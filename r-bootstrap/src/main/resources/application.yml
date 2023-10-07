@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: antchain-bridge-relayer
+  profiles:
+    active: env
+
+mapper:
+  identity: MYSQL
+  mappers: tk.mybatis.mapper.common.Mapper
+  not-empty: true
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: tk.mybatis.springboot.model
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  file:
+    path: ./logs
+  level:
+    app: INFO
