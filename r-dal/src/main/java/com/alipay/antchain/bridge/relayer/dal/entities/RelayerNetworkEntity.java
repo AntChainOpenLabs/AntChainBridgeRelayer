@@ -16,7 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.dal.entities;
 
-import com.alipay.antchain.bridge.relayer.dal.constant.RelayerNodeSyncStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;

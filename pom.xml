@@ -36,15 +36,30 @@
         <redisson-spring.version>3.23.5</redisson-spring.version>
         <spring-boot.version>2.7.16</spring-boot.version>
         <mysql-connector.version>8.0.33</mysql-connector.version>
-        <acb-sdk.version>0.1.2</acb-sdk.version>
+        <acb-sdk.version>0.2.0-SNAPSHOT</acb-sdk.version>
+        <hutool.version>5.8.22</hutool.version>
+        <junit.version>4.13.2</junit.version>
+        <h2.version>2.2.224</h2.version>
+        <embeded-redis.version>0.7.3</embeded-redis.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-core</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-boot-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter-test</artifactId>
+                <version>${mybatis-plus.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.redisson</groupId>
@@ -62,8 +77,8 @@
                 <version>${spring-boot.version}</version>
             </dependency>
             <dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
+                <groupId>com.mysql</groupId>
+                <artifactId>mysql-connector-j</artifactId>
                 <version>${mysql-connector.version}</version>
                 <exclusions>
                     <exclusion>
@@ -82,41 +97,71 @@
                 <artifactId>antchain-bridge-spi</artifactId>
                 <version>${acb-sdk.version}</version>
             </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <version>${spring-boot.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>it.ozimov</groupId>
+                <artifactId>embedded-redis</artifactId>
+                <version>${embeded-redis.version}</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-simple</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
 
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
                 <artifactId>r-commons</artifactId>
-                <version>${version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
                 <artifactId>r-dal</artifactId>
-                <version>${version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
                 <artifactId>r-core</artifactId>
-                <version>${version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
                 <artifactId>r-service</artifactId>
-                <version>${version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
                 <artifactId>r-engine</artifactId>
-                <version>${version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
                 <artifactId>r-server</artifactId>
-                <version>${version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
                 <artifactId>r-cli</artifactId>
-                <version>${version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>

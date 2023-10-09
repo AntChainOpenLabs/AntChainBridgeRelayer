@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.constant;
+package com.alipay.antchain.bridge.relayer.commons.constant;
 
+import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
+import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
+import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -28,6 +31,7 @@ public enum PluginServerStateEnum {
     HEARTBEAT_LOST(3),
     NOT_FOUND(4);
 
+    @EnumValue
     private final int code;
 
     public static PluginServerStateEnum parseFromValue(int value) {
@@ -42,6 +46,6 @@ public enum PluginServerStateEnum {
         } else if (value == NOT_FOUND.code){
             return NOT_FOUND;
         }
-        throw new RuntimeException("Invalid value for plugin server state: " + value);
+        throw new AntChainBridgeRelayerException(RelayerErrorCodeEnum.UNKNOWN_INTERNAL_ERROR, "Invalid value for plugin server state: " + value);
     }
 }

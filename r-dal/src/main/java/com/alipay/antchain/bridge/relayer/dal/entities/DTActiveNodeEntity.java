@@ -18,7 +18,7 @@ package com.alipay.antchain.bridge.relayer.dal.entities;
 
 import java.util.Date;
 
-import com.alipay.antchain.bridge.relayer.dal.constant.DTActiveNodeStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DTActiveNodeStateEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;

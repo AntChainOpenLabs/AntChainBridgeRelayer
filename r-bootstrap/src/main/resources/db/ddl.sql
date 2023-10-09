@@ -24,9 +24,8 @@ CREATE TABLE `blockchain`
     `product`       varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
     `blockchain_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
     `alias`         varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
-    `desc`          varchar(2096) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `description`   varchar(2096) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
     `properties`    blob,
-    `init_height`   int(11)                                                        DEFAULT NULL,
     `gmt_create`    datetime                                                       DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`  datetime                                                       DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -117,24 +116,53 @@ CREATE TABLE `domain_space_cert`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
 
+drop table if exists ucp_pool;
+CREATE TABLE `ucp_pool`
+(
+    `id`                 int(11)              NOT NULL AUTO_INCREMENT,
+    `ucp_id`             VARBINARY(32) UNIQUE NOT NULL,
+    `blockchain_product` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
+    `blockchain_id`      varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `version`            int(11)                                                        DEFAULT NULL,
+    `src_domain`         varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `blockhash`          varchar(66)                                                    DEFAULT NULL,
+    `txhash`             varchar(66)                                                    DEFAULT NULL,
+    `ledger_time`        TIMESTAMP                                                      DEFAULT NULL,
+    `udag_path`          varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `protocol_type`      int(11)                                                        DEFAULT NULL,
+    `raw_message`        mediumblob,
+    `ptc_oid`            VARBINARY(32),
+    `tp_proof`           mediumblob,
+    `from_network`       TINYINT(1)                                                     DEFAULT 0,
+    `relayer_id`         varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
+    `process_state`      varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
+    `gmt_create`         datetime                                                       DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified`       datetime                                                       DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `ucp_state` (`process_state`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci
+  ROW_FORMAT = DYNAMIC;
+
 drop table if exists auth_msg_pool;
 CREATE TABLE `auth_msg_pool`
 (
-    `id`                        int(11) NOT NULL AUTO_INCREMENT,
-    `blockchain_product`        varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
-    `instance`                  varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
-    `domain_name`               varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
-    `amclient_contract_address` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
-    `version`                   int(11)                                                        DEFAULT NULL,
-    `identity`                  varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
-    `protocol_type`             int(11)                                                        DEFAULT NULL,
+    `id`                        int(11)              NOT NULL AUTO_INCREMENT,
+    `ucp_id`                    VARBINARY(32) UNIQUE NOT NULL,
+    `blockchain_product`        varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `blockchain_id`             varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `domain_name`               varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `amclient_contract_address` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `version`                   int(11)                                                       DEFAULT NULL,
+    `msg_sender`                varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `protocol_type`             int(11)                                                       DEFAULT NULL,
+    `trust_level`               int(11)                                                       DEFAULT 2,
     `payload`                   mediumblob,
-    `udag_path`                 varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-    `udag_proof`                mediumblob,
-    `process_state`             varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
+    `process_state`             varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
     `ext`                       mediumblob,
-    `gmt_create`                datetime                                                       DEFAULT CURRENT_TIMESTAMP,
-    `gmt_modified`              datetime                                                       DEFAULT CURRENT_TIMESTAMP,
+    `gmt_create`                datetime                                                      DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified`              datetime                                                      DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `state` (`process_state`),
     KEY `idx_domainname_processstate` (`domain_name`, `process_state`)
@@ -143,11 +171,13 @@ CREATE TABLE `auth_msg_pool`
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
 
-drop table if exists auth_msg_send_queue;
-CREATE TABLE `auth_msg_send_queue`
+drop table if exists sdp_msg_pool;
+CREATE TABLE `sdp_msg_pool`
 (
     `id`                          int(11) NOT NULL AUTO_INCREMENT,
     `auth_msg_id`                 int(11)                                                       DEFAULT NULL,
+    `version`                     int(11)                                                       DEFAULT 1,
+    `atomic`                      TINYINT(1)                                                    DEFAULT 0,
     `sender_blockchain_product`   varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
     `sender_instance`             varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
     `sender_domain_name`          varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -235,32 +265,34 @@ CREATE TABLE `relayer_node`
 drop table if exists auth_msg_archive;
 CREATE TABLE `auth_msg_archive`
 (
-    `id`                        int(11) NOT NULL AUTO_INCREMENT,
-    `blockchain_product`        varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
-    `instance`                  varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
-    `domain_name`               varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
-    `amclient_contract_address` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
-    `version`                   int(11)                                                        DEFAULT NULL,
-    `identity`                  varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
-    `protocol_type`             int(11)                                                        DEFAULT NULL,
+    `id`                        int(11)              NOT NULL AUTO_INCREMENT,
+    `ucp_id`                    VARBINARY(32) UNIQUE NOT NULL,
+    `blockchain_product`        varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `blockchain_id`             varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `domain_name`               varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `amclient_contract_address` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `version`                   int(11)                                                       DEFAULT NULL,
+    `msg_sender`                varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `protocol_type`             int(11)                                                       DEFAULT NULL,
+    `trust_level`               int(11)                                                       DEFAULT 2,
     `payload`                   mediumblob,
-    `udag_path`                 varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-    `udag_proof`                mediumblob,
-    `process_state`             varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
+    `process_state`             varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
     `ext`                       mediumblob,
-    `gmt_create`                datetime                                                       DEFAULT CURRENT_TIMESTAMP,
-    `gmt_modified`              datetime                                                       DEFAULT CURRENT_TIMESTAMP,
+    `gmt_create`                datetime                                                      DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified`              datetime                                                      DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
 
-drop table if exists auth_msg_send_queue_archive;
-CREATE TABLE `auth_msg_send_queue_archive`
+drop table if exists sdp_msg_archive;
+CREATE TABLE `sdp_msg_archive`
 (
     `id`                          int(11) NOT NULL AUTO_INCREMENT,
     `auth_msg_id`                 int(11)                                                       DEFAULT NULL,
+    `version`                     int(11)                                                       DEFAULT 1,
+    `atomic`                      TINYINT(1)                                                    DEFAULT 0,
     `sender_blockchain_product`   varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
     `sender_instance`             varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
     `sender_domain_name`          varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,

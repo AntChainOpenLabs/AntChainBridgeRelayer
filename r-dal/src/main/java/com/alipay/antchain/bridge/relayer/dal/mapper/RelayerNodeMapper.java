@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.constant;
+package com.alipay.antchain.bridge.relayer.dal.mapper;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
-import lombok.AllArgsConstructor;
+import com.alipay.antchain.bridge.relayer.dal.entities.RelayerNodeEntity;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-@AllArgsConstructor
-public enum DTActiveNodeStateEnum {
-    ONLINE("online");
-
-    @EnumValue
-    private final String code;
+public interface RelayerNodeMapper extends BaseMapper<RelayerNodeEntity> {
 }

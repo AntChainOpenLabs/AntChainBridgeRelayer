@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.constant;
+package com.alipay.antchain.bridge.relayer.dal.mapper;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
-import lombok.AllArgsConstructor;
+import com.alipay.antchain.bridge.relayer.dal.entities.CrossChainMsgACLEntity;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-@AllArgsConstructor
-public enum UpperProtocolTypeBeyondAMEnum {
-
-    SDP(0);
-
-    @EnumValue
-    private final int code;
+public interface CrossChainMsgACLMapper extends BaseMapper<CrossChainMsgACLEntity> {
 }

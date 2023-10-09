@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.constant;
+package com.alipay.antchain.bridge.relayer.dal.mapper;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
-import lombok.AllArgsConstructor;
+import com.alipay.antchain.bridge.relayer.dal.entities.SDPMsgArchiveEntity;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-@AllArgsConstructor
-public enum SDPMsgProcessStateEnum {
-    PENDING("am_msg_pending"),
-
-    PROVED("am_proof"),
-
-    FAILED("am_msg_fail");
-
-    @EnumValue
-    private final String code;
+public interface SDPMsgArchiveMapper extends BaseMapper<SDPMsgArchiveEntity> {
 }

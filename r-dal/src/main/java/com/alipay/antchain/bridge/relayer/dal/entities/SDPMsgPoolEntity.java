@@ -16,7 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.dal.entities;
 
-import com.alipay.antchain.bridge.relayer.dal.constant.SDPMsgProcessStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
@@ -24,10 +24,16 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@TableName("auth_msg_send_queue_archive")
-public class AuthMsgSendQueueArchiveEntity extends BaseEntity {
+@TableName("sdp_msg_pool")
+public class SDPMsgPoolEntity extends BaseEntity {
     @TableField("auth_msg_id")
     private int authMsgId;
+
+    @TableField("version")
+    private int version;
+
+    @TableField("atomic")
+    private boolean atomic;
 
     @TableField("sender_blockchain_product")
     private String senderBlockchainProduct;
@@ -69,7 +75,7 @@ public class AuthMsgSendQueueArchiveEntity extends BaseEntity {
     private String txHash;
 
     @TableField("tx_success")
-    private int txSuccess;
+    private boolean txSuccess;
 
     @TableField("tx_fail_reason")
     private String txFailReason;

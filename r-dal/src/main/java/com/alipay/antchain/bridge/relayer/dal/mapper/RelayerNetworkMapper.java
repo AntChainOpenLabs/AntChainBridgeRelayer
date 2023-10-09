@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.constant;
+package com.alipay.antchain.bridge.relayer.dal.mapper;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
-import lombok.AllArgsConstructor;
+import java.util.List;
 
-@AllArgsConstructor
-public enum AuthMsgProcessStateEnum {
+import com.alipay.antchain.bridge.relayer.dal.entities.RelayerNetworkEntity;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-    PENDING("am_pending"),
+public interface RelayerNetworkMapper extends BaseMapper<RelayerNetworkEntity> {
 
-    PROVED("am_proof"),
-
-    REJECTED("am_reject"),
-
-    FAILED("am_fail");
-
-    @EnumValue
-    private final String code;
+    void addNetworkItems(List<RelayerNetworkEntity> entityList);
 }
