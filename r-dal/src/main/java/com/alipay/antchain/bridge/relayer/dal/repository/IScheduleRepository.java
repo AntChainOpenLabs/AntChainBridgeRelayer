@@ -14,15 +14,27 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.mapper;
+package com.alipay.antchain.bridge.relayer.dal.repository;
 
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
+import com.alipay.antchain.bridge.relayer.commons.model.ActiveNode;
 import com.alipay.antchain.bridge.relayer.commons.model.DistributedTask;
-import com.alipay.antchain.bridge.relayer.dal.entities.DTTaskEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-public interface DTTaskMapper extends BaseMapper<DTTaskEntity> {
+public interface IScheduleRepository {
 
-    void saveDTTasks(List<DistributedTask> tasks);
+    Lock getDispatchLock();
+
+    void activate(String nodeId, String nodeIp);
+
+    List<DistributedTask> getAllDistributedTasks();
+
+    List<DistributedTask> getDistributedTasksByNodeId(String nodeId);
+
+    List<ActiveNode> getAllActiveNodes();
+
+    void batchInsertDTTasks(List<DistributedTask> tasks);
+
+    void batchUpdateDTTasks(List<DistributedTask> tasks);
 }

@@ -37,7 +37,7 @@ import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import com.alipay.antchain.bridge.relayer.dal.service.BlockchainService;
 import com.alipay.antchain.bridge.relayer.dal.service.IAnchorProcessService;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
@@ -130,7 +130,7 @@ public class BlockchainRepository implements IBlockchainRepository {
                         .desc(blockchainMeta.getDesc())
                         .properties(blockchainMeta.getProperties().encode())
                         .build(),
-                new LambdaQueryWrapper<BlockchainEntity>()
+                new LambdaUpdateWrapper<BlockchainEntity>()
                         .eq(BlockchainEntity::getBlockchainId, "test")
         ) == 1;
     }

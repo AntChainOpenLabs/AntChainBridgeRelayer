@@ -18,13 +18,12 @@ package com.alipay.antchain.bridge.relayer.commons.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.beans.factory.annotation.Value;
 
 @Getter
 @Setter
 public class RelayerHealthInfo {
 
-    private static long activateLength;
+    private long activateLength;
 
     private long lastActiveTime;
 
@@ -37,16 +36,13 @@ public class RelayerHealthInfo {
     public RelayerHealthInfo(
             String nodeIpAddress,
             int nodePort,
-            long lastActiveTime
+            long lastActiveTime,
+            long activateLength
     ) {
         this.nodeIpAddress = nodeIpAddress;
         this.nodePort = nodePort;
         this.lastActiveTime = lastActiveTime;
+        this.activateLength = activateLength;
         this.active = (System.currentTimeMillis() - lastActiveTime) <= activateLength;
-    }
-
-    @Value("${dt.node.activate.length:3000}")
-    public void setActivateLength(long activateLength) {
-        RelayerHealthInfo.activateLength = activateLength;
     }
 }

@@ -16,6 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.dal.utils;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -281,11 +282,42 @@ public class ConvertUtil {
         return entity;
     }
 
-    public static RelayerHealthInfo convertFromDTActiveNodeEntity(int port, DTActiveNodeEntity entity) {
+    public static RelayerHealthInfo convertFromDTActiveNodeEntity(int port, long activateLength, DTActiveNodeEntity entity) {
         return new RelayerHealthInfo(
                 entity.getNodeIp(),
                 port,
-                entity.getLastActiveTime().getTime()
+                entity.getLastActiveTime().getTime(),
+                activateLength
         );
+    }
+
+    public static DistributedTask convertFromDTTaskEntity(DTTaskEntity entity) {
+        DistributedTask distributedTask = new DistributedTask();
+        distributedTask.setNodeId(entity.getNodeId());
+        distributedTask.setTaskType(entity.getTaskType());
+        distributedTask.setBlockchainId(entity.getBlockchainId());
+        distributedTask.setBlockchainProduct(entity.getProduct());
+        distributedTask.setTimeSlice(entity.getTimeSlice().getTime());
+        distributedTask.setExt(entity.getExt());
+        return distributedTask;
+    }
+
+    public static DTTaskEntity convertFromDistributedTask(DistributedTask task) {
+        DTTaskEntity entity = new DTTaskEntity();
+        entity.setTaskType(task.getTaskType());
+        entity.setBlockchainId(task.getBlockchainId());
+        entity.setProduct(task.getBlockchainProduct());
+        entity.setNodeId(task.getNodeId());
+        entity.setTimeSlice(new Date(task.getTimeSlice()));
+        entity.setExt(task.getExt());
+        return entity;
+    }
+
+    public static ActiveNode convertFromDTActiveNodeEntityActiveNode(DTActiveNodeEntity entity) {
+        ActiveNode node = new ActiveNode();
+        node.setNodeIp(entity.getNodeIp());
+        node.setNodeId(entity.getNodeId());
+        node.setLastActiveTime(entity.getLastActiveTime().getTime());
+        return node;
     }
 }

@@ -38,16 +38,14 @@ import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnu
 import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
-import com.alipay.antchain.bridge.relayer.dal.entities.AuthMsgArchiveEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.AuthMsgPoolEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.SDPMsgArchiveEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.SDPMsgPoolEntity;
+import com.alipay.antchain.bridge.relayer.dal.entities.*;
 import com.alipay.antchain.bridge.relayer.dal.mapper.AuthMsgArchiveMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.AuthMsgPoolMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.SDPMsgArchiveMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.SDPMsgPoolMapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -132,7 +130,13 @@ public class CrossChainRepositoryTest extends TestBase {
 
     @Test
     public void testPutSDPMessage() throws Exception {
+        sdpMsgPoolMapper.selectList(null);
+
         saveSomeSDP();
+
+        System.out.println(sdpMsgPoolMapper.update(new SDPMsgPoolEntity(), new LambdaUpdateWrapper<SDPMsgPoolEntity>().eq(BaseEntity::getId, 100)));
+
+
     }
 
     @Test

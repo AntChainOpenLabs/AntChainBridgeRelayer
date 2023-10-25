@@ -51,6 +51,8 @@ public enum RelayerErrorCodeEnum {
 
     DAL_DT_ACTIVE_NODE_ERROR("0107", "dt active node data error"),
 
+    DAL_DT_TASK_ERROR("0108", "distributed task data error"),
+
     /**
      *
      */

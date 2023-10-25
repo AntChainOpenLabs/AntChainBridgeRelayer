@@ -19,13 +19,16 @@ package com.alipay.antchain.bridge.relayer.dal.entities;
 import java.util.Date;
 
 import com.alipay.antchain.bridge.relayer.commons.constant.DTActiveNodeStateEnum;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@Builder
 @TableName("dt_active_node")
 public class DTActiveNodeEntity extends BaseEntity {
 
@@ -38,6 +41,6 @@ public class DTActiveNodeEntity extends BaseEntity {
     @TableField("state")
     private DTActiveNodeStateEnum state;
 
-    @TableField("last_active_time")
+    @TableField(value = "last_active_time", update = "now()", updateStrategy = FieldStrategy.ALWAYS)
     private Date lastActiveTime;
 }

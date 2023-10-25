@@ -41,6 +41,7 @@ import com.alipay.antchain.bridge.relayer.dal.mapper.RelayerNodeMapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IRelayerNetworkRepository;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +60,9 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
 
     @Value("${os.grpc.port:8089}")
     private int grpcServerPort;
+
+    @Value("${dt.node.activate.length:3000}")
+    private long activateLength;
 
     @Override
     public void addNetworkItems(String networkId, Map<String, RelayerNetwork.Item> relayerNetworkItems) {
@@ -144,7 +148,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
             entity.setSyncState(syncState);
             return 1 == relayerNetworkMapper.update(
                     entity,
-                    new LambdaQueryWrapper<RelayerNetworkEntity>()
+                    new LambdaUpdateWrapper<RelayerNetworkEntity>()
                             .eq(RelayerNetworkEntity::getNetworkId, networkId)
                             .eq(RelayerNetworkEntity::getDomain, domain)
                             .eq(RelayerNetworkEntity::getNodeId, nodeId)
@@ -289,7 +293,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
         try {
             return 1 == relayerNodeMapper.update(
                     ConvertUtil.convertFromRelayerNodeInfo(nodeInfo),
-                    new LambdaQueryWrapper<RelayerNodeEntity>()
+                    new LambdaUpdateWrapper<RelayerNodeEntity>()
                             .eq(RelayerNodeEntity::getNodeId, nodeInfo.getNodeId())
             );
         } catch (Exception e) {
@@ -350,7 +354,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
             }
 
             return entities.stream().map(
-                    entity -> ConvertUtil.convertFromDTActiveNodeEntity(grpcServerPort, entity)
+                    entity -> ConvertUtil.convertFromDTActiveNodeEntity(grpcServerPort, activateLength, entity)
             ).collect(Collectors.toList());
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
