@@ -53,6 +53,10 @@ public enum RelayerErrorCodeEnum {
 
     DAL_DT_TASK_ERROR("0108", "distributed task data error"),
 
+    DAL_CROSSCHAIN_MSG_ACL_ERROR("0109", "acl data error"),
+
+    DAL_SYSTEM_CONFIG_ERROR("010a", "sys config data error"),
+
     /**
      *
      */

@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.entities;
+package com.alipay.antchain.bridge.relayer.dal.repository;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.*;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
-@Getter
-@Setter
-@TableName("system_config")
-@NoArgsConstructor
-@Builder
-@AllArgsConstructor
-public class SystemConfigEntity extends BaseEntity {
-    @TableField("conf_key")
-    private String confKey;
+public interface ISystemConfigRepository {
 
-    @TableField("conf_value")
-    private String confValue;
+    String getSystemConfig(String key);
+
+    boolean hasSystemConfig(String key);
+
+    void setSystemConfig(Map<String, String> configs);
+
+    void setSystemConfig(String key, String value);
+
+    Lock getDistributedLockForDeployTask(String product, String blockchainId);
 }

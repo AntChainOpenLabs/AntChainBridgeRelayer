@@ -320,4 +320,39 @@ public class ConvertUtil {
         node.setLastActiveTime(entity.getLastActiveTime().getTime());
         return node;
     }
+
+    public static CrossChainMsgACLEntity convertFromCrossChainMsgACLItem(CrossChainMsgACLItem item) {
+        CrossChainMsgACLEntity entity = new CrossChainMsgACLEntity();
+        entity.setBizId(item.getBizId());
+
+        entity.setOwnerDomain(item.getOwnerDomain());
+        entity.setOwnerId(item.getOwnerIdentity());
+        entity.setOwnerIdHex(item.getOwnerIdentityHex());
+
+        entity.setGrantDomain(item.getGrantDomain());
+        entity.setGrantId(item.getGrantIdentity());
+        entity.setGrantIdHex(item.getGrantIdentityHex());
+
+        entity.setIsDeleted(item.getIsDeleted());
+
+        return entity;
+    }
+
+    public static CrossChainMsgACLItem convertFromCrossChainMsgACLItem(CrossChainMsgACLEntity entity) {
+        CrossChainMsgACLItem item = new CrossChainMsgACLItem();
+
+        item.setBizId(entity.getBizId());
+
+        item.setOwnerDomain(entity.getOwnerDomain());
+        item.setOwnerIdentity(entity.getOwnerId());
+        item.setOwnerIdentityHex(entity.getOwnerIdHex());
+
+        item.setGrantDomain(entity.getGrantDomain());
+        item.setGrantIdentity(entity.getGrantId());
+        item.setGrantIdentityHex(entity.getGrantIdHex());
+
+        item.setIsDeleted(entity.getIsDeleted());
+
+        return item;
+    }
 }

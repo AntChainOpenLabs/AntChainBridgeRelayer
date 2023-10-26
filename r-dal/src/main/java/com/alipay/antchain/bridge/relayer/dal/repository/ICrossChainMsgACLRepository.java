@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.entities;
+package com.alipay.antchain.bridge.relayer.dal.repository;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.*;
+import com.alipay.antchain.bridge.relayer.commons.model.CrossChainMsgACLItem;
 
-@Getter
-@Setter
-@TableName("system_config")
-@NoArgsConstructor
-@Builder
-@AllArgsConstructor
-public class SystemConfigEntity extends BaseEntity {
-    @TableField("conf_key")
-    private String confKey;
+public interface ICrossChainMsgACLRepository {
 
-    @TableField("conf_value")
-    private String confValue;
+    void saveItem(CrossChainMsgACLItem item);
+
+    void deleteItem(String bizId);
+
+    CrossChainMsgACLItem getItemByBizId(String bizId);
+
+    boolean checkItem(CrossChainMsgACLItem item);
 }
