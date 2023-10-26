@@ -18,12 +18,14 @@ package com.alipay.antchain.bridge.relayer.dal.entities;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 @TableName("anchor_process")
+@AllArgsConstructor
 public class AnchorProcessEntity extends BaseEntity {
 
     @TableField("blockchain_product")

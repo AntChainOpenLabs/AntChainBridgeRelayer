@@ -16,8 +16,9 @@
 
 package com.alipay.antchain.bridge.relayer.dal.entities;
 
-import com.alipay.antchain.bridge.relayer.dal.constant.AuthMsgProcessStateEnum;
-import com.alipay.antchain.bridge.relayer.dal.constant.UpperProtocolTypeBeyondAMEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgTrustLevelEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
@@ -27,10 +28,14 @@ import lombok.Setter;
 @Setter
 @TableName("auth_msg_archive")
 public class AuthMsgArchiveEntity extends BaseEntity {
+
+    @TableField("ucp_id")
+    private byte[] ucpId;
+
     @TableField("blockchain_product")
     private String product;
 
-    @TableField("instance")
+    @TableField("blockchain_id")
     private String blockchainId;
 
     @TableField("domain_name")
@@ -40,22 +45,19 @@ public class AuthMsgArchiveEntity extends BaseEntity {
     private String amClientContractAddress;
 
     @TableField("version")
-    private int version;
+    private Integer version;
 
-    @TableField("identity")
-    private String identity;
+    @TableField("msg_sender")
+    private String msgSender;
 
     @TableField("protocol_type")
     private UpperProtocolTypeBeyondAMEnum protocolType;
 
+    @TableField("trust_level")
+    private AuthMsgTrustLevelEnum trustLevel;
+
     @TableField("payload")
     private byte[] payload;
-
-    @TableField("udag_path")
-    private String udagPath;
-
-    @TableField("udag_proof")
-    private byte[] udagProof;
 
     @TableField("process_state")
     private AuthMsgProcessStateEnum processState;

@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:relayer;DB_CLOSE_DELAY=-1;MODE=MySQL;IGNORECASE=TRUE
+    password: 123
+    username: root
+  redis:
+    host: localhost
+    port: 6379
+    password: Mychain123!@#
+
+logging:
+  file:
+    path: ./logs
+  level:
+    app: INFO

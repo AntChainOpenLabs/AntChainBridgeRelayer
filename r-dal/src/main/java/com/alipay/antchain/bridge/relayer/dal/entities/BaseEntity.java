@@ -18,6 +18,8 @@ package com.alipay.antchain.bridge.relayer.dal.entities;
 
 import java.util.Date;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Getter;
@@ -29,24 +31,24 @@ import lombok.experimental.FieldNameConstants;
 @FieldNameConstants
 public class BaseEntity {
 
-    @TableId("id")
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     /**
      * 数据创建时间
      */
     @TableField("gmt_create")
-    private Date gmtCreated;
+    private Date gmtCreate;
 
     /**
      * 数据更新时间
      */
-    @TableField("gmt_modified")
+    @TableField(value = "gmt_modified", update = "now()", updateStrategy = FieldStrategy.ALWAYS)
     private Date gmtModified;
 
     public void init() {
         Date now = new Date();
-        this.setGmtCreated(now);
+        this.setGmtCreate(now);
         this.setGmtModified(now);
     }
 

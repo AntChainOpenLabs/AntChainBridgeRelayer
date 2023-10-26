@@ -18,11 +18,13 @@ package com.alipay.antchain.bridge.relayer.dal.entities;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("blockchain")
 public class BlockchainEntity extends BaseEntity {
     @TableField("product")
@@ -34,12 +36,9 @@ public class BlockchainEntity extends BaseEntity {
     @TableField("alias")
     private String alias;
 
-    @TableField("desc")
+    @TableField("description")
     private String desc;
 
     @TableField("properties")
     private byte[] properties;
-
-    @TableField("init_height")
-    private Long initHeight;
 }

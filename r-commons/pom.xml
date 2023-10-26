@@ -26,5 +26,13 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
         </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alipay.antchain.bridge</groupId>
+            <artifactId>antchain-bridge-commons</artifactId>
+        </dependency>
     </dependencies>
 </project>
