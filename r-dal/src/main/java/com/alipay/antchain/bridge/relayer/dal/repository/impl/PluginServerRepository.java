@@ -34,13 +34,20 @@ import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PluginServerRepository implements IPluginServerRepository {
 
+    private static final String PLUGIN_SERVER_HEARTBEAT_LOCK_PREFIX = "plugin_server_heartbeat_lock-";
+
     @Resource
     private PluginServerObjectsMapper pluginServerObjectsMapper;
+
+    @Resource
+    private RedissonClient redissonClient;
 
     @Override
     public void insertNewPluginServer(PluginServerDO pluginServerDO) {
@@ -225,5 +232,14 @@ public class PluginServerRepository implements IPluginServerRepository {
                     e
             );
         }
+    }
+
+    @Override
+    public RLock getHeartbeatLock(String psId) {
+        return redissonClient.getLock(getHeartbeatLockKey(psId));
+    }
+
+    private static String getHeartbeatLockKey(String psId) {
+        return String.format("%s%s", PLUGIN_SERVER_HEARTBEAT_LOCK_PREFIX, psId);
     }
 }

@@ -33,10 +33,13 @@ import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import com.alipay.antchain.bridge.relayer.dal.entities.AnchorProcessEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.BaseEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.BlockchainEntity;
+import com.alipay.antchain.bridge.relayer.dal.entities.DomainCertEntity;
+import com.alipay.antchain.bridge.relayer.dal.mapper.DomainCertMapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import com.alipay.antchain.bridge.relayer.dal.service.BlockchainService;
 import com.alipay.antchain.bridge.relayer.dal.service.IAnchorProcessService;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
@@ -52,6 +55,9 @@ public class BlockchainRepository implements IBlockchainRepository {
 
     @Resource
     private BlockchainService blockchainService;
+
+    @Resource
+    private DomainCertMapper domainCertMapper;
 
     @Resource
     private RedissonClient redissonClient;
@@ -160,6 +166,48 @@ public class BlockchainRepository implements IBlockchainRepository {
             return null;
         }
         return ConvertUtil.convertFromBlockchainEntity(blockchainEntity);
+    }
+
+    @Override
+    public boolean hasBlockchain(String product, String blockchainId) {
+        try {
+            return blockchainService.exists(
+                    new LambdaQueryWrapper<BlockchainEntity>()
+                            .eq(BlockchainEntity::getProduct, product)
+                            .eq(BlockchainEntity::getBlockchainId, blockchainId)
+            );
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    String.format(
+                            "failed to query blockchain existence from DB for ( product: %s, blockchain id: %s )",
+                            product, blockchainId
+                    ), e
+            );
+        }
+    }
+
+    @Override
+    public String getBlockchainDomain(String product, String blockchainId) {
+        try {
+            DomainCertEntity entity = domainCertMapper.selectOne(
+                    new LambdaQueryWrapper<DomainCertEntity>()
+                            .eq(DomainCertEntity::getProduct, product)
+                            .eq(DomainCertEntity::getBlockchainId, blockchainId)
+            );
+            if (ObjectUtil.isNull(entity)) {
+                return "";
+            }
+            return entity.getDomain();
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    String.format(
+                            "failed to query blockchain existence from DB for ( product: %s, blockchain id: %s )",
+                            product, blockchainId
+                    ), e
+            );
+        }
     }
 
     private void flushAnchorProcessHeights(AnchorProcessHeights heights) {

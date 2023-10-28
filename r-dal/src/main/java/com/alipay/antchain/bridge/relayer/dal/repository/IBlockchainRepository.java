@@ -33,4 +33,8 @@ public interface IBlockchainRepository {
     List<BlockchainMeta> getAllBlockchainMeta();
 
     BlockchainMeta getBlockchainMeta(String product, String blockchainId);
+
+    boolean hasBlockchain(String product, String blockchainId);
+
+    String getBlockchainDomain(String product, String blockchainId);
 }

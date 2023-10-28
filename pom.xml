@@ -41,6 +41,9 @@
         <junit.version>4.13.2</junit.version>
         <h2.version>2.2.224</h2.version>
         <embeded-redis.version>0.7.3</embeded-redis.version>
+        <protobuf-plugin.version>0.6.1</protobuf-plugin.version>
+        <protobuf.version>3.19.1</protobuf.version>
+        <grpc.version>1.42.2</grpc.version>
     </properties>
 
     <dependencyManagement>
@@ -126,6 +129,21 @@
                         <artifactId>slf4j-simple</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-netty-shaded</artifactId>
+                <version>${grpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-stub</artifactId>
+                <version>${grpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-protobuf</artifactId>
+                <version>${grpc.version}</version>
             </dependency>
 
             <dependency>

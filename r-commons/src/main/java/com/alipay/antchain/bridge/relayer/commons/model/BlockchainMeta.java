@@ -19,10 +19,12 @@ package com.alipay.antchain.bridge.relayer.commons.model;
 import java.util.Map;
 
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.BooleanUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.annotation.JSONField;
+import com.alipay.antchain.bridge.commons.bbc.DefaultBBCContext;
 import com.alipay.antchain.bridge.relayer.commons.constant.AMServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.utils.HeteroBBCContextDeserializer;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,73 +32,47 @@ import lombok.Setter;
 @Setter
 public class BlockchainMeta {
 
+    public static String createMetaKey(String product, String blockchainId) {
+        return product + "_" + blockchainId;
+    }
+
     @Getter
     @Setter
     public static class BlockchainProperties {
 
-        public static String AM_CLIENT_CONTRACT_ADDRESS = "am_client_contract_address";
-
-        public static String SDP_MSG_CONTRACT_ADDRESS = "sdp_msg_contract_address";
-
-        public static String ANCHOR_RUNTIME_STATUS = "anchor_runtime_status";
-
-        public static String INIT_BLOCK_HEIGHT = "init_block_height";
-
-        public static String IS_DOMAIN_REGISTERED = "is_domain_registered";
-
-        public static String HETEROGENEOUS_BBC_CONTEXT = "heterogeneous_bbc_context";
-
-        public static String PLUGIN_SERVER_ID = "plugin_server_id";
-
-        public static String AM_SERVICE_STATUS = "am_service_status";
-
         public static BlockchainProperties decode(byte[] rawData) {
-            BlockchainProperties blockchainProperties = new BlockchainProperties();
-            JSON.parseObject(new String(rawData)).getInnerMap()
-                    .forEach((key, value) -> blockchainProperties.getProperties().put(key, (String) value));
-            return blockchainProperties;
+            return JSON.parseObject(rawData, BlockchainProperties.class);
         }
 
-        private Map<String, String> properties = MapUtil.newHashMap();
+        @JSONField(name = "am_client_contract_address")
+        private String amClientContractAddress;
 
-        public String getAmClientContractAddress() {
-            return properties.get(AM_CLIENT_CONTRACT_ADDRESS);
-        }
+        @JSONField(name = "sdp_msg_contract_address")
+        private String sdpMsgContractAddress;
 
-        public String getSdpMsgContractAddress() {
-            return properties.get(SDP_MSG_CONTRACT_ADDRESS);
-        }
+        @JSONField(name = "anchor_runtime_status")
+        private BlockchainStateEnum anchorRuntimeStatus;
 
-        public BlockchainStateEnum getBlockchainState() {
-            return BlockchainStateEnum.parseFromValue(properties.get(ANCHOR_RUNTIME_STATUS));
-        }
+        @JSONField(name = "init_block_height")
+        private Long initBlockHeight;
 
-        public Long getInitBlockHeight() {
-            return Long.parseLong(properties.get(INIT_BLOCK_HEIGHT));
-        }
+        @JSONField(name = "is_domain_registered")
+        private Boolean isDomainRegistered;
 
-        public boolean isDomainRegistered() {
-            return BooleanUtil.toBoolean(properties.getOrDefault(IS_DOMAIN_REGISTERED, ""));
-        }
+        @JSONField(name = "heterogeneous_bbc_context", deserializeUsing = HeteroBBCContextDeserializer.class)
+        private DefaultBBCContext bbcContext;
 
-        public String getHeterogeneousBbcContext() {
-            return properties.get(HETEROGENEOUS_BBC_CONTEXT);
-        }
+        @JSONField(name = "plugin_server_id")
+        private String pluginServerId;
 
-        public String getPluginServerId() {
-            return properties.get(PLUGIN_SERVER_ID);
-        }
+        @JSONField(name = "am_service_status")
+        private AMServiceStatusEnum amServiceStatus;
 
-        public AMServiceStatusEnum getAMServiceStatus() {
-            return AMServiceStatusEnum.valueOf(properties.get(AM_SERVICE_STATUS));
-        }
-
-        public String getExtraProperty(String key) {
-            return properties.get(key);
-        }
+        @JSONField(name = "extra_properties")
+        private Map<String, String> extraProperties = MapUtil.newHashMap();
 
         public byte[] encode() {
-            return JSON.toJSONBytes(properties);
+            return JSON.toJSONBytes(this);
         }
     }
 
@@ -117,10 +93,24 @@ public class BlockchainMeta {
             String desc,
             byte[] rawProperties
     ) {
+        this(product, blockchainId, alias, desc, BlockchainProperties.decode(rawProperties));
+    }
+
+    public BlockchainMeta(
+            String product,
+            String blockchainId,
+            String alias,
+            String desc,
+            BlockchainProperties properties
+    ) {
         this.product = product;
         this.blockchainId = blockchainId;
         this.alias = alias;
         this.desc = desc;
-        this.properties = BlockchainProperties.decode(rawProperties);
+        this.properties = properties;
+    }
+
+    public String getMetaKey() {
+        return createMetaKey(this.product, this.blockchainId);
     }
 }

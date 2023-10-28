@@ -57,6 +57,14 @@ public enum RelayerErrorCodeEnum {
 
     DAL_SYSTEM_CONFIG_ERROR("010a", "sys config data error"),
 
+    CORE_BLOCKCHAIN_ERROR("0201", "blockchain error"),
+
+    CORE_BLOCKCHAIN_CLIENT_INIT_ERROR("0202", "blockchain client init error"),
+
+    CORE_PLUGIN_SERVER_ERROR("0203", "plugin server error"),
+
+    CORE_BBC_CALL_ERROR("0204", "call bbc error"),
+
     /**
      *
      */

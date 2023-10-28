@@ -46,10 +46,13 @@ import com.alipay.antchain.bridge.relayer.dal.mapper.SDPMsgPoolMapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.helpers.BasicMarkerFactory;
 
+@Slf4j
 public class CrossChainRepositoryTest extends TestBase {
 
     @BeforeClass

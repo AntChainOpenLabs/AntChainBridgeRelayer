@@ -21,6 +21,7 @@ import java.util.List;
 import com.alipay.antchain.bridge.relayer.commons.constant.PluginServerStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.PluginServerDO;
 import com.alipay.antchain.bridge.relayer.commons.model.PluginServerInfo;
+import org.redisson.api.RLock;
 
 public interface IPluginServerRepository {
 
@@ -41,4 +42,6 @@ public interface IPluginServerRepository {
     List<String> getDomainsServingOfPluginServer(String psId);
 
     PluginServerInfo getPluginServerInfo(String psId);
+
+    RLock getHeartbeatLock(String psId);
 }
