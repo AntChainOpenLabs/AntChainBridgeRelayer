@@ -79,6 +79,47 @@ public class BlockchainRepository implements IBlockchainRepository {
     }
 
     @Override
+    public AnchorProcessHeights getAnchorProcessHeights(String product, String blockchainId) {
+        try {
+            AnchorProcessHeights heights = getAnchorProcessHeightsFromCache(product, blockchainId);
+            if (ObjectUtil.isNull(heights)) {
+                List<AnchorProcessEntity> entities = anchorProcessService.lambdaQuery()
+                        .select(
+                                ListUtil.toList(
+                                        AnchorProcessEntity::getTask,
+                                        AnchorProcessEntity::getBlockHeight,
+                                        BaseEntity::getGmtModified
+                                )
+                        ).eq(AnchorProcessEntity::getProduct, product)
+                        .eq(AnchorProcessEntity::getBlockchainId, blockchainId)
+                        .list();
+                if (ObjectUtil.isEmpty(entities)) {
+                    return null;
+                }
+                heights = new AnchorProcessHeights(product, blockchainId);
+                for (AnchorProcessEntity entity : entities) {
+                    heights.getProcessHeights().put(entity.getTask(), entity.getBlockHeight());
+                    heights.getModifiedTimeMap().put(entity.getTask(), entity.getGmtModified().getTime());
+                }
+
+                return heights;
+            }
+
+            for (Map.Entry<String, Long> entry : heights.getProcessHeights().entrySet()) {
+                heights.getModifiedTimeMap().put(entry.getKey(), heights.getLastUpdateTime());
+            }
+            return heights;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_ANCHOR_HEIGHTS_ERROR,
+                    "failed to get heights for ( product: %s, blockchain id: %s )",
+                    product, blockchainId,
+                    e
+            );
+        }
+    }
+
+    @Override
     public void setAnchorProcessHeight(String product, String blockchainId, String heightType, Long height) {
         try {
             if (flushPeriodForHeightsCache == 0) {

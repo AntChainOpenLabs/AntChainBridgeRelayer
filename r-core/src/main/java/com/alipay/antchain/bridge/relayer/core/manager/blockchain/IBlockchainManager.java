@@ -77,7 +77,7 @@ public interface IBlockchainManager {
      * @param clientConfig 区块链的客户端配置
      * @return true：配置信息可用 false：配置信息不可用
      */
-    boolean updateBlockchain(String product, String blockchainId, String alias, String desc,
+    void updateBlockchain(String product, String blockchainId, String pluginServerId, String alias, String desc,
                              Map<String, String> clientConfig);
 
     /**
@@ -89,50 +89,16 @@ public interface IBlockchainManager {
      * @param confValue
      * @return
      */
-    boolean updateBlockchainProperty(String product, String blockchainId, String confKey, String confValue);
+    void updateBlockchainProperty(String product, String blockchainId, String confKey, String confValue);
 
     /**
-     * 为指定区块链部署Oracle合约
+     * 为指定区块链部署 AM合约
      *
      * @param product      区块链产品类型
      * @param blockchainId 区块链id
      * @return true：部署成功 false：部署失败
      */
-    boolean deployOracleContract(String product, String blockchainId);
-
-    boolean updateBlockchain(BlockchainMeta blockchainMeta);
-
-    boolean upgradeOracleContract(String product, String blockchainId);
-
-    boolean upgradeP2PContract(String product, String blockchainId);
-
-    boolean upgradeP2PContract(String product, String blockchainId, String contractType, byte[] code);
-
-    boolean upgradeAMContract(String product, String blockchainId);
-
-    boolean upgradeAMContract(String product, String blockchainId, String contractType, byte[] code);
-
-    boolean upgradeFabricParserContract(String product, String blockchainId);
-
-    boolean upgradeMychainParserContract(String product, String blockchainId);
-
-    /**
-     * 初始化udns锚定，将udns注册进sgx oracle，并生成udns锚定进度条
-     *
-     * @param product
-     * @param blockchainId
-     * @return
-     */
-    boolean setupUDNS(String product, String blockchainId);
-
-    /**
-     * 为指定区块链部署Oracle AM合约
-     *
-     * @param product      区块链产品类型
-     * @param blockchainId 区块链id
-     * @return true：部署成功 false：部署失败
-     */
-    boolean deployOracleAMContract(String product, String blockchainId);
+    void deployAMClientContract(String product, String blockchainId);
 
     /**
      * 启动指定的区块链anchor（区块链监听程序）
@@ -143,7 +109,7 @@ public interface IBlockchainManager {
      * @param blockchainId 区块链id
      * @return true：启动成功 false：启动失败
      */
-    boolean startBlockchainAnchor(String product, String blockchainId);
+    void startBlockchainAnchor(String product, String blockchainId);
 
     /**
      * 暂停指定的区块链anchor（区块链监听程序）
@@ -155,7 +121,7 @@ public interface IBlockchainManager {
      * @param blockchainId 区块链id
      * @return true：暂停成功 false：暂停失败
      */
-    boolean stopBlockchainAnchor(String product, String blockchainId);
+    void stopBlockchainAnchor(String product, String blockchainId);
 
     /**
      * 获取区块链元信息，包括以下信息

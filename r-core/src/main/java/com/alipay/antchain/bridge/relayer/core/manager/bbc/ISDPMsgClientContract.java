@@ -13,7 +13,7 @@ public interface ISDPMsgClientContract {
      * @param amContract am协议合约地址
      * @return
      */
-    boolean setAmContract(String amContract);
+    void setAmContract(String amContract);
 
     /**
      * Query the sequence number of the cross-chain direction
@@ -32,5 +32,5 @@ public interface ISDPMsgClientContract {
      * @param contractId
      * @return
      */
-    boolean deployContract(String contractId);
+    void deployContract();
 }

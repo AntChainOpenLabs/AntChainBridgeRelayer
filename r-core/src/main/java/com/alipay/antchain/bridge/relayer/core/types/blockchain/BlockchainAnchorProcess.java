@@ -16,6 +16,13 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.blockchain;
 
+import java.util.Date;
+import java.util.Map;
+
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.DateUtil;
+import com.alipay.antchain.bridge.relayer.commons.model.AnchorProcessHeights;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,10 +30,48 @@ import lombok.Setter;
 @Setter
 public class BlockchainAnchorProcess {
 
+    private static final String ANCHOR_PROCESS_LATEST_HEIGHT = "polling";
+
+    private static final String ANCHOR_PROCESS_SPV_HEIGHT = "notify_CONTRACT_SYSTEM";
+
+    private static final String ANCHOR_PROCESS_DATA_REQ_HEIGHT = "notify_CONTRACT_ORACLE";
+
+    private static final String ANCHOR_PROCESS_MSG_HEIGHT = "notify_CONTRACT_AM_CLIENT";
+
+    public static BlockchainAnchorProcess convertFrom(AnchorProcessHeights heights) {
+        BlockchainAnchorProcess process = new BlockchainAnchorProcess();
+
+        for (Map.Entry<String, Long> entry : heights.getProcessHeights().entrySet()) {
+            TaskBlockHeight taskBlockHeight = new TaskBlockHeight(
+                    entry.getValue(),
+                    DateUtil.format(
+                            new Date(heights.getModifiedTimeMap().get(entry.getKey())),
+                            DatePattern.NORM_DATETIME_PATTERN
+                    )
+            );
+            switch (entry.getKey()) {
+                case ANCHOR_PROCESS_LATEST_HEIGHT:
+                    process.setLatestBlockHeight(taskBlockHeight);
+                    break;
+                case ANCHOR_PROCESS_SPV_HEIGHT:
+                    process.setSpvTaskBlockHeight(taskBlockHeight);
+                    break;
+                case ANCHOR_PROCESS_DATA_REQ_HEIGHT:
+                    process.setDataReqTaskBlockHeight(taskBlockHeight);
+                    break;
+                case ANCHOR_PROCESS_MSG_HEIGHT:
+                    process.setCrosschainTaskBlockHeight(taskBlockHeight);
+                    break;
+            }
+        }
+        return process;
+    }
+
     @Getter
     @Setter
+    @AllArgsConstructor
     public static class TaskBlockHeight {
-        private int height;
+        private long height;
         private String gmtModified;
     }
 

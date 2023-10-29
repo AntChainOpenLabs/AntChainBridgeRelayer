@@ -18,11 +18,14 @@ package com.alipay.antchain.bridge.relayer.dal.repository;
 
 import java.util.List;
 
+import com.alipay.antchain.bridge.relayer.commons.model.AnchorProcessHeights;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 
 public interface IBlockchainRepository {
 
     Long getAnchorProcessHeight(String product, String blockchainId, String heightType);
+
+    AnchorProcessHeights getAnchorProcessHeights(String product, String blockchainId);
 
     void setAnchorProcessHeight(String product, String blockchainId, String heightType, Long height);
 

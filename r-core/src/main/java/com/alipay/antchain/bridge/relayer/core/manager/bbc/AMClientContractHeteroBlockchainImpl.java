@@ -15,9 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 public class AMClientContractHeteroBlockchainImpl implements IAMClientContract {
 
     public static int RECEIVER_IDENTITY_BYTEARRAY_LEN = 32;
-    
+
     public static int SENDER_DOMAIN_LEN = 128 + 1; // 1 byte for len ; 128 bytes for domain
-    
+
     public static int FLAGS_LEN = 4;
 
     public static byte[] extractProofs(byte[] encodedAmMsgPkg) {
@@ -78,22 +78,9 @@ public class AMClientContractHeteroBlockchainImpl implements IAMClientContract {
     }
 
     @Override
-    public boolean setProtocol(String protocolContract, String protocolType) {
-        try {
-            this.bbcServiceClient.setProtocol(protocolContract, protocolType);
-        } catch (Exception e) {
-            log.error("failed to set protocol {} of type {} for AM on blockchain {}",
-                    protocolContract, protocolType, this.bbcServiceClient.getDomain(), e);
-            return false;
-        }
-        return true;
+    public void setProtocol(String protocolContract, String protocolType) {
+        this.bbcServiceClient.setProtocol(protocolContract, protocolType);
     }
-
-    @Override
-    public boolean addRelayers(String relayer) {
-        return true;
-    }
-
 
     @Override
     public List<AuthMsgWrapper> parseAMRequest(AbstractBlock abstractBlock) {
@@ -104,15 +91,8 @@ public class AMClientContractHeteroBlockchainImpl implements IAMClientContract {
     }
 
     @Override
-    public boolean deployContract(String contractId) {
-        try {
-            this.bbcServiceClient.setupAuthMessageContract();
-        } catch (Exception e) {
-            log.error("failed to setup AM contract on blockchain {}", this.bbcServiceClient.getDomain(), e);
-            return false;
-        }
-
-        return true;
+    public void deployContract() {
+        this.bbcServiceClient.setupAuthMessageContract();
     }
 
 }

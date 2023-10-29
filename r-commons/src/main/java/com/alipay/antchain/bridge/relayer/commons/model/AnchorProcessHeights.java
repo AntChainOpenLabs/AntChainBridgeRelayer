@@ -67,6 +67,8 @@ public class AnchorProcessHeights {
 
     private final Map<String, Long> processHeights = MapUtil.newHashMap();
 
+    private final Map<String, Long> modifiedTimeMap = MapUtil.newHashMap();
+
     private long lastUpdateTime = 0L;
 
     public AnchorProcessHeights(String product, String blockchainId) {

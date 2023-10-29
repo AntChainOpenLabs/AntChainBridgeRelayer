@@ -15,16 +15,9 @@ public class SDPMsgClientHeteroBlockchainImpl implements ISDPMsgClientContract {
     }
 
     @Override
-    public boolean setAmContract(String amContract) {
-        try {
-            this.bbcServiceClient.setAmContract(amContract);
-            this.bbcServiceClient.setLocalDomain(bbcServiceClient.getDomain());
-        } catch (Exception e) {
-            log.error("failed to set amContract to SDP message contract blockchain {}", bbcServiceClient.getDomain(), e);
-            return false;
-        }
-
-        return true;
+    public void setAmContract(String amContract) {
+        this.bbcServiceClient.setAmContract(amContract);
+        this.bbcServiceClient.setLocalDomain(bbcServiceClient.getDomain());
     }
 
     @Override
@@ -43,14 +36,7 @@ public class SDPMsgClientHeteroBlockchainImpl implements ISDPMsgClientContract {
     }
 
     @Override
-    public boolean deployContract(String contractId) {
-        try {
-            this.bbcServiceClient.setupSDPMessageContract();
-        } catch (Exception e) {
-            log.error("failed to setup SDP contract on blockchain {}", this.bbcServiceClient.getDomain(), e);
-            return false;
-        }
-
-        return true;
+    public void deployContract() {
+        this.bbcServiceClient.setupSDPMessageContract();
     }
 }

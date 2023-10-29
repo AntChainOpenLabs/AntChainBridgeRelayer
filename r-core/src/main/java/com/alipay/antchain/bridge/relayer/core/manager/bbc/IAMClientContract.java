@@ -22,15 +22,7 @@ public interface IAMClientContract {
      * @param protocolType     协议类型
      * @return
      */
-    boolean setProtocol(String protocolContract, String protocolType);
-
-    /**
-     * 给AM合约添加Relayer
-     *
-     * @param relayer
-     * @return
-     */
-    boolean addRelayers(String relayer);
+    void setProtocol(String protocolContract, String protocolType);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // 非合约接口，合约的数据解析接口
@@ -50,5 +42,5 @@ public interface IAMClientContract {
      * @param contractId
      * @return
      */
-    boolean deployContract(String contractId);
+    void deployContract();
 }

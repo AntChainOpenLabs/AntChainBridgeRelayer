@@ -17,9 +17,15 @@
 package com.alipay.antchain.bridge.relayer.commons.model;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.alipay.antchain.bridge.commons.bbc.DefaultBBCContext;
 import com.alipay.antchain.bridge.relayer.commons.constant.AMServiceStatusEnum;
@@ -41,8 +47,36 @@ public class BlockchainMeta {
     public static class BlockchainProperties {
 
         public static BlockchainProperties decode(byte[] rawData) {
-            return JSON.parseObject(rawData, BlockchainProperties.class);
+            JSONObject jsonObject = JSON.parseObject(new String(rawData));
+            BlockchainProperties properties = jsonObject.toJavaObject(BlockchainProperties.class);
+            if (ObjectUtil.isNull(properties)) {
+                return null;
+            }
+            jsonObject.keySet().forEach(
+                    key -> {
+                        if (jsonFieldNameSet.contains(key)) {
+                            return;
+                        }
+                        Object val = jsonObject.get(key);
+                        if (val instanceof String) {
+                            properties.getExtraProperties().put(key, (String) val);
+                        }
+                    }
+            );
+            return properties;
         }
+
+        private static final Set<String> jsonFieldNameSet = CollectionUtil.newHashSet(
+                "am_client_contract_address",
+                "sdp_msg_contract_address",
+                "anchor_runtime_status",
+                "init_block_height",
+                "is_domain_registered",
+                "heterogeneous_bbc_context",
+                "plugin_server_id",
+                "am_service_status",
+                "extra_properties"
+        );
 
         @JSONField(name = "am_client_contract_address")
         private String amClientContractAddress;
@@ -112,5 +146,48 @@ public class BlockchainMeta {
 
     public String getMetaKey() {
         return createMetaKey(this.product, this.blockchainId);
+    }
+
+    public String getPluginServerId() {
+        return properties.getPluginServerId();
+    }
+
+    public void updateProperties(BlockchainProperties properties) {
+        if (StrUtil.isNotEmpty(properties.getAmClientContractAddress())) {
+            this.properties.setAmClientContractAddress(properties.getAmClientContractAddress());
+        }
+        if (StrUtil.isNotEmpty(properties.getSdpMsgContractAddress())) {
+            this.properties.setSdpMsgContractAddress(properties.getSdpMsgContractAddress());
+        }
+        if (ObjectUtil.isNotNull(properties.getAnchorRuntimeStatus())) {
+            this.properties.setAnchorRuntimeStatus(properties.getAnchorRuntimeStatus());
+        }
+        if (ObjectUtil.isNotNull(properties.getInitBlockHeight())) {
+            this.properties.setInitBlockHeight(properties.getInitBlockHeight());
+        }
+        if (ObjectUtil.isNotNull(properties.getIsDomainRegistered())) {
+            this.properties.setIsDomainRegistered(properties.getIsDomainRegistered());
+        }
+        if (ObjectUtil.isNotNull(properties.getBbcContext())) {
+            this.properties.setBbcContext(properties.getBbcContext());
+        }
+        if (StrUtil.isNotEmpty(properties.getPluginServerId())) {
+            this.properties.setPluginServerId(properties.getPluginServerId());
+        }
+        if (ObjectUtil.isNotNull(properties.getAmServiceStatus())) {
+            this.properties.setAmServiceStatus(properties.getAmServiceStatus());
+        }
+        if (ObjectUtil.isNotEmpty(properties.getExtraProperties())) {
+            this.properties.getExtraProperties().putAll(properties.getExtraProperties());
+        }
+    }
+
+    public void updateProperty(String key, String value) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(key, value);
+        BlockchainProperties properties = Objects.requireNonNull(
+                BlockchainProperties.decode(JSON.toJSONBytes(jsonObject))
+        );
+        updateProperties(properties);
     }
 }

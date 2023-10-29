@@ -31,7 +31,9 @@ public enum BlockchainStateEnum {
 
     RUNNING("RUNNING"),
 
-    STOPPED("STOP");
+    STOPPED("STOP"),
+
+    UPDATE("UPDATE");
 
     @JSONField
     private final String code;
