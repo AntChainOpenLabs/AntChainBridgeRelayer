@@ -24,16 +24,20 @@ import javax.annotation.Resource;
 
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.GRpcBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
+import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.manager.network.RelayerNetworkManagerImpl;
+import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository;
+import com.alipay.antchain.bridge.relayer.dal.repository.IRelayerNetworkRepository;
+import com.alipay.antchain.bridge.relayer.dal.repository.ISystemConfigRepository;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.support.TransactionTemplate;
 
-@AutoConfiguration(after = TransactionAutoConfiguration.class)
+@Configuration
 public class RelayerCoreConfig {
 
     @Value("${plugin_server_manager.grpc.auth.tls.client.key.path:config/relayer.key}")
@@ -53,6 +57,15 @@ public class RelayerCoreConfig {
 
     @Value("${plugin_server_manager.grpc.heartbeat.error_limit:5}")
     private int errorLimitForHeartbeat;
+
+    @Value("${relayer.network.node.pubkey_algo:RSA}")
+    private String pubkeyAlgo;
+
+    @Value("${relayer.network.node.pubkey:null}")
+    private String pubkeyBase64;
+
+    @Value("${relayer.network.node.pubkey_file:null}")
+    private String pubkeyFile;
 
     @Resource
     private TransactionTemplate transactionTemplate;
@@ -80,6 +93,23 @@ public class RelayerCoreConfig {
                 ),
                 heartbeatDelayedTime,
                 errorLimitForHeartbeat
+        );
+    }
+
+    @Bean
+    @Autowired
+    public IRelayerNetworkManager relayerNetworkManager(
+            IRelayerNetworkRepository relayerNetworkRepository,
+            IBlockchainRepository blockchainRepository,
+            ISystemConfigRepository systemConfigRepository
+    ) {
+        return new RelayerNetworkManagerImpl(
+                pubkeyAlgo,
+                pubkeyBase64,
+                pubkeyFile,
+                relayerNetworkRepository,
+                blockchainRepository,
+                systemConfigRepository
         );
     }
 }

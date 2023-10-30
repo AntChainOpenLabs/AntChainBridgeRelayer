@@ -16,13 +16,69 @@
 
 package com.alipay.antchain.bridge.relayer.bootstrap.repo;
 
+import java.util.List;
+import javax.annotation.Resource;
+
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
+import com.alipay.antchain.bridge.relayer.bootstrap.basic.BlockchainModelsTest;
+import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
+import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
+import com.alipay.antchain.bridge.relayer.dal.entities.DomainCertEntity;
+import com.alipay.antchain.bridge.relayer.dal.mapper.DomainCertMapper;
+import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class BlockchainRepositoryTest extends TestBase {
 
-    @Test
-    public void test() {
+    private static final BlockchainMeta.BlockchainProperties blockchainProperties
+            = BlockchainMeta.BlockchainProperties.decode(BlockchainModelsTest.BLOCKCHAIN_META_EXAMPLE_OBJ.getBytes());
 
+    private static final BlockchainMeta testchain1Meta = new BlockchainMeta("testchain", "testchain_1.id", "", "", blockchainProperties);
+
+    @Resource
+    private IBlockchainRepository blockchainRepository;
+
+    @Resource
+    private DomainCertMapper domainCertMapper;
+
+    private boolean alreadySaveSomeBlockchains;
+
+    private void saveSomeBlockchains() {
+        if (alreadySaveSomeBlockchains) {
+            return;
+        }
+
+        blockchainRepository.saveBlockchainMeta(testchain1Meta);
+        DomainCertEntity entity = new DomainCertEntity();
+        entity.setBlockchainId(testchain1Meta.getBlockchainId());
+        entity.setProduct(testchain1Meta.getProduct());
+        entity.setDomain("testchain1");
+        domainCertMapper.insert(entity);
+
+        alreadySaveSomeBlockchains = true;
+    }
+
+    @Test
+    public void testSaveBlockchainMeta() {
+        BlockchainMeta blockchainMeta = new BlockchainMeta("testchain", "testchain.id", "", "", blockchainProperties);
+        blockchainRepository.saveBlockchainMeta(blockchainMeta);
+        Assert.assertThrows(AntChainBridgeRelayerException.class, () -> blockchainRepository.saveBlockchainMeta(blockchainMeta));
+    }
+
+    @Test
+    public void testGetAllBlockchainMetaByState() {
+        saveSomeBlockchains();
+        List<BlockchainMeta> result = blockchainRepository.getBlockchainMetaByState(BlockchainStateEnum.RUNNING);
+        Assert.assertTrue(result.size() >= 1);
+    }
+
+    @Test
+    public void testGetBlockchainMetaByDomain() {
+        saveSomeBlockchains();
+        BlockchainMeta blockchainMeta = blockchainRepository.getBlockchainMetaByDomain("testchain1");
+        Assert.assertNotNull(blockchainMeta);
+        Assert.assertEquals(testchain1Meta.getBlockchainId(), blockchainMeta.getBlockchainId());
     }
 }

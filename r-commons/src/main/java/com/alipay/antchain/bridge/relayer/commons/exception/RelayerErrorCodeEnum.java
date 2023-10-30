@@ -65,6 +65,8 @@ public enum RelayerErrorCodeEnum {
 
     CORE_BBC_CALL_ERROR("0204", "call bbc error"),
 
+    CORE_RELAYER_NETWORK_ERROR("0205", "relayer network error"),
+
     /**
      *
      */

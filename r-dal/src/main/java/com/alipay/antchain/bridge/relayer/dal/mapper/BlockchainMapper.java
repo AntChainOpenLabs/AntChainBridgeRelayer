@@ -18,8 +18,11 @@ package com.alipay.antchain.bridge.relayer.dal.mapper;
 
 import com.alipay.antchain.bridge.relayer.dal.entities.BlockchainEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Param;
 
 public interface BlockchainMapper extends BaseMapper<BlockchainEntity> {
 
     void insertBlockchain(String product, String blockchainId, String alias, String description, byte[] properties);
+
+    BlockchainEntity queryBlockchainByDomain(@Param("domain") String domain);
 }

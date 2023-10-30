@@ -26,6 +26,7 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AnchorProcessHeights;
@@ -46,6 +47,7 @@ import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class BlockchainRepository implements IBlockchainRepository {
@@ -112,9 +114,9 @@ public class BlockchainRepository implements IBlockchainRepository {
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_ANCHOR_HEIGHTS_ERROR,
-                    "failed to get heights for ( product: %s, blockchain id: %s )",
-                    product, blockchainId,
-                    e
+                    e,
+                    "failed to get heights for ( product: {}, blockchain id: {} )",
+                    product, blockchainId
             );
         }
     }
@@ -190,6 +192,65 @@ public class BlockchainRepository implements IBlockchainRepository {
     }
 
     @Override
+    public List<BlockchainMeta> getBlockchainMetaByState(BlockchainStateEnum state) {
+        try {
+            List<BlockchainEntity> blockchainEntities = blockchainService.lambdaQuery()
+                    .like(BlockchainEntity::getProperties, state.getCode())
+                    .list();
+            if (ObjectUtil.isEmpty(blockchainEntities)) {
+                return ListUtil.empty();
+            }
+            return blockchainEntities.stream()
+                    .map(ConvertUtil::convertFromBlockchainEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to query blockchains from DB with state {}", state.getCode()
+            );
+        }
+    }
+
+    @Override
+    public BlockchainMeta getBlockchainMetaByDomain(String domain) {
+        try {
+            BlockchainEntity blockchainEntity = blockchainService.getBaseMapper().queryBlockchainByDomain(domain);
+            if (ObjectUtil.isNull(blockchainEntity)) {
+                return null;
+            }
+            return ConvertUtil.convertFromBlockchainEntity(blockchainEntity);
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to query blockchains from DB with domain {}", domain
+            );
+        }
+    }
+
+    @Override
+    public List<BlockchainMeta> getBlockchainMetaByPluginServerId(String pluginServerId) {
+        try {
+            List<BlockchainEntity> blockchainEntities = blockchainService.lambdaQuery()
+                    .like(BlockchainEntity::getProperties, pluginServerId)
+                    .list();
+            if (ObjectUtil.isEmpty(blockchainEntities)) {
+                return ListUtil.empty();
+            }
+            return blockchainEntities.stream()
+                    .map(ConvertUtil::convertFromBlockchainEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to query blockchains from DB with plugin server id {}", pluginServerId
+            );
+        }
+    }
+
+    @Override
     public BlockchainMeta getBlockchainMeta(String product, String blockchainId) {
         BlockchainEntity blockchainEntity = blockchainService.lambdaQuery()
                 .eq(BlockchainEntity::getProduct, product)
@@ -247,6 +308,45 @@ public class BlockchainRepository implements IBlockchainRepository {
                             "failed to query blockchain existence from DB for ( product: %s, blockchain id: %s )",
                             product, blockchainId
                     ), e
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public List<String> getBlockchainDomainsByState(BlockchainStateEnum state) {
+        try {
+            List<BlockchainEntity> blockchainEntities = blockchainService.lambdaQuery()
+                    .select(ListUtil.toList(BlockchainEntity::getBlockchainId))
+                    .like(BlockchainEntity::getProperties, state.getCode())
+                    .list();
+            if (ObjectUtil.isEmpty(blockchainEntities)) {
+                return ListUtil.empty();
+            }
+
+            List<DomainCertEntity> domainCertEntities = domainCertMapper.selectList(
+                    new LambdaQueryWrapper<DomainCertEntity>()
+                            .select(ListUtil.toList(DomainCertEntity::getDomain))
+                            .in(
+                                    DomainCertEntity::getBlockchainId,
+                                    blockchainEntities.stream()
+                                            .map(BlockchainEntity::getBlockchainId)
+                                            .collect(Collectors.toList())
+                            )
+            );
+            if (ObjectUtil.isEmpty(domainCertEntities)) {
+                return ListUtil.empty();
+            }
+
+            return domainCertEntities.stream()
+                    .map(DomainCertEntity::getDomain)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to query blockchain domain list from DB for state {}",
+                    state.getCode()
             );
         }
     }

@@ -16,6 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.dal.repository.impl;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import javax.annotation.Resource;
@@ -36,6 +37,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SystemConfigRepository implements ISystemConfigRepository {
+
+    /**
+     * relayer的endpoints信息
+     */
+    public static final String LOCAL_ENDPOINTS_KEY = "local_endpoints";
 
     @Resource
     private RedissonClient redissonClient;
@@ -129,6 +135,15 @@ public class SystemConfigRepository implements ISystemConfigRepository {
     @Override
     public Lock getDistributedLockForDeployTask(String product, String blockchainId) {
         return redissonClient.getLock(getDeployLockKey(product, blockchainId));
+    }
+
+    @Override
+    public List<String> getLocalEndpoints() {
+        String val = getSystemConfig(LOCAL_ENDPOINTS_KEY);
+        if (StrUtil.isEmpty(val)) {
+            return ListUtil.empty();
+        }
+        return StrUtil.split(val, "^");
     }
 
     private String getDeployLockKey(String product, String blockchainId) {

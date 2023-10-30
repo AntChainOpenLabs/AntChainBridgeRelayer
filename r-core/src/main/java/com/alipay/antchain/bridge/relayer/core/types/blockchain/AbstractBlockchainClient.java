@@ -1,5 +1,6 @@
 package com.alipay.antchain.bridge.relayer.core.types.blockchain;
 
+import com.alipay.antchain.bridge.commons.bbc.AbstractBBCContext;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainMessageReceipt;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IAMClientContract;
@@ -32,6 +33,8 @@ public abstract class AbstractBlockchainClient {
     public abstract ISDPMsgClientContract getSDPMsgClientContract();
 
     public abstract CrossChainMessageReceipt queryCommittedTxReceipt(String txhash);
+
+    public abstract AbstractBBCContext queryBBCContext();
 
     @Getter
     @Setter

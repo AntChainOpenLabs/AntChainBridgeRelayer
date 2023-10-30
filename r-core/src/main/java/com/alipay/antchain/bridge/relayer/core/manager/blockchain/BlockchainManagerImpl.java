@@ -18,6 +18,7 @@ package com.alipay.antchain.bridge.relayer.core.manager.blockchain;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.core.util.ObjectUtil;
@@ -26,6 +27,7 @@ import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.commons.bbc.AbstractBBCContext;
 import com.alipay.antchain.bridge.commons.bbc.DefaultBBCContext;
 import com.alipay.antchain.bridge.commons.bbc.syscontract.ContractStatusEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.AMServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
@@ -198,6 +200,7 @@ public class BlockchainManagerImpl implements IBlockchainManager {
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.UNKNOWN_INTERNAL_ERROR,
+                    e,
                     "failed to update property (key: {}, val: {}) for blockchain {} - {} with unknown exception",
                     confKey, confValue, product, blockchainId
             );
@@ -218,6 +221,7 @@ public class BlockchainManagerImpl implements IBlockchainManager {
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
+                    e,
                     "failed to deploy am contract for blockchain {} - {}",
                     product, blockchainId
             );
@@ -253,6 +257,7 @@ public class BlockchainManagerImpl implements IBlockchainManager {
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
+                    e,
                     "failed to start blockchain {} - {}",
                     product, blockchainId
             );
@@ -288,6 +293,7 @@ public class BlockchainManagerImpl implements IBlockchainManager {
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
+                    e,
                     "failed to stop blockchain {} - {}",
                     product, blockchainId
             );
@@ -321,37 +327,113 @@ public class BlockchainManagerImpl implements IBlockchainManager {
 
     @Override
     public List<BlockchainMeta> getAllServingBlockchains() {
-        return null;
+        try {
+            return blockchainRepository.getBlockchainMetaByState(BlockchainStateEnum.RUNNING);
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to query all serving blockchains"
+            );
+        }
     }
 
     @Override
     public boolean checkIfDomainPrepared(String domain) {
-        return false;
+        try {
+            BlockchainMeta blockchainMeta = blockchainRepository.getBlockchainMetaByDomain(domain);
+            if (ObjectUtil.isNull(blockchainMeta)) {
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("failed to query blockchain by domain {}", domain, e);
+            return false;
+        }
+        return true;
     }
 
     @Override
     public boolean checkIfDomainRunning(String domain) {
-        return false;
+        try {
+            BlockchainMeta blockchainMeta = blockchainRepository.getBlockchainMetaByDomain(domain);
+            if (ObjectUtil.isNull(blockchainMeta)) {
+                return false;
+            }
+            return BlockchainStateEnum.RUNNING == blockchainMeta.getProperties().getAnchorRuntimeStatus();
+        } catch (Exception e) {
+            log.error("failed to query blockchain by domain {}", domain, e);
+            return false;
+        }
     }
 
     @Override
     public boolean checkIfDomainAMDeployed(String domain) {
-        return false;
+        try {
+            BlockchainMeta blockchainMeta = blockchainRepository.getBlockchainMetaByDomain(domain);
+            if (ObjectUtil.isNull(blockchainMeta)) {
+                return false;
+            }
+            return AMServiceStatusEnum.FINISH_DEPLOY_AM_CONTRACT == blockchainMeta.getProperties().getAmServiceStatus();
+        } catch (Exception e) {
+            log.error("failed to query blockchain by domain {}", domain, e);
+            return false;
+        }
     }
 
     @Override
     public List<String> getBlockchainsByPluginServerId(String pluginServerId) {
-        return null;
+        try {
+            return blockchainRepository.getBlockchainMetaByPluginServerId(pluginServerId).stream()
+                    .map(BlockchainMeta::getBlockchainId)
+                    .collect(Collectors.toList());
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to query blockchains by plugin server id {}"
+            );
+        }
     }
 
     @Override
     public void updateSDPMsgSeq(String receiverProduct, String receiverBlockchainId, String senderDomain, String from, String to, long newSeq) {
-
+        throw new AntChainBridgeRelayerException(
+                RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
+                "update SDP msg seq not supported for now"
+        );
     }
 
     @Override
     public long querySDPMsgSeq(String receiverProduct, String receiverBlockchainId, String senderDomain, String from, String to) {
-        return 0;
+        try {
+            AbstractBlockchainClient blockchainClient = blockchainClientPool.getClient(receiverProduct, receiverBlockchainId);
+            if (ObjectUtil.isNull(blockchainClient)) {
+                throw new AntChainBridgeRelayerException(
+                        RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
+                        "failed to get blockchain client for blockchain ( product: {}, bcId: {})",
+                        receiverProduct, receiverBlockchainId
+                );
+            }
+
+            return blockchainClient.getSDPMsgClientContract().querySDPMsgSeqOnChain(
+                    senderDomain,
+                    from,
+                    blockchainClient.getDomain(),
+                    to
+            );
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to query blockchains by plugin server id {}"
+            );
+        }
     }
 
     private boolean isBlockchainExists(String product, String blockchainId) {
@@ -379,35 +461,33 @@ public class BlockchainManagerImpl implements IBlockchainManager {
             );
         }
 
-        HeteroBlockchainClient heteroBlockchainClient = (HeteroBlockchainClient) blockchainClient;
-
-        AbstractBBCContext bbcContext = heteroBlockchainClient.queryBBCContext();
+        AbstractBBCContext bbcContext = blockchainClient.queryBBCContext();
 
         if (
                 ObjectUtil.isNull(bbcContext.getAuthMessageContract())
                         || ContractStatusEnum.INIT == bbcContext.getAuthMessageContract().getStatus()
         ) {
-            heteroBlockchainClient.getAMClientContract().deployContract();
+            blockchainClient.getAMClientContract().deployContract();
         }
 
         if (
                 ObjectUtil.isNull(bbcContext.getSdpContract())
                         || ContractStatusEnum.INIT == bbcContext.getSdpContract().getStatus()
         ) {
-            heteroBlockchainClient.getSDPMsgClientContract().deployContract();
+            blockchainClient.getSDPMsgClientContract().deployContract();
         }
 
-        bbcContext = heteroBlockchainClient.queryBBCContext();
-        heteroBlockchainClient.getAMClientContract()
+        bbcContext = blockchainClient.queryBBCContext();
+        blockchainClient.getAMClientContract()
                 .setProtocol(
                         bbcContext.getSdpContract().getContractAddress(),
                         Integer.toString(UpperProtocolTypeBeyondAMEnum.SDP.getCode())
                 );
 
-        heteroBlockchainClient.getSDPMsgClientContract()
+        blockchainClient.getSDPMsgClientContract()
                 .setAmContract(bbcContext.getAuthMessageContract().getContractAddress());
 
-        bbcContext = heteroBlockchainClient.queryBBCContext();
+        bbcContext = blockchainClient.queryBBCContext();
 
         blockchainMeta.getProperties().setAmClientContractAddress(
                 bbcContext.getAuthMessageContract().getContractAddress()
@@ -419,7 +499,7 @@ public class BlockchainManagerImpl implements IBlockchainManager {
                 (DefaultBBCContext) bbcContext
         );
 
-        heteroBlockchainClient.setBlockchainMeta(blockchainMeta);
+        blockchainClient.setBlockchainMeta(blockchainMeta);
         updateBlockchainMeta(blockchainMeta);
     }
 }

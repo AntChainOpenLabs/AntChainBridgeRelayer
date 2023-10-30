@@ -18,6 +18,7 @@ package com.alipay.antchain.bridge.relayer.dal.repository;
 
 import java.util.List;
 
+import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AnchorProcessHeights;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 
@@ -35,9 +36,17 @@ public interface IBlockchainRepository {
 
     List<BlockchainMeta> getAllBlockchainMeta();
 
+    List<BlockchainMeta> getBlockchainMetaByState(BlockchainStateEnum state);
+
+    BlockchainMeta getBlockchainMetaByDomain(String domain);
+
+    List<BlockchainMeta> getBlockchainMetaByPluginServerId(String pluginServerId);
+
     BlockchainMeta getBlockchainMeta(String product, String blockchainId);
 
     boolean hasBlockchain(String product, String blockchainId);
 
     String getBlockchainDomain(String product, String blockchainId);
+
+    List<String> getBlockchainDomainsByState(BlockchainStateEnum state);
 }

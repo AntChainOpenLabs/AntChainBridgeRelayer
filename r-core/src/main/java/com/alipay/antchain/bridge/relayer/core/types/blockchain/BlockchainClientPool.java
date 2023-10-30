@@ -2,7 +2,6 @@ package com.alipay.antchain.bridge.relayer.core.types.blockchain;
 
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
@@ -14,7 +13,7 @@ import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.types.pluginserver.IBBCServiceClient;
-import com.alipay.antchain.bridge.relayer.dal.repository.impl.BlockchainRepository;
+import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import lombok.Synchronized;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +21,7 @@ import org.springframework.stereotype.Component;
 public class BlockchainClientPool {
 
     @Resource
-    private BlockchainRepository blockchainRepository;
+    private IBlockchainRepository blockchainRepository;
 
     @Resource
     private IBBCPluginManager bbcPluginManager;

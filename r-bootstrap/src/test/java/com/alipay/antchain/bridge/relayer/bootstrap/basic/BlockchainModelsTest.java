@@ -36,7 +36,7 @@ public class BlockchainModelsTest {
             "  \"plugin_server_id\" : \"p-QYj86x8Zd\"\n" +
             "}";
 
-    private static final String BLOCKCHAIN_META_EXAMPLE_OBJ = "{\n" +
+    public static final String BLOCKCHAIN_META_EXAMPLE_OBJ = "{\n" +
             "    \"init_block_height\":\"13947633\",\n" +
             "    \"anchor_runtime_status\":\"RUNNING\",\n" +
             "    \"sdp_msg_contract_address\":\"0x098310f3921eb1f7488ee169298e92759caa4e14\",\n" +
