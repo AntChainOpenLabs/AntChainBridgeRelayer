@@ -31,6 +31,7 @@ import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelaye
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AnchorProcessHeights;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
 import com.alipay.antchain.bridge.relayer.dal.entities.AnchorProcessEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.BaseEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.BlockchainEntity;
@@ -347,6 +348,27 @@ public class BlockchainRepository implements IBlockchainRepository {
                     e,
                     "failed to query blockchain domain list from DB for state {}",
                     state.getCode()
+            );
+        }
+    }
+
+    @Override
+    public DomainCertWrapper getDomainCert(String domain) {
+        try {
+            DomainCertEntity entity = domainCertMapper.selectOne(
+                    new LambdaQueryWrapper<DomainCertEntity>()
+                            .eq(DomainCertEntity::getDomain, domain)
+            );
+            if (ObjectUtil.isNull(entity)) {
+                return null;
+            }
+            return ConvertUtil.convertFromDomainCertEntity(entity);
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to query domain cert from DB for domain {}",
+                    domain
             );
         }
     }

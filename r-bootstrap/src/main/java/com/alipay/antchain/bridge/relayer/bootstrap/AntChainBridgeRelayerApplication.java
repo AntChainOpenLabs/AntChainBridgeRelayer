@@ -16,6 +16,9 @@
 
 package com.alipay.antchain.bridge.relayer.bootstrap;
 
+import java.security.Security;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -26,6 +29,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 public class AntChainBridgeRelayerApplication {
 
     public static void main(String[] args) {
+        Security.addProvider(new BouncyCastleProvider());
         new SpringApplicationBuilder(AntChainBridgeRelayerApplication.class)
                 .web(WebApplicationType.NONE)
                 .run(args);

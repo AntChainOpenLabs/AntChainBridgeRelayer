@@ -14,36 +14,30 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.entities;
+package com.alipay.antchain.bridge.relayer.commons.model;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.bcdns.DomainNameCredentialSubject;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
-@TableName("domain_cert")
-public class DomainCertEntity extends BaseEntity {
+public class DomainCertWrapper {
 
-    @TableField("domain")
-    private String domain;
+    private AbstractCrossChainCertificate crossChainCertificate;
 
-    @TableField("blockchain_product")
-    private String product;
+    private DomainNameCredentialSubject domainNameCredentialSubject;
 
-    @TableField("instance")
+    private String blockchainProduct;
+
     private String blockchainId;
 
-    @TableField("subject_oid")
-    private byte[] subjectOid;
+    private String domain;
 
-    @TableField("issuer_oid")
-    private byte[] issuerOid;
-
-    @TableField("domain_space")
     private String domainSpace;
-
-    @TableField("domain_cert")
-    private byte[] domainCert;
 }

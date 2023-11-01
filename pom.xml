@@ -44,6 +44,8 @@
         <protobuf-plugin.version>0.6.1</protobuf-plugin.version>
         <protobuf.version>3.19.1</protobuf.version>
         <grpc.version>1.42.2</grpc.version>
+        <bouncycastle.version>1.76</bouncycastle.version>
+        <commons-collections4.version>4.4</commons-collections4.version>
     </properties>
 
     <dependencyManagement>
@@ -185,6 +187,21 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk15on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections4.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

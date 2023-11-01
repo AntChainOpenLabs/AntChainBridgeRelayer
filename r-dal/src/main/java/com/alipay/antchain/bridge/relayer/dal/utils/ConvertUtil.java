@@ -16,13 +16,20 @@
 
 package com.alipay.antchain.bridge.relayer.dal.utils;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
+import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
+import com.alipay.antchain.bridge.commons.bcdns.DomainNameCredentialSubject;
 import com.alipay.antchain.bridge.commons.core.am.*;
 import com.alipay.antchain.bridge.commons.core.base.*;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV1;
@@ -256,24 +263,26 @@ public class ConvertUtil {
     }
 
     public static RelayerNodeInfo convertFromRelayerNodeEntity(RelayerNodeEntity entity) {
-        RelayerNodeInfo nodeInfo = new RelayerNodeInfo();
-
-        nodeInfo.setNodeId(entity.getNodeId());
-        nodeInfo.setNodePublicKey(entity.getNodePublicKey());
-        nodeInfo.setDomains(StrUtil.split(entity.getDomains(), "^"));
-        nodeInfo.setEndpoints(StrUtil.split(entity.getEndpoints(), "^"));
+        RelayerNodeInfo nodeInfo = new RelayerNodeInfo(
+                entity.getNodeId(),
+                CrossChainCertificateFactory.createCrossChainCertificate(
+                        Base64.decode(entity.getNodeCrossChainCert())
+                ),
+                entity.getNodeSigAlgo(),
+                StrUtil.split(entity.getEndpoints(), "^"),
+                StrUtil.split(entity.getDomains(), "^")
+        );
         nodeInfo.setProperties(RelayerNodeInfo.RelayerNodeProperties.decodeFromJson(new String(entity.getProperties())));
-
         return nodeInfo;
     }
 
-    public static RelayerNodeEntity convertFromRelayerNodeInfo(RelayerNodeInfo nodeInfo) {
+    public static RelayerNodeEntity convertFromRelayerNodeInfo(RelayerNodeInfo nodeInfo) throws IOException {
         RelayerNodeEntity entity = new RelayerNodeEntity();
         entity.setNodeId(nodeInfo.getNodeId());
         entity.setDomains(
                 nodeInfo.getDomains().stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("")
         );
-        entity.setNodePublicKey(nodeInfo.getNodePublicKey());
+        entity.setNodeCrossChainCert(Base64.encode(nodeInfo.getCrossChainCertificate().encode()));
         entity.setEndpoints(
                 nodeInfo.getEndpoints().stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("")
         );
@@ -354,5 +363,43 @@ public class ConvertUtil {
         item.setIsDeleted(entity.getIsDeleted());
 
         return item;
+    }
+
+    public static DomainCertWrapper convertFromDomainCertEntity(DomainCertEntity entity) {
+        AbstractCrossChainCertificate crossChainCertificate = CrossChainCertificateFactory.createCrossChainCertificate(
+                entity.getDomainCert()
+        );
+        Assert.equals(
+                CrossChainCertificateTypeEnum.DOMAIN_NAME_CERTIFICATE,
+                crossChainCertificate.getType()
+        );
+        DomainNameCredentialSubject domainNameCredentialSubject = DomainNameCredentialSubject.decode(
+                crossChainCertificate.getCredentialSubject()
+        );
+
+        return new DomainCertWrapper(
+                crossChainCertificate,
+                domainNameCredentialSubject,
+                entity.getProduct(),
+                entity.getBlockchainId(),
+                entity.getDomain(),
+                entity.getDomainSpace()
+        );
+    }
+
+    public static DomainCertEntity convertFromDomainCertWrapper(DomainCertWrapper wrapper) {
+        DomainCertEntity entity = new DomainCertEntity();
+        entity.setDomainCert(wrapper.getCrossChainCertificate().encode());
+        entity.setDomain(wrapper.getDomain());
+        entity.setProduct(wrapper.getBlockchainProduct());
+        entity.setBlockchainId(wrapper.getBlockchainId());
+        entity.setSubjectOid(
+                wrapper.getDomainNameCredentialSubject().getApplicant().encode()
+        );
+        entity.setIssuerOid(
+                wrapper.getCrossChainCertificate().getIssuer().encode()
+        );
+        entity.setDomainSpace(wrapper.getDomainSpace());
+        return entity;
     }
 }

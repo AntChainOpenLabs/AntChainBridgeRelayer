@@ -69,8 +69,9 @@ CREATE TABLE `domain_cert`
     `domain`             varchar(128) DEFAULT NULL,
     `blockchain_product` varchar(64)  DEFAULT NULL,
     `instance`           varchar(128) DEFAULT NULL,
-    `cert_pk_hash`       varchar(64)  DEFAULT NULL,
-    `issuer_pk_hash`     varchar(64)  DEFAULT NULL,
+    `subject_oid`        blob         DEFAULT NULL,
+    `issuer_oid`         blob         DEFAULT NULL,
+    `domain_space`       varchar(128) DEFAULT NULL,
     `domain_cert`        longblob,
     `gmt_create`         datetime     DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`       datetime     DEFAULT CURRENT_TIMESTAMP,
@@ -203,14 +204,15 @@ CREATE TABLE `relayer_network`
 
 CREATE TABLE `relayer_node`
 (
-    `id`              int(11) NOT NULL AUTO_INCREMENT,
-    `node_id`         varchar(64)   DEFAULT NULL,
-    `node_public_key` varchar(1024) DEFAULT NULL,
-    `domains`         varchar(2048) DEFAULT NULL,
-    `endpoints`       varchar(1024) DEFAULT NULL,
-    `properties`      longblob,
-    `gmt_create`      datetime      DEFAULT CURRENT_TIMESTAMP,
-    `gmt_modified`    datetime      DEFAULT CURRENT_TIMESTAMP,
+    `id`                   int(11) NOT NULL AUTO_INCREMENT,
+    `node_id`              varchar(64)   DEFAULT NULL,
+    `node_crosschain_cert` binary        DEFAULT NULL,
+    `node_sig_algo`        varchar(255)  DEFAULT NULL,
+    `domains`              varchar(2048) DEFAULT NULL,
+    `endpoints`            varchar(1024) DEFAULT NULL,
+    `properties`           longblob,
+    `gmt_create`           datetime      DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified`         datetime      DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_relayer_node` (`node_id`)
 );

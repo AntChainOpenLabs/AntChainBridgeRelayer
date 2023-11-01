@@ -22,8 +22,15 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.lang.Assert;
+import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
+import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
+import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.GRpcBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
+import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.RelayerNetworkManagerImpl;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
@@ -58,14 +65,20 @@ public class RelayerCoreConfig {
     @Value("${plugin_server_manager.grpc.heartbeat.error_limit:5}")
     private int errorLimitForHeartbeat;
 
-    @Value("${relayer.network.node.pubkey_algo:RSA}")
-    private String pubkeyAlgo;
+    @Value("${relayer.network.node.sig_algo:SHA256WithRSA}")
+    private String sigAlgo;
 
     @Value("${relayer.network.node.pubkey:null}")
     private String pubkeyBase64;
 
     @Value("${relayer.network.node.pubkey_file:null}")
     private String pubkeyFile;
+
+    @Value("${relayer.network.node.crosschain_cert_path:null}")
+    private String crossChainCertPath;
+
+    @Value("${relayer.network.node.server.mode:https}")
+    private String localNodeServerMode;
 
     @Resource
     private TransactionTemplate transactionTemplate;
@@ -101,15 +114,25 @@ public class RelayerCoreConfig {
     public IRelayerNetworkManager relayerNetworkManager(
             IRelayerNetworkRepository relayerNetworkRepository,
             IBlockchainRepository blockchainRepository,
-            ISystemConfigRepository systemConfigRepository
+            ISystemConfigRepository systemConfigRepository,
+            IBCDNSManager bcdnsManager
     ) {
+        AbstractCrossChainCertificate crossChainCertificate = CrossChainCertificateFactory.createCrossChainCertificate(
+                FileUtil.readBytes(crossChainCertPath)
+        );
+        Assert.equals(
+                CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
+                crossChainCertificate.getType()
+        );
         return new RelayerNetworkManagerImpl(
-                pubkeyAlgo,
-                pubkeyBase64,
-                pubkeyFile,
+                sigAlgo,
+                localNodeServerMode,
+                crossChainCertificate,
+                RelayerCredentialSubject.decode(crossChainCertificate.getCredentialSubject()),
                 relayerNetworkRepository,
                 blockchainRepository,
-                systemConfigRepository
+                systemConfigRepository,
+                bcdnsManager
         );
     }
 }

@@ -29,7 +29,7 @@ public interface IRelayerNetworkManager {
      *
      * @return
      */
-    RelayerNodeInfo getRelayerNodeInfoWithBlockchainInfos();
+    RelayerNodeInfo getRelayerNodeInfoWithContent();
 
     /**
      * 获取对应domain的relayerBlockchainInfos。

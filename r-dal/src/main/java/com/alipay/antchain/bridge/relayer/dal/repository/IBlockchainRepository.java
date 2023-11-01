@@ -21,6 +21,7 @@ import java.util.List;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AnchorProcessHeights;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
 
 public interface IBlockchainRepository {
 
@@ -49,4 +50,6 @@ public interface IBlockchainRepository {
     String getBlockchainDomain(String product, String blockchainId);
 
     List<String> getBlockchainDomainsByState(BlockchainStateEnum state);
+
+    DomainCertWrapper getDomainCert(String domain);
 }

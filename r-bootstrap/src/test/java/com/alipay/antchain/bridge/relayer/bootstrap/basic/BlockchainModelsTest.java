@@ -177,4 +177,10 @@ public class BlockchainModelsTest {
                 blockchainMeta.getProperties().getExtraProperties().get("testabc")
         );
     }
+
+    @Test
+    public void testRelayerBlockchainInfo() {
+//        RelayerBlockchainInfo relayerBlockchainInfo = new RelayerBlockchainInfo();
+//        relayerBlockchainInfo.set
+    }
 }
