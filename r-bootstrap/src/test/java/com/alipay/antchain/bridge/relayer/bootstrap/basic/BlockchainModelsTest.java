@@ -16,11 +16,33 @@
 
 package com.alipay.antchain.bridge.relayer.bootstrap.basic;
 
+import java.io.ByteArrayInputStream;
+import java.security.PrivateKey;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.HexUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.crypto.PemUtil;
 import com.alipay.antchain.bridge.commons.bbc.syscontract.ContractStatusEnum;
+import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
+import com.alipay.antchain.bridge.commons.bcdns.DomainNameCredentialSubject;
+import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.relayer.commons.constant.AMServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
+import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
+import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class BlockchainModelsTest {
@@ -106,6 +128,66 @@ public class BlockchainModelsTest {
             "    \"plugin_server_id\":\"p-QYj86x8Zd\"\n" +
             "}";
 
+    private static AbstractCrossChainCertificate antchainDotComDomainCert;
+
+    private static AbstractCrossChainCertificate catchainDotComDomainCert;
+
+    private static AbstractCrossChainCertificate dogchainDotComDomainCert;
+
+    private static AbstractCrossChainCertificate birdchainDotComDomainCert;
+
+    private static AbstractCrossChainCertificate dotComDomainSpaceCert;
+
+    private static List<AbstractCrossChainCertificate> domainCertList = new ArrayList<>();
+
+    private static Map<String, AbstractCrossChainCertificate> trustRootMap = new HashMap<>();
+
+    private static AbstractCrossChainCertificate relayerCert;
+
+    private static AbstractCrossChainCertificate trustRootCert;
+
+    private static PrivateKey privateKey;
+
+    @BeforeClass
+    public static void setup() throws Exception {
+        antchainDotComDomainCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+                FileUtil.readBytes("cc_certs/antchain.com.crt")
+        );
+        catchainDotComDomainCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+                FileUtil.readBytes("cc_certs/catchain.com.crt")
+        );
+        dogchainDotComDomainCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+                FileUtil.readBytes("cc_certs/dogchain.com.crt")
+        );
+        birdchainDotComDomainCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+                FileUtil.readBytes("cc_certs/birdchain.com.crt")
+        );
+
+        domainCertList.add(antchainDotComDomainCert);
+        domainCertList.add(catchainDotComDomainCert);
+        domainCertList.add(dogchainDotComDomainCert);
+        domainCertList.add(birdchainDotComDomainCert);
+
+        relayerCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+                FileUtil.readBytes("cc_certs/relayer.crt")
+        );
+        dotComDomainSpaceCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+                FileUtil.readBytes("cc_certs/x.com.crt")
+        );
+        trustRootCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+                FileUtil.readBytes("cc_certs/trust_root.crt")
+        );
+        privateKey = PemUtil.readPemPrivateKey(
+                new ByteArrayInputStream(FileUtil.readBytes("cc_certs/private_key.pem"))
+        );
+
+        trustRootMap.put(CrossChainDomain.ROOT_DOMAIN_SPACE, trustRootCert);
+        trustRootMap.put(
+                CrossChainCertificateUtil.getCrossChainDomainSpace(dotComDomainSpaceCert).getDomain(),
+                dotComDomainSpaceCert
+        );
+    }
+
     @Test
     public void testBlockchainPropertiesDeserialization() throws Exception {
         BlockchainMeta.BlockchainProperties properties = BlockchainMeta.BlockchainProperties.decode(BLOCKCHAIN_META_EXAMPLE.getBytes());
@@ -180,7 +262,85 @@ public class BlockchainModelsTest {
 
     @Test
     public void testRelayerBlockchainInfo() {
-//        RelayerBlockchainInfo relayerBlockchainInfo = new RelayerBlockchainInfo();
-//        relayerBlockchainInfo.set
+
+        DomainCertWrapper domainCertWrapper = new DomainCertWrapper(
+                antchainDotComDomainCert,
+                DomainNameCredentialSubject.decode(antchainDotComDomainCert.getCredentialSubject()),
+                "mychain",
+                "antchain.com.id",
+                "antchain.com",
+                ".com"
+        );
+
+        RelayerBlockchainInfo relayerBlockchainInfo = new RelayerBlockchainInfo();
+        relayerBlockchainInfo.setDomainCert(domainCertWrapper);
+        relayerBlockchainInfo.setDomainSpaceChain(ListUtil.toList(".com"));
+        relayerBlockchainInfo.setAmContractClientAddresses("0xda216434d379c95db9e80edb2566abaaac467429ce63d92cfb2c5af338f65f52");
+
+        String rawInfo = relayerBlockchainInfo.encode();
+        System.out.println(rawInfo);
+
+        RelayerBlockchainInfo relayerBlockchainInfo1 = RelayerBlockchainInfo.decode(rawInfo);
+        Assert.assertNotNull(relayerBlockchainInfo1);
+        Assert.assertEquals(
+                relayerBlockchainInfo.getDomainCert().getDomain(),
+                relayerBlockchainInfo1.getDomainCert().getDomain()
+        );
+    }
+
+    @Test
+    public void testRelayerBlockchainContent() {
+
+        RelayerBlockchainContent relayerBlockchainContent = new RelayerBlockchainContent(
+                domainCertList.stream()
+                        .map(
+                                cert -> new RelayerBlockchainInfo(
+                                        new DomainCertWrapper(
+                                                cert,
+                                                DomainNameCredentialSubject.decode(cert.getCredentialSubject()),
+                                                "mychain",
+                                                CrossChainCertificateUtil.getCrossChainDomain(cert).getDomain() + ".id",
+                                                CrossChainCertificateUtil.getCrossChainDomain(cert).getDomain(),
+                                                CrossChainCertificateUtil.getCrossChainDomainSpace(dotComDomainSpaceCert).getDomain()
+                                        ),
+                                        ListUtil.toList(".com"),
+                                        HexUtil.encodeHexStr(RandomUtil.randomBytes(32))
+                                )
+                        ).collect(Collectors.toMap(
+                                info -> info.getDomainCert().getDomain(),
+                                info -> info
+                        )),
+                trustRootMap
+        );
+
+        Assert.assertEquals(
+                CrossChainCertificateUtil.getCrossChainDomain(antchainDotComDomainCert).getDomain(),
+                relayerBlockchainContent.getRelayerBlockchainInfo(
+                        CrossChainCertificateUtil.getCrossChainDomain(antchainDotComDomainCert).getDomain()
+                ).getDomainCert().getDomain()
+        );
+        String rawContent = relayerBlockchainContent.encodeToJson();
+        Assert.assertNotNull(rawContent);
+        System.out.println(rawContent);
+
+        RelayerBlockchainContent relayerBlockchainContent1 = RelayerBlockchainContent.decodeFromJson(rawContent);
+        Assert.assertNotNull(relayerBlockchainContent1);
+        Assert.assertEquals(
+                relayerBlockchainContent.getRelayerBlockchainInfo(
+                        CrossChainCertificateUtil.getCrossChainDomain(catchainDotComDomainCert).getDomain()
+                ).getDomainCert().getDomain(),
+                relayerBlockchainContent1.getRelayerBlockchainInfo(
+                        CrossChainCertificateUtil.getCrossChainDomain(catchainDotComDomainCert).getDomain()
+                ).getDomainCert().getDomain()
+        );
+
+        AbstractCrossChainCertificate domainSpaceCert = relayerBlockchainContent1.getDomainSpaceCert(
+                CrossChainCertificateUtil.getCrossChainDomainSpace(dotComDomainSpaceCert).getDomain()
+        );
+        Assert.assertNotNull(domainSpaceCert);
+        Assert.assertEquals(
+                dotComDomainSpaceCert.getId(),
+                domainSpaceCert.getId()
+        );
     }
 }

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
@@ -41,6 +42,16 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RelayerBlockchainInfo {
+
+    public RelayerBlockchainInfo(
+            DomainCertWrapper domainCert,
+            List<String> domainSpaceChain,
+            String amContractClientAddresses
+    ) {
+        this.domainCert = domainCert;
+        this.domainSpaceChain = domainSpaceChain;
+        this.amContractClientAddresses = amContractClientAddresses;
+    }
 
     @JSONField
     private List<String> domainSpaceChain;
@@ -68,18 +79,18 @@ public class RelayerBlockchainInfo {
      * 方便跨链时候传递一些链的特性，在逻辑上适配不同的链。
      */
     @JSONField
-    private Map<String, String> chainFeatures;
+    private Map<String, String> chainFeatures = new HashMap<>();
 
     /**
      * json编码值
      */
-    public String getEncode() {
+    public String encode() {
         JSONObject jsonObject = (JSONObject) JSON.toJSON(this);
         return jsonObject
                 .fluentPut("product", domainCert.getBlockchainProduct())
                 .fluentPut("domain", domainCert.getDomain())
                 .fluentPut("domainCert", domainCert.getCrossChainCertificate().encode())
-                .fluentPut("ptcCrossChainCert", ptcCrossChainCert.encode())
+                .fluentPut("ptcCrossChainCert", ObjectUtil.isNull(ptcCrossChainCert) ? "" : ptcCrossChainCert.encode())
                 .toJSONString();
     }
 
@@ -110,18 +121,22 @@ public class RelayerBlockchainInfo {
         domainCertWrapper.setDomainNameCredentialSubject(
                 DomainNameCredentialSubject.decode(domainCrossChainCert.getCredentialSubject())
         );
-
-        AbstractCrossChainCertificate ptcCrossChainCert = CrossChainCertificateFactory.createCrossChainCertificate(
-                jsonObject.getBytes("ptcCrossChainCert")
-        );
-        Assert.equals(
-                CrossChainCertificateTypeEnum.PROOF_TRANSFORMATION_COMPONENT_CERTIFICATE,
-                ptcCrossChainCert.getType()
-        );
+        byte[] rawPTCCert = jsonObject.getBytes("ptcCrossChainCert");
+        AbstractCrossChainCertificate ptcCrossChainCert = null;
+        if (ObjectUtil.isNotEmpty(rawPTCCert)) {
+            ptcCrossChainCert = CrossChainCertificateFactory.createCrossChainCertificate(
+                    jsonObject.getBytes("ptcCrossChainCert")
+            );
+            Assert.equals(
+                    CrossChainCertificateTypeEnum.PROOF_TRANSFORMATION_COMPONENT_CERTIFICATE,
+                    ptcCrossChainCert.getType()
+            );
+        }
 
         RelayerBlockchainInfo blockchainInfo = jsonObject.toJavaObject(RelayerBlockchainInfo.class);
         blockchainInfo.setDomainCert(domainCertWrapper);
         blockchainInfo.setPtcCrossChainCert(ptcCrossChainCert);
+        domainCertWrapper.setDomainSpace(blockchainInfo.getDomainSpaceChain().get(0));
 
         return blockchainInfo;
     }
@@ -133,9 +148,6 @@ public class RelayerBlockchainInfo {
      * @param value
      */
     public void addChainFeature(String key, String value) {
-        if (null == chainFeatures) {
-            chainFeatures = new HashMap<>();
-        }
         this.chainFeatures.put(key, value);
     }
 

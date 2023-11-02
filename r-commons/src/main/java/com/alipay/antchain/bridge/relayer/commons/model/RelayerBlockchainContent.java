@@ -19,6 +19,9 @@ package com.alipay.antchain.bridge.relayer.commons.model;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
@@ -43,7 +46,7 @@ public class RelayerBlockchainContent {
         Map<String, AbstractCrossChainCertificate> trustRootCertMap = jsonObject.getJSONObject(Fields.trustRootCertTrie)
                 .entrySet().stream().collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> CrossChainCertificateFactory.createCrossChainCertificate((byte[]) entry.getValue())
+                        entry -> CrossChainCertificateFactory.createCrossChainCertificate(Base64.decode((String) entry.getValue()))
                 ));
         return new RelayerBlockchainContent(
                 relayerBlockchainInfoMap,
@@ -59,8 +62,22 @@ public class RelayerBlockchainContent {
             Map<String, RelayerBlockchainInfo> relayerBlockchainInfoMap,
             Map<String, AbstractCrossChainCertificate> trustRootCertMap
     ) {
-        relayerBlockchainInfoTrie = new PatriciaTrie<>(relayerBlockchainInfoMap);
-        trustRootCertTrie = new PatriciaTrie<>(trustRootCertMap);
+        relayerBlockchainInfoTrie = new PatriciaTrie<>(
+                relayerBlockchainInfoMap.entrySet().stream()
+                        .map(entry -> MapUtil.entry(StrUtil.reverse(entry.getKey()), entry.getValue()))
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                Map.Entry::getValue
+                        ))
+        );
+        trustRootCertTrie = new PatriciaTrie<>(
+                trustRootCertMap.entrySet().stream()
+                        .map(entry -> MapUtil.entry(StrUtil.reverse(entry.getKey()), entry.getValue()))
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                Map.Entry::getValue
+                        ))
+        );
     }
 
     public String encodeToJson() {
@@ -69,8 +86,8 @@ public class RelayerBlockchainContent {
                 Fields.relayerBlockchainInfoTrie,
                 relayerBlockchainInfoTrie.entrySet().stream().collect(
                         Collectors.toMap(
-                                Map.Entry::getKey,
-                                entry -> entry.getValue().getEncode()
+                                entry -> StrUtil.reverse(entry.getKey()),
+                                entry -> entry.getValue().encode()
                         )
                 )
         );
@@ -78,11 +95,19 @@ public class RelayerBlockchainContent {
                 Fields.trustRootCertTrie,
                 trustRootCertTrie.entrySet().stream().collect(
                         Collectors.toMap(
-                                Map.Entry::getKey,
+                                entry -> StrUtil.reverse(entry.getKey()),
                                 entry -> entry.getValue().encode()
                         )
                 )
         );
         return jsonObject.toJSONString();
+    }
+
+    public RelayerBlockchainInfo getRelayerBlockchainInfo(String domain) {
+        return this.relayerBlockchainInfoTrie.get(StrUtil.reverse(domain));
+    }
+
+    public AbstractCrossChainCertificate getDomainSpaceCert(String domainSpace) {
+        return this.trustRootCertTrie.get(StrUtil.reverse(domainSpace));
     }
 }
