@@ -83,6 +83,7 @@ CREATE TABLE `domain_space_cert`
 (
     `id`                int(11) NOT NULL AUTO_INCREMENT,
     `domain_space`      varchar(128) DEFAULT NULL,
+    `parent_space`      varchar(128) DEFAULT NULL,
     `description`       varchar(128) DEFAULT NULL,
     `domain_space_cert` longblob,
     `gmt_create`        datetime     DEFAULT CURRENT_TIMESTAMP,
@@ -210,6 +211,7 @@ CREATE TABLE `relayer_node`
     `node_sig_algo`        varchar(255)  DEFAULT NULL,
     `domains`              varchar(2048) DEFAULT NULL,
     `endpoints`            varchar(1024) DEFAULT NULL,
+    `blockchain_content`   binary        DEFAULT NULL,
     `properties`           longblob,
     `gmt_create`           datetime      DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`         datetime      DEFAULT CURRENT_TIMESTAMP,

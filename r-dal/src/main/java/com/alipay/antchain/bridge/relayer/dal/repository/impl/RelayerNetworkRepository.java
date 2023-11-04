@@ -325,6 +325,22 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
+    public boolean hasRelayerNode(String nodeId) {
+        try {
+            return relayerNodeMapper.exists(
+                    new LambdaQueryWrapper<RelayerNodeEntity>()
+                            .eq(RelayerNodeEntity::getNodeId, nodeId)
+            );
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_RELAYER_NODE_ERROR,
+                    "failed to check if relayer node exist: " + nodeId,
+                    e
+            );
+        }
+    }
+
+    @Override
     public RelayerNodeInfo getRelayerNode(String nodeId) {
         try {
             RelayerNodeEntity entity = relayerNodeMapper.selectOne(

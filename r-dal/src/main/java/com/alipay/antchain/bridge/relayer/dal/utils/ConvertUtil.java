@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.HexUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
@@ -272,7 +273,16 @@ public class ConvertUtil {
                 StrUtil.split(entity.getEndpoints(), "^"),
                 StrUtil.split(entity.getDomains(), "^")
         );
-        nodeInfo.setProperties(RelayerNodeInfo.RelayerNodeProperties.decodeFromJson(new String(entity.getProperties())));
+        if (ObjectUtil.isNotEmpty(entity.getBlockchainContent())) {
+            nodeInfo.setRelayerBlockchainContent(
+                    RelayerBlockchainContent.decodeFromJson(entity.getBlockchainContent())
+            );
+        }
+        nodeInfo.setProperties(
+                RelayerNodeInfo.RelayerNodeProperties.decodeFromJson(
+                        new String(entity.getProperties())
+                )
+        );
         return nodeInfo;
     }
 
@@ -282,9 +292,14 @@ public class ConvertUtil {
         entity.setDomains(
                 nodeInfo.getDomains().stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("")
         );
-        entity.setNodeCrossChainCert(Base64.encode(nodeInfo.getCrossChainCertificate().encode()));
+        entity.setNodeCrossChainCert(Base64.encode(nodeInfo.getRelayerCrossChainCertificate().encode()));
         entity.setEndpoints(
                 nodeInfo.getEndpoints().stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("")
+        );
+
+        entity.setBlockchainContent(
+                ObjectUtil.isNull(nodeInfo.getRelayerBlockchainContent()) ?
+                        StrUtil.EMPTY : nodeInfo.getRelayerBlockchainContent().encodeToJson()
         );
         entity.setProperties(nodeInfo.marshalProperties().getBytes());
 

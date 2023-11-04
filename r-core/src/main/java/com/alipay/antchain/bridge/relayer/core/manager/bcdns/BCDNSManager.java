@@ -60,4 +60,9 @@ public class BCDNSManager implements IBCDNSManager {
     public BCDNSTrustRootCredentialSubject getTrustRootCredentialSubjectForRootDomain() {
         return null;
     }
+
+    @Override
+    public boolean validateCrossChainCertificate(AbstractCrossChainCertificate certificate) {
+        return false;
+    }
 }

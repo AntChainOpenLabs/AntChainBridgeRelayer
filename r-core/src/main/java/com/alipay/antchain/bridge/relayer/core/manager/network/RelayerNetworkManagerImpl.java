@@ -16,14 +16,19 @@
 
 package com.alipay.antchain.bridge.relayer.core.manager.network;
 
+import java.security.PrivateKey;
+import java.security.Signature;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import cn.hutool.cache.Cache;
+import cn.hutool.cache.CacheUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
@@ -31,6 +36,7 @@ import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelaye
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
+import com.alipay.antchain.bridge.relayer.core.types.network.request.RelayerRequest;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IRelayerNetworkRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.ISystemConfigRepository;
@@ -54,25 +60,30 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
 
     private final ISystemConfigRepository systemConfigRepository;
 
-    //TODO: for next stage development
-    private final AbstractCrossChainCertificate crossChainCertificate;
+    private final AbstractCrossChainCertificate localRelayerCertificate;
 
     private final RelayerCredentialSubject relayerCredentialSubject;
 
+    private final PrivateKey localRelayerPrivateKey;
+
     private final IBCDNSManager bcdnsManager;
+
+    private final Cache<String, RelayerNodeInfo> relayerNodeInfoCache = CacheUtil.newTimedCache(3_000);
 
     public RelayerNetworkManagerImpl(
             String localNodeSigAlgo,
             String localNodeServerMode,
-            AbstractCrossChainCertificate crossChainCertificate,
+            AbstractCrossChainCertificate relayerCertificate,
             RelayerCredentialSubject relayerCredentialSubject,
+            PrivateKey localRelayerPrivateKey,
             IRelayerNetworkRepository relayerNetworkRepository,
             IBlockchainRepository blockchainRepository,
             ISystemConfigRepository systemConfigRepository,
             IBCDNSManager bcdnsManager
     ) {
-        this.crossChainCertificate = crossChainCertificate;
+        this.localRelayerCertificate = relayerCertificate;
         this.relayerCredentialSubject = relayerCredentialSubject;
+        this.localRelayerPrivateKey = localRelayerPrivateKey;
         this.localNodeId = DigestUtil.sha256Hex(relayerCredentialSubject.getApplicant().getRawId());
         this.localNodeServerMode = localNodeServerMode;
         this.relayerNetworkRepository = relayerNetworkRepository;
@@ -85,14 +96,19 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     @Override
     public RelayerNodeInfo getRelayerNodeInfo() {
         try {
-            return new RelayerNodeInfo(
+            if (relayerNodeInfoCache.containsKey(localNodeId)) {
+                return relayerNodeInfoCache.get(localNodeId);
+            }
+            RelayerNodeInfo localNodeInfo = new RelayerNodeInfo(
                     localNodeId,
-                    crossChainCertificate,
+                    localRelayerCertificate,
                     relayerCredentialSubject,
                     localNodeSigAlgo,
                     systemConfigRepository.getLocalEndpoints(),
                     blockchainRepository.getBlockchainDomainsByState(BlockchainStateEnum.RUNNING)
             );
+            relayerNodeInfoCache.put(localNodeId, localNodeInfo);
+            return localNodeInfo;
         } catch (AntChainBridgeRelayerException e) {
             throw e;
         } catch (Exception e) {
@@ -164,12 +180,9 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
         }
 
         return new RelayerBlockchainInfo(
-                domainSpaceChain,
                 domainCertWrapper,
-                null,
-                null,
-                blockchainMeta.getProperties().getAmClientContractAddress(),
-                MapUtil.newHashMap()
+                domainSpaceChain,
+                blockchainMeta.getProperties().getAmClientContractAddress()
         );
     }
 
@@ -271,5 +284,37 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     @Override
     public List<RelayerHealthInfo> healthCheckRelayers() {
         return null;
+    }
+
+    @Override
+    public void signRelayerRequest(RelayerRequest relayerRequest) {
+        try {
+            Signature signer = Signature.getInstance(localNodeSigAlgo);
+            signer.initSign(localRelayerPrivateKey);
+            signer.update(relayerRequest.rawEncode());
+            relayerRequest.setSignature(signer.sign());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_RELAYER_NETWORK_ERROR,
+                    "failed to sign for request type {}", relayerRequest.getRequestType().getCode()
+            );
+        }
+    }
+
+    @Override
+    public boolean validateRelayerRequest(RelayerRequest relayerRequest) {
+        if (!bcdnsManager.validateCrossChainCertificate(relayerRequest.getSenderRelayerCertificate())) {
+            return false;
+        }
+        if (
+                ObjectUtil.notEqual(
+                        CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
+                        relayerRequest.getSenderRelayerCertificate().getType()
+                )
+        ) {
+            return false;
+        }
+
+        return relayerRequest.verify();
     }
 }

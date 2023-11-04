@@ -38,6 +38,15 @@
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web-services</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>wsdl4j</groupId>
+            <artifactId>wsdl4j</artifactId>
+            <version>1.6.3</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -67,6 +76,50 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.codehaus.mojo</groupId>-->
+<!--                <artifactId>jaxb2-maven-plugin</artifactId>-->
+<!--                <version>2.5.0</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>xjc</id>-->
+<!--                        <goals>-->
+<!--                            <goal>xjc</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--                <configuration>-->
+<!--                    <sources>-->
+<!--                        <source>src/main/resources/relayer_node_peer.xsd</source>-->
+<!--                    </sources>-->
+<!--                    <outputDirectory>src/main/java</outputDirectory>-->
+<!--                    <clearOutputDir>false</clearOutputDir>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>jaxws-maven-plugin</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>wsimport</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <wsdlFiles>
+                        <wsdlFile>${project.basedir}/src/main/resources/relayer_node_peer.wsdl</wsdlFile>
+                    </wsdlFiles>
+                    <packageName>com.alipay.antchain.bridge.relayer.core.types.network.ws.client.generated</packageName>
+                    <sourceDestDir>
+                        ${project.basedir}/src/main/java
+                    </sourceDestDir>
+                    <wsdlLocation>
+                        http://127.0.0.1:8082/WSEndpointServer?wsdl
+                    </wsdlLocation>
+                </configuration>
             </plugin>
         </plugins>
     </build>

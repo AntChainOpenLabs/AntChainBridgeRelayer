@@ -37,4 +37,6 @@ public interface IBCDNSManager {
     BCDNSTrustRootCredentialSubject getTrustRootCredentialSubject(String domainSpace);
 
     BCDNSTrustRootCredentialSubject getTrustRootCredentialSubjectForRootDomain();
+
+    boolean validateCrossChainCertificate(AbstractCrossChainCertificate certificate);
 }

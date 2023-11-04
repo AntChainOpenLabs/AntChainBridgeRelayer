@@ -52,5 +52,7 @@ public interface IRelayerNetworkRepository {
 
     RelayerNodeInfo getRelayerNode(String nodeId);
 
+    boolean hasRelayerNode(String nodeId);
+
     List<RelayerHealthInfo> getAllRelayerHealthInfo();
 }

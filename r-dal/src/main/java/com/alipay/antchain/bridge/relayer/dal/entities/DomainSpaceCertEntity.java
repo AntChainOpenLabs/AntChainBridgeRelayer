@@ -29,6 +29,9 @@ public class DomainSpaceCertEntity extends BaseEntity {
     @TableField("domain_space")
     private String domainSpace;
 
+    @TableField("parent_space")
+    private String parentSpace;
+
     @TableField("description")
     private String desc;
 

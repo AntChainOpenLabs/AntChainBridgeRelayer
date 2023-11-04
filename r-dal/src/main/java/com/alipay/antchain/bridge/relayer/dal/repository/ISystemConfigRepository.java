@@ -33,4 +33,6 @@ public interface ISystemConfigRepository {
     Lock getDistributedLockForDeployTask(String product, String blockchainId);
 
     List<String> getLocalEndpoints();
+
+    String getDefaultNetworkId();
 }

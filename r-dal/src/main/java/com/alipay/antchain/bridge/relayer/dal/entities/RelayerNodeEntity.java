@@ -40,6 +40,9 @@ public class RelayerNodeEntity extends BaseEntity {
     @TableField("endpoints")
     private String endpoints;
 
+    @TableField("blockchain_content")
+    private String blockchainContent;
+
     @TableField("properties")
     private byte[] properties;
 }

@@ -17,11 +17,7 @@
 package com.alipay.antchain.bridge.relayer.commons.model;
 
 import java.io.*;
-import java.security.KeyFactory;
-import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.Signature;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +27,6 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.NumberUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
@@ -68,8 +63,6 @@ public class RelayerNodeInfo {
          */
         public static String LAST_TIME_HANDSHAKE = "last_handshake_time";
 
-        public static String RELAYER_BLOCKCHAIN_CONTENT = "relayer_blockchain_content";
-
         public static RelayerNodeProperties decodeFromJson(String json) {
             RelayerNodeProperties relayerNodeProperties = new RelayerNodeProperties();
             JSON.parseObject(json).getInnerMap()
@@ -81,14 +74,6 @@ public class RelayerNodeInfo {
          * Relayer其他属性
          */
         private final Map<String, String> properties = MapUtil.newHashMap();
-
-        public void setRelayerBlockchainContent(RelayerBlockchainContent content) {
-            properties.put(RELAYER_BLOCKCHAIN_CONTENT, content.encodeToJson());
-        }
-
-        public String getRelayerBlockchainContentJson() {
-            return properties.getOrDefault(RELAYER_BLOCKCHAIN_CONTENT, "");
-        }
 
         public String getTrustedServiceId() {
             return properties.get(TRUSTED_SERVICE_ID);
@@ -105,8 +90,68 @@ public class RelayerNodeInfo {
         public byte[] encode() {
             return JSON.toJSONBytes(properties);
         }
+
+        public String encodeToJson() {
+            return JSON.toJSONString(properties);
+        }
     }
 
+    public static RelayerNodeInfo decode(byte[] rawData) {
+
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(rawData);
+        DataInputStream stream = new DataInputStream(byteArrayInputStream);
+
+        try {
+            RelayerNodeInfo info = new RelayerNodeInfo();
+            info.setNodeId(stream.readUTF());
+            info.setRelayerCrossChainCertificate(
+                    CrossChainCertificateFactory.createCrossChainCertificate(
+                            Base64.decode(stream.readUTF())
+                    )
+            );
+            Assert.equals(
+                    CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
+                    info.getRelayerCrossChainCertificate().getType()
+            );
+            info.setRelayerCredentialSubject(
+                    RelayerCredentialSubject.decode(
+                            info.getRelayerCrossChainCertificate().getCredentialSubject()
+                    )
+            );
+
+            int endpointSize = stream.readInt();
+
+            while (endpointSize > 0) {
+                info.addEndpoint(stream.readUTF());
+                endpointSize--;
+            }
+
+            int domainSize = stream.readInt();
+
+            while (domainSize > 0) {
+                info.addDomain(stream.readUTF());
+                domainSize--;
+            }
+
+            try {
+                String rawProperties = stream.readUTF();
+                info.setProperties(
+                        RelayerNodeProperties.decodeFromJson(rawProperties)
+                );
+                String rawBlockchainContent = stream.readUTF();
+                info.setRelayerBlockchainContent(
+                        RelayerBlockchainContent.decodeFromJson(rawBlockchainContent)
+                );
+            } catch (EOFException e) {
+                return info;
+            }
+
+            return info;
+
+        } catch (Exception e) {
+            throw new RuntimeException("failed to decode relayer node info: ", e);
+        }
+    }
 
     //************************************************
     // 基础属性
@@ -117,7 +162,7 @@ public class RelayerNodeInfo {
      */
     private String nodeId;
 
-    private AbstractCrossChainCertificate crossChainCertificate;
+    private AbstractCrossChainCertificate relayerCrossChainCertificate;
 
     private RelayerCredentialSubject relayerCredentialSubject;
 
@@ -148,22 +193,17 @@ public class RelayerNodeInfo {
 
     private String sigAlgo;
 
-    /**
-     * Relayer对RelayerNodeInfo的签名
-     */
-    public byte[] signature;
-
     public RelayerNodeInfo(
             String nodeId,
-            AbstractCrossChainCertificate crossChainCertificate,
+            AbstractCrossChainCertificate relayerCrossChainCertificate,
             String sigAlgo,
             List<String> endpoints,
             List<String> domains
     ) {
-        Assert.equals(CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE, crossChainCertificate.getType());
+        Assert.equals(CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE, relayerCrossChainCertificate.getType());
         this.nodeId = nodeId;
-        this.crossChainCertificate = crossChainCertificate;
-        this.relayerCredentialSubject = RelayerCredentialSubject.decode(crossChainCertificate.getCredentialSubject());
+        this.relayerCrossChainCertificate = relayerCrossChainCertificate;
+        this.relayerCredentialSubject = RelayerCredentialSubject.decode(relayerCrossChainCertificate.getCredentialSubject());
         this.sigAlgo = sigAlgo;
         this.endpoints = endpoints;
         this.domains = domains;
@@ -171,14 +211,14 @@ public class RelayerNodeInfo {
 
     public RelayerNodeInfo(
             String nodeId,
-            AbstractCrossChainCertificate crossChainCertificate,
+            AbstractCrossChainCertificate relayerCrossChainCertificate,
             RelayerCredentialSubject relayerCredentialSubject,
             String sigAlgo,
             List<String> endpoints,
             List<String> domains
     ) {
         this.nodeId = nodeId;
-        this.crossChainCertificate = crossChainCertificate;
+        this.relayerCrossChainCertificate = relayerCrossChainCertificate;
         this.relayerCredentialSubject = relayerCredentialSubject;
         this.sigAlgo = sigAlgo;
         this.endpoints = endpoints;
@@ -189,14 +229,32 @@ public class RelayerNodeInfo {
      * RelayerNodeInfo编码值，用于交换信息时私钥签名
      */
     public byte[] getEncode() {
-
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream stream = new DataOutputStream(byteArrayOutputStream);
+        encodeWithPropertiesExcluded(stream);
+        return byteArrayOutputStream.toByteArray();
+    }
 
+    public byte[] encodeWithProperties() {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream stream = new DataOutputStream(byteArrayOutputStream);
+        encodeWithPropertiesExcluded(stream);
+
+        try {
+            stream.writeUTF(this.properties.encodeToJson());
+            stream.writeUTF(this.relayerBlockchainContent.encodeToJson());
+        } catch (Exception e) {
+            throw new RuntimeException("failed to encode with properties: ", e);
+        }
+
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    private void encodeWithPropertiesExcluded(DataOutputStream stream) {
         try {
             stream.writeUTF(nodeId);
             stream.writeUTF(
-                    Base64.encode(crossChainCertificate.encode())
+                    Base64.encode(relayerCrossChainCertificate.encode())
             );
 
             stream.writeInt(endpoints.size());
@@ -212,111 +270,6 @@ public class RelayerNodeInfo {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        return byteArrayOutputStream.toByteArray();
-    }
-
-    public static RelayerNodeInfo decode(byte[] encode) {
-
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(encode);
-        DataInputStream stream = new DataInputStream(byteArrayInputStream);
-
-        try {
-            RelayerNodeInfo info = new RelayerNodeInfo();
-            info.setNodeId(stream.readUTF());
-            info.setCrossChainCertificate(
-                    CrossChainCertificateFactory.createCrossChainCertificate(
-                            Base64.decode(stream.readUTF())
-                    )
-            );
-            Assert.equals(
-                    CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
-                    info.getCrossChainCertificate().getType()
-            );
-            info.setRelayerCredentialSubject(
-                    RelayerCredentialSubject.decode(
-                            info.getCrossChainCertificate().getCredentialSubject()
-                    )
-            );
-
-            int endpointSize = stream.readInt();
-
-            while (endpointSize > 0) {
-                info.addEndpoint(stream.readUTF());
-                endpointSize--;
-            }
-
-            int domainSize = stream.readInt();
-
-            while (domainSize > 0) {
-                info.addDomain(stream.readUTF());
-                domainSize--;
-            }
-
-            return info;
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * 验签
-     *
-     * @return
-     */
-    public boolean verify() {
-
-        try {
-            Signature verifier = Signature.getInstance(sigAlgo);
-            verifier.initVerify(getPublicKey());
-            verifier.update(getEncode());
-
-            return verifier.verify(signature);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * 签名
-     *
-     * @param key
-     */
-    public void sign(PrivateKey key) {
-
-        try {
-            Signature signer = Signature.getInstance(sigAlgo);
-            signer.initSign(key);
-            signer.update(getEncode());
-
-            signature = signer.sign();
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * 签名
-     *
-     * @param key
-     */
-    public void sign(String key) {
-
-        try {
-
-            KeyFactory factory = KeyFactory.getInstance("RSA");
-
-            PrivateKey privateKey = factory.generatePrivate(
-                    new PKCS8EncodedKeySpec(Base64.decode(key)));
-
-            sign(privateKey);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public void unmarshalProperties(String properties) {
@@ -329,17 +282,6 @@ public class RelayerNodeInfo {
 
     public void addProperty(String key, String value) {
         this.properties.getProperties().put(key, value);
-    }
-
-    public RelayerBlockchainContent getRelayerBlockchainContent() {
-        if (ObjectUtil.isNull(relayerBlockchainContent)) {
-            relayerBlockchainContent = RelayerBlockchainContent.decodeFromJson(properties.getRelayerBlockchainContentJson());
-        }
-        return relayerBlockchainContent;
-    }
-
-    public void dumpBlockchainContent() {
-        properties.setRelayerBlockchainContent(relayerBlockchainContent);
     }
 
     public void addEndpoint(String endpoint) {

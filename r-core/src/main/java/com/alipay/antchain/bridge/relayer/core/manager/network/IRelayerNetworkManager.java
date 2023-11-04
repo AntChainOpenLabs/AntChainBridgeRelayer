@@ -2,11 +2,13 @@ package com.alipay.antchain.bridge.relayer.core.manager.network;
 
 import java.util.List;
 
+import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerHealthInfo;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNetwork;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
+import com.alipay.antchain.bridge.relayer.core.types.network.request.RelayerRequest;
 
 /**
  * 该Manager提供个管理RelayerNetwork的系列管理接口
@@ -215,4 +217,17 @@ public interface IRelayerNetworkManager {
      * @return
      */
     List<RelayerHealthInfo> healthCheckRelayers();
+
+    /**
+     * @param relayerRequest
+     */
+    void signRelayerRequest(RelayerRequest relayerRequest);
+
+    AbstractCrossChainCertificate getLocalRelayerCertificate();
+
+    boolean validateRelayerRequest(RelayerRequest relayerRequest);
+
+    String getLocalNodeId();
+
+    String getLocalNodeSigAlgo();
 }

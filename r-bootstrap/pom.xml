@@ -81,9 +81,11 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <includes>
-                    <include>**/application.yml</include>
+                    <include>**/*.yml</include>
                     <include>**/*.xml</include>
                     <include>**/banner.txt</include>
+                    <include>node_keys/**</include>
+                    <include>cc_certs/**</include>
                 </includes>
                 <!-- 是否替换@xx@表示的maven properties属性值 -->
                 <filtering>true</filtering>
