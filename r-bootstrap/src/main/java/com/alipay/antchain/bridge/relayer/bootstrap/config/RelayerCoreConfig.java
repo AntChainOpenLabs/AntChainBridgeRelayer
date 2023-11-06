@@ -83,6 +83,12 @@ public class RelayerCoreConfig {
     @Value("${relayer.network.node.server.port:8082}")
     private int localNodeServerPort;
 
+    @Value("#{systemConfigRepository.defaultNetworkId}")
+    private String defaultNetworkId;
+
+    @Value("${relayer.network.node.server.as_discovery:false}")
+    private boolean isDiscoveryService;
+
     @Resource
     private TransactionTemplate transactionTemplate;
 
@@ -145,14 +151,18 @@ public class RelayerCoreConfig {
     @Autowired
     public WSRelayerServer wsRelayerServer(
             @Qualifier("wsRelayerServerExecutorService") ExecutorService wsRelayerServerExecutorService,
-            WsSslFactory wsSslFactory
+            WsSslFactory wsSslFactory,
+            IRelayerNetworkManager relayerNetworkManager
     ) {
         try {
             return new WSRelayerServer(
                     localNodeServerMode,
                     localNodeServerPort,
+                    defaultNetworkId,
                     wsRelayerServerExecutorService,
-                    wsSslFactory
+                    wsSslFactory,
+                    relayerNetworkManager,
+                    isDiscoveryService
             );
         } catch (Exception e) {
             throw new BeanInitializationException(

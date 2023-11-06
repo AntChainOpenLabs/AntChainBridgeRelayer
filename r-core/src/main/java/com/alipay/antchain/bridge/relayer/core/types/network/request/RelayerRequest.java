@@ -25,6 +25,7 @@ import com.alipay.antchain.bridge.commons.bcdns.utils.ObjectIdentityUtil;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.TLVTypeEnum;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.TLVUtils;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.annotation.TLVField;
+import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -55,16 +56,14 @@ public class RelayerRequest {
         return TLVUtils.decode(rawData, requestClass);
     }
 
+    public static RelayerRequest decode(byte[] rawData) {
+        return TLVUtils.decode(rawData, RelayerRequest.class);
+    }
+
     public RelayerRequest(
-            RelayerRequestType relayerRequestType,
-            String nodeId,
-            AbstractCrossChainCertificate senderRelayerCertificate,
-            String sigAlgo
+            RelayerRequestType relayerRequestType
     ) {
         this.requestType = relayerRequestType;
-        this.nodeId = nodeId;
-        this.senderRelayerCertificate = senderRelayerCertificate;
-        this.sigAlgo = sigAlgo;
     }
 
     @TLVField(tag = TLV_TYPE_RELAYER_REQUEST_TYPE, type = TLVTypeEnum.UINT8)
@@ -122,5 +121,9 @@ public class RelayerRequest {
 
     public void setRequestTypeCode(String requestType) {
         this.requestType = RelayerRequestType.parseFromValue(requestType);
+    }
+
+    public String calcRelayerNodeId() {
+        return RelayerNodeInfo.calculateNodeId(senderRelayerCertificate);
     }
 }

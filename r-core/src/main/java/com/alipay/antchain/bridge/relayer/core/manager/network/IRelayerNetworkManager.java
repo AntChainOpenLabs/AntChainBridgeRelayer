@@ -9,6 +9,7 @@ import com.alipay.antchain.bridge.relayer.commons.model.RelayerHealthInfo;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNetwork;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.RelayerRequest;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.RelayerResponse;
 
 /**
  * 该Manager提供个管理RelayerNetwork的系列管理接口
@@ -223,9 +224,16 @@ public interface IRelayerNetworkManager {
      */
     void signRelayerRequest(RelayerRequest relayerRequest);
 
+    /**
+     * @param relayerResponse
+     */
+    void signRelayerResponse(RelayerResponse relayerResponse);
+
     AbstractCrossChainCertificate getLocalRelayerCertificate();
 
     boolean validateRelayerRequest(RelayerRequest relayerRequest);
+
+    boolean validateRelayerResponse(RelayerResponse relayerResponse);
 
     String getLocalNodeId();
 

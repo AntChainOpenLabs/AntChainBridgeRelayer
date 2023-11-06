@@ -16,7 +16,10 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network.request;
 
-import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.map.MapUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,28 +32,46 @@ import lombok.experimental.FieldNameConstants;
 @FieldNameConstants
 public class HandshakeRelayerRequest extends RelayerRequest {
 
+    public static HandshakeRelayerRequest createFrom(RelayerRequest relayerRequest) {
+        HandshakeRelayerRequest request = BeanUtil.copyProperties(
+                relayerRequest,
+                HandshakeRelayerRequest.class
+        );
+
+        JSONObject jsonObject = JSON.parseObject(new String(relayerRequest.getRequestPayload()));
+        request.setNetworkId(jsonObject.getString(Fields.networkId));
+        request.setSenderNodeInfo(RelayerNodeInfo.decode(jsonObject.getBytes(Fields.senderNodeInfo)));
+        return request;
+    }
+
+    public static byte[] createHandshakePayload(
+            String networkId,
+            RelayerNodeInfo relayerNodeInfo
+    ) {
+        return JSON.toJSONBytes(
+                MapUtil.builder()
+                        .put(Fields.networkId, networkId)
+                        .put(Fields.senderNodeInfo, relayerNodeInfo.encodeWithProperties())
+                        .build()
+        );
+    }
+
     private String networkId;
 
     private RelayerNodeInfo senderNodeInfo;
 
     public HandshakeRelayerRequest(
-            String nodeId,
-            AbstractCrossChainCertificate senderRelayerCertificate,
-            String sigAlgo,
             RelayerNodeInfo senderNodeInfo,
             String networkId
     ) {
         super(
-                RelayerRequestType.HANDSHAKE,
-                nodeId,
-                senderRelayerCertificate,
-                sigAlgo
+                RelayerRequestType.HANDSHAKE
         );
 
         this.networkId = networkId;
         this.senderNodeInfo = senderNodeInfo;
         setRequestPayload(
-                senderNodeInfo.encodeWithProperties()
+                createHandshakePayload(networkId, senderNodeInfo)
         );
     }
 }

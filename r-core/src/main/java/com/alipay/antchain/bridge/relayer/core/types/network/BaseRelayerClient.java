@@ -67,14 +67,10 @@ public abstract class BaseRelayerClient implements RelayerClient {
 
     @Override
     public RelayerNodeInfo getRelayerNodeInfo() {
-        RelayerRequest request = new GetRelayerNodeInfoRelayerRequest(
-                relayerNetworkManager.getLocalNodeId(),
-                relayerNetworkManager.getLocalRelayerCertificate(),
-                relayerNetworkManager.getLocalNodeSigAlgo()
-        );
+        RelayerRequest request = new GetRelayerNodeInfoRelayerRequest();
         relayerNetworkManager.signRelayerRequest(request);
 
-        RelayerResponse response = sendRequest(request);
+        RelayerResponse response = validateRelayerResponse(sendRequest(request));
         if (ObjectUtil.isNull(response) || !response.isSuccess()) {
             throw new RuntimeException(
                     StrUtil.format(
@@ -89,15 +85,10 @@ public abstract class BaseRelayerClient implements RelayerClient {
 
     @Override
     public RelayerBlockchainInfo getRelayerBlockchainInfo(String domainToQuery) {
-        RelayerRequest request = new GetRelayerBlockchainInfoRelayerRequest(
-                relayerNetworkManager.getLocalNodeId(),
-                relayerNetworkManager.getLocalRelayerCertificate(),
-                relayerNetworkManager.getLocalNodeSigAlgo(),
-                domainToQuery
-        );
+        RelayerRequest request = new GetRelayerBlockchainInfoRelayerRequest(domainToQuery);
         relayerNetworkManager.signRelayerRequest(request);
 
-        RelayerResponse response = sendRequest(request);
+        RelayerResponse response = validateRelayerResponse(sendRequest(request));
         if (ObjectUtil.isNull(response) || !response.isSuccess()) {
             throw new RuntimeException(
                     StrUtil.format(
@@ -115,9 +106,6 @@ public abstract class BaseRelayerClient implements RelayerClient {
     @Override
     public void amRequest(String domainName, String authMsg, String udagProof, String ledgerInfo) {
         RelayerRequest request = new AMRelayerRequest(
-                relayerNetworkManager.getLocalNodeId(),
-                relayerNetworkManager.getLocalRelayerCertificate(),
-                relayerNetworkManager.getLocalNodeSigAlgo(),
                 udagProof,
                 authMsg,
                 domainName,
@@ -125,7 +113,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
         );
         relayerNetworkManager.signRelayerRequest(request);
 
-        RelayerResponse response = sendRequest(request);
+        RelayerResponse response = validateRelayerResponse(sendRequest(request));
         if (ObjectUtil.isNull(response)) {
             throw new RuntimeException(
                     StrUtil.format(
@@ -145,14 +133,11 @@ public abstract class BaseRelayerClient implements RelayerClient {
     @Override
     public RelayerNodeInfo handshake(RelayerNodeInfo senderNodeInfo, String networkId) {
         RelayerRequest request = new HandshakeRelayerRequest(
-                relayerNetworkManager.getLocalNodeId(),
-                relayerNetworkManager.getLocalRelayerCertificate(),
-                relayerNetworkManager.getLocalNodeSigAlgo(),
                 senderNodeInfo,
                 defaultNetworkId
         );
 
-        RelayerResponse response = sendRequest(request);
+        RelayerResponse response = validateRelayerResponse(sendRequest(request));
         if (ObjectUtil.isNull(response)) {
             throw new RuntimeException(
                     StrUtil.format(
@@ -184,5 +169,17 @@ public abstract class BaseRelayerClient implements RelayerClient {
         log.debug("handshake with relayer {} success with response: {}", this.remoteNodeInfo.getNodeId(), response.getResponsePayload());
 
         return remoteNodeInfo;
+    }
+
+    private RelayerResponse validateRelayerResponse(RelayerResponse relayerResponse) {
+        if (relayerNetworkManager.validateRelayerResponse(relayerResponse)) {
+            throw new RuntimeException(
+                    StrUtil.format(
+                            "response from relayer {} sig is invalid",
+                            relayerResponse.calcRelayerNodeId()
+                    )
+            );
+        }
+        return relayerResponse;
     }
 }

@@ -16,25 +16,32 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network.request;
 
-import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import cn.hutool.core.bean.BeanUtil;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class GetRelayerBlockchainInfoRelayerRequest extends RelayerRequest {
 
+    private String domainToQuery;
+
+    public static GetRelayerBlockchainInfoRelayerRequest createFrom(RelayerRequest relayerRequest) {
+        GetRelayerBlockchainInfoRelayerRequest request = BeanUtil.copyProperties(
+                relayerRequest,
+                GetRelayerBlockchainInfoRelayerRequest.class
+        );
+        request.setDomainToQuery(new String(relayerRequest.getRequestPayload()));
+        return request;
+    }
+
     public GetRelayerBlockchainInfoRelayerRequest(
-            String nodeId,
-            AbstractCrossChainCertificate senderRelayerCertificate,
-            String sigAlgo,
             String domainToQuery
     ) {
         super(
-                RelayerRequestType.GET_RELAYER_BLOCKCHAIN_INFO,
-                nodeId,
-                senderRelayerCertificate,
-                sigAlgo
+                RelayerRequestType.GET_RELAYER_BLOCKCHAIN_INFO
         );
         this.setRequestPayload(domainToQuery.getBytes());
     }

@@ -27,6 +27,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
@@ -44,6 +45,19 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RelayerNodeInfo {
+
+    public static String calculateNodeId(AbstractCrossChainCertificate crossChainCertificate) {
+        Assert.equals(
+                CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
+                crossChainCertificate.getType()
+        );
+
+        return DigestUtil.sha256Hex(
+                RelayerCredentialSubject.decode(
+                        crossChainCertificate.getCredentialSubject()
+                ).getApplicant().getRawId()
+        );
+    }
 
     @Getter
     @Setter

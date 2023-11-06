@@ -20,28 +20,35 @@ import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.RelayerRequestType;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Endpoint Server基类
  */
 @Getter
 @Setter
+@Slf4j
+@NoArgsConstructor
 public abstract class BaseRelayerServer {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(
-        BaseRelayerServer.class);
 
     private IRelayerNetworkManager relayerNetworkManager;
 
     private boolean isDiscoveryServer;
 
+    private String defaultNetworkId;
+
 //    private Receiver receiver;
 
-    public BaseRelayerServer() {
-
+    public BaseRelayerServer(
+            IRelayerNetworkManager relayerNetworkManager,
+            String defaultNetworkId,
+            boolean isDiscoveryServer
+    ) {
+        this.relayerNetworkManager = relayerNetworkManager;
+        this.defaultNetworkId = defaultNetworkId;
+        this.isDiscoveryServer = isDiscoveryServer;
 //        ServiceManagerModule serviceManagerModule = ServerContext.getInstance().getServerModule(
 //                ServiceManagerModule.class);
 //
@@ -210,7 +217,7 @@ public abstract class BaseRelayerServer {
 //        });
     }
 
-    private boolean isAboutDomain(RelayerRequestType type) {
+    public boolean isAboutDomain(RelayerRequestType type) {
         switch (type) {
             case GET_RELAYER_FOR_DOMAIN:
             case REGISTER_DOMAIN:

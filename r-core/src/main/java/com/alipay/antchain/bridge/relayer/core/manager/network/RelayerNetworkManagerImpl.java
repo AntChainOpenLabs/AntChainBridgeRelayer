@@ -26,7 +26,6 @@ import cn.hutool.cache.Cache;
 import cn.hutool.cache.CacheUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.crypto.digest.DigestUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
@@ -37,6 +36,7 @@ import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.RelayerRequest;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.RelayerResponse;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IRelayerNetworkRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.ISystemConfigRepository;
@@ -84,7 +84,7 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
         this.localRelayerCertificate = relayerCertificate;
         this.relayerCredentialSubject = relayerCredentialSubject;
         this.localRelayerPrivateKey = localRelayerPrivateKey;
-        this.localNodeId = DigestUtil.sha256Hex(relayerCredentialSubject.getApplicant().getRawId());
+        this.localNodeId = RelayerNodeInfo.calculateNodeId(relayerCertificate);
         this.localNodeServerMode = localNodeServerMode;
         this.relayerNetworkRepository = relayerNetworkRepository;
         this.blockchainRepository = blockchainRepository;
@@ -289,6 +289,10 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     @Override
     public void signRelayerRequest(RelayerRequest relayerRequest) {
         try {
+            relayerRequest.setNodeId(localNodeId);
+            relayerRequest.setSenderRelayerCertificate(localRelayerCertificate);
+            relayerRequest.setSigAlgo(localNodeSigAlgo);
+
             Signature signer = Signature.getInstance(localNodeSigAlgo);
             signer.initSign(localRelayerPrivateKey);
             signer.update(relayerRequest.rawEncode());
@@ -297,6 +301,24 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_RELAYER_NETWORK_ERROR,
                     "failed to sign for request type {}", relayerRequest.getRequestType().getCode()
+            );
+        }
+    }
+
+    @Override
+    public void signRelayerResponse(RelayerResponse relayerResponse) {
+        try {
+            relayerResponse.setRemoteRelayerCertificate(localRelayerCertificate);
+            relayerResponse.setSigAlgo(localNodeSigAlgo);
+
+            Signature signer = Signature.getInstance(localNodeSigAlgo);
+            signer.initSign(localRelayerPrivateKey);
+            signer.update(relayerResponse.rawEncode());
+            relayerResponse.setSignature(signer.sign());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_RELAYER_NETWORK_ERROR,
+                    "failed to sign response"
             );
         }
     }
@@ -316,5 +338,22 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
         }
 
         return relayerRequest.verify();
+    }
+
+    @Override
+    public boolean validateRelayerResponse(RelayerResponse relayerResponse) {
+        if (!bcdnsManager.validateCrossChainCertificate(relayerResponse.getRemoteRelayerCertificate())) {
+            return false;
+        }
+        if (
+                ObjectUtil.notEqual(
+                        CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
+                        relayerResponse.getRemoteRelayerCertificate().getType()
+                )
+        ) {
+            return false;
+        }
+
+        return relayerResponse.verify();
     }
 }

@@ -17,7 +17,6 @@
 package com.alipay.antchain.bridge.relayer.core.types.network.request;
 
 import cn.hutool.core.util.StrUtil;
-import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,16 +24,9 @@ import lombok.Setter;
 @Setter
 public class GetRelayerNodeInfoRelayerRequest extends RelayerRequest {
 
-    public GetRelayerNodeInfoRelayerRequest(
-            String nodeId,
-            AbstractCrossChainCertificate senderRelayerCertificate,
-            String sigAlgo
-    ) {
+    public GetRelayerNodeInfoRelayerRequest() {
         super(
-                RelayerRequestType.GET_RELAYER_NODE_INFO,
-                nodeId,
-                senderRelayerCertificate,
-                sigAlgo
+                RelayerRequestType.GET_RELAYER_NODE_INFO
         );
         setRequestPayload(StrUtil.EMPTY.getBytes());
     }

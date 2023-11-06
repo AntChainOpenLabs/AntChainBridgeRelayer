@@ -115,9 +115,12 @@ public class WSRelayerClient extends BaseRelayerClient {
 
     @Override
     public RelayerResponse sendRequest(RelayerRequest relayerRequest) {
-
-        String response = wsEndpointServer.request(Base64.encode(relayerRequest.encode()));
-
-        return RelayerResponse.decode(Base64.decode(response));
+        return RelayerResponse.decode(
+                Base64.decode(
+                        wsEndpointServer.request(
+                                Base64.encode(relayerRequest.encode())
+                        )
+                )
+        );
     }
 }

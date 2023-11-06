@@ -67,6 +67,8 @@ public enum RelayerErrorCodeEnum {
 
     CORE_RELAYER_NETWORK_ERROR("0205", "relayer network error"),
 
+    SERVER_REQUEST_FROM_RELAYER_REJECT("0301", "relayer request rejected"),
+
     /**
      *
      */

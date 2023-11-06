@@ -19,12 +19,15 @@ package com.alipay.antchain.bridge.relayer.core.types.network.response;
 import java.security.PublicKey;
 import java.security.Signature;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
 import com.alipay.antchain.bridge.commons.bcdns.utils.ObjectIdentityUtil;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.TLVTypeEnum;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.TLVUtils;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.annotation.TLVField;
+import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
+import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +55,58 @@ public class RelayerResponse {
     public static final short TLV_TYPE_RELAYER_RESPONSE_REMOTE_SIG_ALGO = 4;
 
     public static final short TLV_TYPE_RELAYER_RESPONSE_SIG = 5;
+
+    public static RelayerResponse createSuccessResponse(
+            IResponsePayload payload,
+            IRelayerNetworkManager relayerNetworkManager
+    ) {
+        return createResponse(
+                SUCCESS,
+                "",
+                payload,
+                relayerNetworkManager
+        );
+    }
+
+    public static RelayerResponse createFailureResponse(
+            String errorMsg,
+            IResponsePayload payload,
+            IRelayerNetworkManager relayerNetworkManager
+    ) {
+        return createResponse(
+                FAILED,
+                errorMsg,
+                payload,
+                relayerNetworkManager
+        );
+    }
+
+    public static RelayerResponse createFailureResponse(
+            String errorMsg,
+            IRelayerNetworkManager relayerNetworkManager
+    ) {
+        return createResponse(
+                FAILED,
+                errorMsg,
+                null,
+                relayerNetworkManager
+        );
+    }
+
+    public static RelayerResponse createResponse(
+            int errorCode,
+            String message,
+            IResponsePayload payload,
+            IRelayerNetworkManager relayerNetworkManager
+    ) {
+        RelayerResponse relayerResponse = new RelayerResponse();
+        relayerResponse.setResponseCode(errorCode);
+        relayerResponse.setResponseMessage(message);
+        relayerResponse.setResponsePayload(ObjectUtil.isNull(payload) ? "" : payload.encode());
+        relayerNetworkManager.signRelayerResponse(relayerResponse);
+
+        return relayerResponse;
+    }
 
     public static RelayerResponse decode(byte[] rawData) {
         return TLVUtils.decode(rawData, RelayerResponse.class);
@@ -124,5 +179,9 @@ public class RelayerResponse {
 
     public boolean isSuccess() {
         return responseCode == SUCCESS;
+    }
+
+    public String calcRelayerNodeId() {
+        return RelayerNodeInfo.calculateNodeId(remoteRelayerCertificate);
     }
 }

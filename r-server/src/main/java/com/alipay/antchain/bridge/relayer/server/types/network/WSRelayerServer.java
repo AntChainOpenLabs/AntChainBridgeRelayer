@@ -22,6 +22,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.xml.ws.Endpoint;
 
+import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
@@ -53,12 +54,19 @@ public class WSRelayerServer {
     public WSRelayerServer(
             String serverMode,
             int port,
+            String defaultNetworkId,
             ExecutorService wsRelayerServerExecutorService,
-            WsSslFactory wsSslFactory
+            WsSslFactory wsSslFactory,
+            IRelayerNetworkManager relayerNetworkManager,
+            boolean isDiscoveryService
     ) {
         this.serverMode = serverMode;
         this.port = port;
-        this.wsRelayerServerAPI = new WSRelayerServerAPImpl();
+        this.wsRelayerServerAPI = new WSRelayerServerAPImpl(
+                relayerNetworkManager,
+                defaultNetworkId,
+                isDiscoveryService
+        );
         this.workers = wsRelayerServerExecutorService;
         this.wsSslFactory = wsSslFactory;
 

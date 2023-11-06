@@ -16,26 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network.response;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.annotation.JSONField;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+public interface IResponsePayload {
 
-@Getter
-@AllArgsConstructor
-public class HandshakeRespPayload implements IResponsePayload {
-    public static HandshakeRespPayload decodeFromJson(String json) {
-        return JSON.parseObject(json, HandshakeRespPayload.class);
-    }
-
-    @JSONField(name = "network_id")
-    private String remoteNetworkId;
-
-    @JSONField(name = "remote_node_info")
-    private String remoteNodeInfo;
-
-    @Override
-    public String encode() {
-        return JSON.toJSONString(this);
-    }
+    String encode();
 }

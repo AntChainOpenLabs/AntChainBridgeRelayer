@@ -16,15 +16,21 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network.request;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
-import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 public class AMRelayerRequest extends RelayerRequest {
+
+    public static AMRelayerRequest createFrom(RelayerRequest relayerRequest) {
+        AMRelayerRequest request = JSON.parseObject(relayerRequest.getRequestPayload(), AMRelayerRequest.class);
+        BeanUtil.copyProperties(relayerRequest, request);
+        return request;
+    }
 
     @JSONField
     private String udagProof;
@@ -39,19 +45,13 @@ public class AMRelayerRequest extends RelayerRequest {
     private String ledgerInfo;
 
     public AMRelayerRequest(
-            String nodeId,
-            AbstractCrossChainCertificate senderRelayerCertificate,
-            String sigAlgo,
             String udagProof,
             String authMsg,
             String domainName,
             String ledgerInfo
     ) {
         super(
-                RelayerRequestType.AM_REQUEST,
-                nodeId,
-                senderRelayerCertificate,
-                sigAlgo
+                RelayerRequestType.AM_REQUEST
         );
         this.udagProof = udagProof;
         this.authMsg = authMsg;
