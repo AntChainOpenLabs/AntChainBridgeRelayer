@@ -417,4 +417,13 @@ public class ConvertUtil {
         entity.setDomainSpace(wrapper.getDomainSpace());
         return entity;
     }
+
+    public static DomainSpaceCertEntity convertFromDomainSpaceCertWrapper(DomainSpaceCertWrapper wrapper) {
+        DomainSpaceCertEntity entity = new DomainSpaceCertEntity();
+        entity.setDomainSpace(wrapper.getDomainSpace());
+        entity.setParentSpace(wrapper.getParentDomainSpace());
+        entity.setDesc(wrapper.getDesc());
+        entity.setDomainSpaceCert(wrapper.getDomainSpaceCert().encode());
+        return entity;
+    }
 }

@@ -48,7 +48,7 @@ public interface IRelayerNetworkManager {
      * @param nodeInfo
      * @return
      */
-    boolean addRelayerNode(RelayerNodeInfo nodeInfo);
+    void addRelayerNode(RelayerNodeInfo nodeInfo);
 
     /**
      * 将除了域名列表和RelayerBlockchainInfo之外的信息存储起来
@@ -56,7 +56,7 @@ public interface IRelayerNetworkManager {
      * @param nodeInfo
      * @return
      */
-    boolean addRelayerNodeWithoutDomainInfo(RelayerNodeInfo nodeInfo);
+    void addRelayerNodeWithoutDomainInfo(RelayerNodeInfo nodeInfo);
 
     /**
      * 向relayer node中添加属性
@@ -66,7 +66,7 @@ public interface IRelayerNetworkManager {
      * @param value
      * @return
      */
-    boolean addRelayerNodeProperty(String nodeId, String key, String value);
+    void addRelayerNodeProperty(String nodeId, String key, String value);
 
     /**
      * 获取Relayer节点
@@ -93,7 +93,7 @@ public interface IRelayerNetworkManager {
      * @param nodeId    节点id
      * @return
      */
-    boolean syncRelayerNode(String networkId, String nodeId);
+    void syncRelayerNode(String networkId, String nodeId);
 
     //**********************************************
     // relayer 网络管理

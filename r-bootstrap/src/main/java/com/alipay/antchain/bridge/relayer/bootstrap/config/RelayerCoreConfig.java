@@ -32,8 +32,9 @@ import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.RelayerNetworkManagerImpl;
+import com.alipay.antchain.bridge.relayer.core.types.network.RelayerClientPool;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
-import com.alipay.antchain.bridge.relayer.server.types.network.WSRelayerServer;
+import com.alipay.antchain.bridge.relayer.server.network.WSRelayerServer;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IRelayerNetworkRepository;
@@ -124,7 +125,8 @@ public class RelayerCoreConfig {
             IRelayerNetworkRepository relayerNetworkRepository,
             IBlockchainRepository blockchainRepository,
             ISystemConfigRepository systemConfigRepository,
-            IBCDNSManager bcdnsManager
+            IBCDNSManager bcdnsManager,
+            RelayerClientPool relayerClientPool
     ) {
         AbstractCrossChainCertificate relayerCertificate = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
                 FileUtil.readBytes(relayerCrossChainCertPath)
@@ -143,7 +145,8 @@ public class RelayerCoreConfig {
                 relayerNetworkRepository,
                 blockchainRepository,
                 systemConfigRepository,
-                bcdnsManager
+                bcdnsManager,
+                relayerClientPool
         );
     }
 

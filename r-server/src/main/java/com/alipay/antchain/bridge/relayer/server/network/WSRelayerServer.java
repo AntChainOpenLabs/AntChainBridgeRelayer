@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.server.types.network;
+package com.alipay.antchain.bridge.relayer.server.network;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;

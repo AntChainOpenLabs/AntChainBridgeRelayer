@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.server.types.network;
+package com.alipay.antchain.bridge.relayer.server.network;
 
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -24,13 +24,11 @@ import javax.jws.soap.SOAPBinding;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
+import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.exception.RejectRequestException;
-import com.alipay.antchain.bridge.relayer.core.types.network.request.AMRelayerRequest;
-import com.alipay.antchain.bridge.relayer.core.types.network.request.GetRelayerBlockchainInfoRelayerRequest;
-import com.alipay.antchain.bridge.relayer.core.types.network.request.HandshakeRelayerRequest;
-import com.alipay.antchain.bridge.relayer.core.types.network.request.RelayerRequest;
+import com.alipay.antchain.bridge.relayer.core.types.network.request.*;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.HandshakeRespPayload;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.RelayerResponse;
 import lombok.NoArgsConstructor;
@@ -106,6 +104,10 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                     return processHandshakeRequest(
                             HandshakeRelayerRequest.createFrom(request)
                     ).encode();
+                case GET_RELAYER_BLOCKCHAIN_CONTENT:
+                    return processGetRelayerBlockchainContent(
+                            GetRelayerBlockchainContentRelayerRequest.createFrom(request)
+                    ).encode();
                 default:
                     return RelayerResponse.createFailureResponse(
                             "request type not supported: " + request.getRequestType().getCode(),
@@ -143,7 +145,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                     request.getDomainToQuery()
             );
         } catch (AntChainBridgeRelayerException e) {
-            log.error("failed to query blockchain info for domain {}", request.getDomainToQuery());
+            log.error("failed to query blockchain info for domain {}", request.getDomainToQuery(), e);
             return RelayerResponse.createFailureResponse(
                     e.getMsg(),
                     getRelayerNetworkManager()
@@ -158,6 +160,39 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
         return RelayerResponse.createSuccessResponse(
                 blockchainInfo::encode,
+                getRelayerNetworkManager()
+        );
+    }
+
+    private RelayerResponse processGetRelayerBlockchainContent(GetRelayerBlockchainContentRelayerRequest request) {
+        if (!getRelayerNetworkManager().validateRelayerRequest(request)) {
+            log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
+            return RelayerResponse.createFailureResponse(
+                    "verify sig failed",
+                    getRelayerNetworkManager()
+            );
+        }
+
+        RelayerBlockchainContent blockchainContent;
+        try {
+            blockchainContent = getRelayerNetworkManager().getRelayerNodeInfoWithContent()
+                    .getRelayerBlockchainContent();
+        } catch (AntChainBridgeRelayerException e) {
+            log.error("failed to query local blockchain content", e);
+            return RelayerResponse.createFailureResponse(
+                    e.getMsg(),
+                    getRelayerNetworkManager()
+            );
+        }
+        if (ObjectUtil.isNull(blockchainContent)) {
+            return RelayerResponse.createFailureResponse(
+                    "empty result",
+                    getRelayerNetworkManager()
+            );
+        }
+
+        return RelayerResponse.createSuccessResponse(
+                blockchainContent::encodeToJson,
                 getRelayerNetworkManager()
         );
     }

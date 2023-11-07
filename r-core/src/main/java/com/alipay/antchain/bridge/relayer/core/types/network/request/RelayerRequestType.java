@@ -59,7 +59,9 @@ public enum RelayerRequestType {
     /**
      * 让relayer配置中心删除对应域名
      */
-    DELETE_DOMAIN("deleteDomain");
+    DELETE_DOMAIN("deleteDomain"),
+
+    GET_RELAYER_BLOCKCHAIN_CONTENT("getRelayerBlockChainContent");
 
     private final String code;
 
@@ -80,6 +82,8 @@ public enum RelayerRequestType {
             return UPDATE_DOMAIN;
         } else if (StrUtil.equals(value, DELETE_DOMAIN.code)) {
             return DELETE_DOMAIN;
+        } else if (StrUtil.equals(value, GET_RELAYER_BLOCKCHAIN_CONTENT.code)) {
+            return GET_RELAYER_BLOCKCHAIN_CONTENT;
         }
         throw new AntChainBridgeRelayerException(
                 RelayerErrorCodeEnum.UNKNOWN_INTERNAL_ERROR,
@@ -105,6 +109,8 @@ public enum RelayerRequestType {
                 return UPDATE_DOMAIN;
             case 7:
                 return DELETE_DOMAIN;
+            case 8:
+                return GET_RELAYER_BLOCKCHAIN_CONTENT;
             default:
                 return null;
         }

@@ -38,6 +38,8 @@ public interface IRelayerNetworkRepository {
 
     Map<String, RelayerNetwork.Item> getNetworkItems(String networkId);
 
+    boolean hasNetworkItem(String networkId, String domain, String nodeId);
+
     List<RelayerNetwork> getAllNetworks();
 
     RelayerNetwork getRelayerNetwork(String networkId);

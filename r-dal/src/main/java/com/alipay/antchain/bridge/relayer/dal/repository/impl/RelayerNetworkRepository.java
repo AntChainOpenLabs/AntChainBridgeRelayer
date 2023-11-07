@@ -190,6 +190,25 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
+    public boolean hasNetworkItem(String networkId, String domain, String nodeId) {
+        try {
+            return relayerNetworkMapper.exists(
+                    new LambdaQueryWrapper<RelayerNetworkEntity>()
+                            .eq(RelayerNetworkEntity::getNetworkId, networkId)
+                            .eq(RelayerNetworkEntity::getDomain, domain)
+                            .eq(RelayerNetworkEntity::getNodeId, nodeId)
+            );
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_RELAYER_NETWORK_ERROR,
+                    e,
+                    "failed to check if network item ( network_id: {}, domain: {}, node_id: {}) exists",
+                    networkId, domain, nodeId
+            );
+        }
+    }
+
+    @Override
     public List<RelayerNetwork> getAllNetworks() {
         try {
             List<RelayerNetworkEntity> entities = relayerNetworkMapper.selectList(null);

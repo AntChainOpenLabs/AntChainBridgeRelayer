@@ -57,6 +57,8 @@ public enum RelayerErrorCodeEnum {
 
     DAL_SYSTEM_CONFIG_ERROR("010a", "sys config data error"),
 
+    DAL_DOMAIN_SPACE_ERROR("010b", "domain space cert data error"),
+
     CORE_BLOCKCHAIN_ERROR("0201", "blockchain error"),
 
     CORE_BLOCKCHAIN_CLIENT_INIT_ERROR("0202", "blockchain client init error"),

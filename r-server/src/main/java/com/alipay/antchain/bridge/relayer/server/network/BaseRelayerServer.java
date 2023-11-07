@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.server.types.network;
+package com.alipay.antchain.bridge.relayer.server.network;
 
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;

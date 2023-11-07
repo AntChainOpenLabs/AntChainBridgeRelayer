@@ -143,7 +143,7 @@ public class RelayerNodeInfo {
             int domainSize = stream.readInt();
 
             while (domainSize > 0) {
-                info.addDomain(stream.readUTF());
+                info.addDomainIfNotExist(stream.readUTF());
                 domainSize--;
             }
 
@@ -206,6 +206,21 @@ public class RelayerNodeInfo {
     //************************************************
 
     private String sigAlgo;
+
+    public RelayerNodeInfo(
+            AbstractCrossChainCertificate relayerCrossChainCertificate,
+            String sigAlgo,
+            List<String> endpoints,
+            List<String> domains
+    ) {
+        Assert.equals(CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE, relayerCrossChainCertificate.getType());
+        this.nodeId = RelayerNodeInfo.calculateNodeId(relayerCrossChainCertificate);
+        this.relayerCrossChainCertificate = relayerCrossChainCertificate;
+        this.relayerCredentialSubject = RelayerCredentialSubject.decode(relayerCrossChainCertificate.getCredentialSubject());
+        this.sigAlgo = sigAlgo;
+        this.endpoints = endpoints;
+        this.domains = domains;
+    }
 
     public RelayerNodeInfo(
             String nodeId,
@@ -302,7 +317,10 @@ public class RelayerNodeInfo {
         this.endpoints.add(endpoint);
     }
 
-    public void addDomain(String domain) {
+    public void addDomainIfNotExist(String domain) {
+        if (this.domains.contains(domain)) {
+            return;
+        }
         this.domains.add(domain);
     }
 
