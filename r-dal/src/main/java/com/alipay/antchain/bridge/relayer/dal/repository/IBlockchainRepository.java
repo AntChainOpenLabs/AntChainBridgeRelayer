@@ -41,6 +41,8 @@ public interface IBlockchainRepository {
 
     BlockchainMeta getBlockchainMetaByDomain(String domain);
 
+    boolean hasBlockchain(String domain);
+
     List<BlockchainMeta> getBlockchainMetaByPluginServerId(String pluginServerId);
 
     BlockchainMeta getBlockchainMeta(String product, String blockchainId);

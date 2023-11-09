@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.BlockchainAnchorProcess;
 
 /**
@@ -91,6 +92,10 @@ public interface IBlockchainManager {
      */
     void updateBlockchainProperty(String product, String blockchainId, String confKey, String confValue);
 
+    boolean hasBlockchain(String domain);
+
+    DomainCertWrapper getDomainCert(String domain);
+
     /**
      * 为指定区块链部署 AM合约
      *
@@ -134,6 +139,10 @@ public interface IBlockchainManager {
      * @return 元信息模型
      */
     BlockchainMeta getBlockchainMeta(String product, String blockchainId);
+
+    BlockchainMeta getBlockchainMetaByDomain(String domain);
+
+    String getBlockchainDomain(String product, String blockchainId);
 
     /**
      * 更新区块链元信息

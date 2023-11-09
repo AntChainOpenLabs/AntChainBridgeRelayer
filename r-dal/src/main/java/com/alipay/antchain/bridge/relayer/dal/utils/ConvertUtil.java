@@ -351,11 +351,11 @@ public class ConvertUtil {
 
         entity.setOwnerDomain(item.getOwnerDomain());
         entity.setOwnerId(item.getOwnerIdentity());
-        entity.setOwnerIdHex(item.getOwnerIdentityHex());
+        entity.setOwnerIdHex(item.getOwnerIdentityHex().toLowerCase());
 
         entity.setGrantDomain(item.getGrantDomain());
         entity.setGrantId(item.getGrantIdentity());
-        entity.setGrantIdHex(item.getGrantIdentityHex());
+        entity.setGrantIdHex(item.getGrantIdentityHex().toLowerCase());
 
         entity.setIsDeleted(item.getIsDeleted());
 

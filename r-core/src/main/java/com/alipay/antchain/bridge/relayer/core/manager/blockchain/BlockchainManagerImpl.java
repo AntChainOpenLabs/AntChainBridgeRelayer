@@ -34,6 +34,7 @@ import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelaye
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AnchorProcessHeights;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.AbstractBlockchainClient;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.BlockchainAnchorProcess;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.BlockchainClientPool;
@@ -209,6 +210,16 @@ public class BlockchainManagerImpl implements IBlockchainManager {
     }
 
     @Override
+    public boolean hasBlockchain(String domain) {
+        return blockchainRepository.hasBlockchain(domain);
+    }
+
+    @Override
+    public DomainCertWrapper getDomainCert(String domain) {
+        return blockchainRepository.getDomainCert(domain);
+    }
+
+    @Override
     public void deployAMClientContract(String product, String blockchainId) {
         try {
             BlockchainMeta blockchainMeta = this.getBlockchainMeta(product, blockchainId);
@@ -303,6 +314,16 @@ public class BlockchainManagerImpl implements IBlockchainManager {
     @Override
     public BlockchainMeta getBlockchainMeta(String product, String blockchainId) {
         return blockchainRepository.getBlockchainMeta(product, blockchainId);
+    }
+
+    @Override
+    public BlockchainMeta getBlockchainMetaByDomain(String domain) {
+        return blockchainRepository.getBlockchainMetaByDomain(domain);
+    }
+
+    @Override
+    public String getBlockchainDomain(String product, String blockchainId) {
+        return blockchainRepository.getBlockchainDomain(product, blockchainId);
     }
 
     @Override

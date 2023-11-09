@@ -16,6 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.commons.model;
 
+import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.core.sdp.AbstractSDPMessage;
 import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
 import lombok.AllArgsConstructor;
@@ -112,5 +113,10 @@ public class SDPMsgWrapper {
 
     public int getMsgSequence() {
         return this.sdpMessage.getSequence();
+    }
+
+    public boolean isBlockchainSelfCall() {
+        return StrUtil.equals(getSenderBlockchainDomain(), getReceiverBlockchainDomain())
+                && StrUtil.equalsIgnoreCase(getMsgSender(), getMsgReceiver());
     }
 }

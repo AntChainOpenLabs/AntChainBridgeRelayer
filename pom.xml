@@ -19,7 +19,6 @@
         <module>r-bootstrap</module>
         <module>r-dal</module>
         <module>r-cli</module>
-        <module>r-service</module>
         <module>r-core</module>
         <module>r-engine</module>
         <module>r-server</module>
@@ -166,11 +165,6 @@
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
                 <artifactId>r-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.alipay.antchain.bridge</groupId>
-                <artifactId>r-service</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

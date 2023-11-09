@@ -121,6 +121,24 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
+    public RelayerNetwork.Item getNetworkItem(String domain) {
+        try {
+            return ConvertUtil.convertFromRelayerNetworkEntity(
+                    relayerNetworkMapper.selectOne(
+                            new LambdaQueryWrapper<RelayerNetworkEntity>()
+                                    .eq(RelayerNetworkEntity::getDomain, domain)
+                    )
+            );
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_RELAYER_NETWORK_ERROR,
+                    StrUtil.format("failed to get network item by domain: {} ", domain),
+                    e
+            );
+        }
+    }
+
+    @Override
     public void addNetworkItem(String networkId, String domain, String nodeId, RelayerNodeSyncStateEnum syncState) {
         try {
             relayerNetworkMapper.insert(
@@ -271,10 +289,48 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
+    @Transactional
+    public RelayerNetwork getRelayerNetworkByDomain(String domain) {
+        try {
+            RelayerNetworkEntity entity = relayerNetworkMapper.selectOne(
+                    new LambdaQueryWrapper<RelayerNetworkEntity>()
+                            .select(ListUtil.toList(RelayerNetworkEntity::getNetworkId))
+                            .eq(RelayerNetworkEntity::getDomain, domain)
+            );
+            if (ObjectUtil.isNull(entity) || StrUtil.isEmpty(entity.getNetworkId())) {
+                return null;
+            }
+
+            List<RelayerNetworkEntity> entities = relayerNetworkMapper.selectList(
+                    new LambdaQueryWrapper<RelayerNetworkEntity>()
+                            .eq(RelayerNetworkEntity::getNetworkId, entity.getNetworkId())
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return null;
+            }
+
+            RelayerNetwork network = new RelayerNetwork(entity.getNetworkId());
+            entities.forEach(
+                    e -> network.addItem(e.getDomain(), e.getNodeId(), e.getSyncState())
+            );
+
+            return network;
+
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_RELAYER_NETWORK_ERROR,
+                    "failed to get network by domain " + domain,
+                    e
+            );
+        }
+    }
+
+    @Override
     public String getRelayerNodeIdForDomain(String domain) {
         try {
             RelayerNetworkEntity entity = relayerNetworkMapper.selectOne(
                     new LambdaQueryWrapper<RelayerNetworkEntity>()
+                            .select(ListUtil.toList(RelayerNetworkEntity::getNodeId))
                             .eq(RelayerNetworkEntity::getDomain, domain)
             );
             if (ObjectUtil.isNull(entity)) {

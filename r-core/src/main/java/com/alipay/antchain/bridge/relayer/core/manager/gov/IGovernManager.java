@@ -14,27 +14,17 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.commons.constant;
+package com.alipay.antchain.bridge.relayer.core.manager.gov;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import com.alipay.antchain.bridge.relayer.commons.model.CrossChainMsgACLItem;
 
-@Getter
-@AllArgsConstructor
-public enum SDPMsgProcessStateEnum {
-    PENDING("am_msg_pending"),
+public interface IGovernManager {
 
-    MSG_ILLEGAL("am_msg_fail"),
+    boolean verifyCrossChainMsgACL(String ownerDomain, String ownerIdHex, String grantDomain, String grantIdHex);
 
-    MSG_REJECTED("am_msg_rejected"),
+    void addCrossChainMsgACL(CrossChainMsgACLItem crossChainMsgACLItem);
 
-    TX_PENDING("tx_pending"),
+    void delCrossChainMsgACL(String bizId);
 
-    TX_SUCCESS("tx_success"),
-
-    TX_FAILED("tx_fail");
-
-    @EnumValue
-    private final String code;
+    CrossChainMsgACLItem getCrossChainMsgACL(String bizId);
 }

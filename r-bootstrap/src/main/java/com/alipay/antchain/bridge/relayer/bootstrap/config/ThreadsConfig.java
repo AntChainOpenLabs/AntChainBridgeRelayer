@@ -41,6 +41,12 @@ public class ThreadsConfig {
     @Value("${relayer.network.node.client.threads.total_size:64}")
     private int wsRelayerClientTotalSize;
 
+    @Value("${relayer.service.process.threads.core_size:32}")
+    private int processServiceCoreSize;
+
+    @Value("${relayer.service.process.threads.total_size:64}")
+    private int processServiceTotalSize;
+
     @Bean(name = "wsRelayerServerExecutorService")
     public ExecutorService wsRelayerServerExecutorService() {
         return new ThreadPoolExecutor(
@@ -48,7 +54,7 @@ public class ThreadsConfig {
                 wsRelayerServerTotalSize,
                 0L,
                 TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<Runnable>(10000),
+                new ArrayBlockingQueue<>(10000),
                 new ThreadFactoryBuilder().setNameFormat("ws-relayer-server-worker-%d").build(),
                 new ThreadPoolExecutor.AbortPolicy()
         );
@@ -61,8 +67,21 @@ public class ThreadsConfig {
                 wsRelayerClientTotalSize,
                 0L,
                 TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<Runnable>(10000),
+                new ArrayBlockingQueue<>(10000),
                 new ThreadFactoryBuilder().setNameFormat("ws-relayer-client-worker-%d").build(),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+    }
+
+    @Bean(name = "processServiceThreadsPool")
+    public ExecutorService processServiceThreadsPool() {
+        return new ThreadPoolExecutor(
+                processServiceCoreSize,
+                processServiceTotalSize,
+                1000,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(10000),
+                new ThreadFactoryBuilder().setNameFormat("Process-worker-%d").build(),
                 new ThreadPoolExecutor.AbortPolicy()
         );
     }

@@ -24,8 +24,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.cache.Cache;
+import cn.hutool.cache.CacheUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
@@ -47,6 +50,7 @@ import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,11 +69,26 @@ public class BlockchainRepository implements IBlockchainRepository {
     @Resource
     private RedissonClient redissonClient;
 
-    @Value("${anchor.process.cache.heights.ttl:240000}")
+    @Value("${anchor.process.cache.heights.ttl:240_000}")
     private long ttlForHeightsCache;
 
     @Value("${anchor.process.cache.flush.period:0}")
     private long flushPeriodForHeightsCache;
+
+    @Value("${relayer.cache.domain_cert.ttl:10000}")
+    private long domainCertCacheTTL;
+
+    @Value("${relayer.cache.domain_cert.ttl:3000}")
+    private long blockchainMetaCacheTTL;
+
+    @Resource
+    private Cache<String, DomainCertWrapper> domainCertWrapperCache;
+
+    @Resource
+    private Cache<String, BlockchainMeta> blockchainMetaCache;
+
+    @Resource
+    private Cache<String, String> blockchainIdToDomainCache;
 
     @Override
     public Long getAnchorProcessHeight(String product, String blockchainId, String heightType) {
@@ -161,6 +180,7 @@ public class BlockchainRepository implements IBlockchainRepository {
                     blockchainMeta.getDesc(),
                     blockchainMeta.getProperties().encode()
             );
+            blockchainMetaCache.put(blockchainMeta.getBlockchainId(), blockchainMeta);
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
@@ -174,15 +194,21 @@ public class BlockchainRepository implements IBlockchainRepository {
 
     @Override
     public boolean updateBlockchainMeta(BlockchainMeta blockchainMeta) {
-        return blockchainService.getBaseMapper().update(
-                BlockchainEntity.builder()
-                        .alias(blockchainMeta.getAlias())
-                        .desc(blockchainMeta.getDesc())
-                        .properties(blockchainMeta.getProperties().encode())
-                        .build(),
-                new LambdaUpdateWrapper<BlockchainEntity>()
-                        .eq(BlockchainEntity::getBlockchainId, "test")
-        ) == 1;
+        if (
+                blockchainService.getBaseMapper().update(
+                        BlockchainEntity.builder()
+                                .alias(blockchainMeta.getAlias())
+                                .desc(blockchainMeta.getDesc())
+                                .properties(blockchainMeta.getProperties().encode())
+                                .build(),
+                        new LambdaUpdateWrapper<BlockchainEntity>()
+                                .eq(BlockchainEntity::getBlockchainId, "test")
+                ) == 1
+        ) {
+            blockchainMetaCache.put(blockchainMeta.getBlockchainId(), blockchainMeta);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -216,11 +242,20 @@ public class BlockchainRepository implements IBlockchainRepository {
     @Override
     public BlockchainMeta getBlockchainMetaByDomain(String domain) {
         try {
+            if (blockchainMetaCache.containsKey(getDomainBlockchainMetaCacheKey(domain))) {
+                return blockchainMetaCache.get(getDomainBlockchainMetaCacheKey(domain));
+            }
+
             BlockchainEntity blockchainEntity = blockchainService.getBaseMapper().queryBlockchainByDomain(domain);
             if (ObjectUtil.isNull(blockchainEntity)) {
                 return null;
             }
-            return ConvertUtil.convertFromBlockchainEntity(blockchainEntity);
+            BlockchainMeta blockchainMeta = ConvertUtil.convertFromBlockchainEntity(blockchainEntity);
+            blockchainMetaCache.put(getDomainBlockchainMetaCacheKey(domain), blockchainMeta);
+            if (StrUtil.isAllNotEmpty(domain, blockchainEntity.getBlockchainId())) {
+                blockchainIdToDomainCache.put(blockchainEntity.getBlockchainId(), domain);
+            }
+            return blockchainMeta;
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
@@ -228,6 +263,37 @@ public class BlockchainRepository implements IBlockchainRepository {
                     "failed to query blockchains from DB with domain {}", domain
             );
         }
+    }
+
+    @Override
+    public boolean hasBlockchain(String domain) {
+        String blockchainId;
+        if (domainCertWrapperCache.containsKey(domain)) {
+            blockchainId = domainCertWrapperCache.get(domain).getBlockchainId();
+        } else {
+            DomainCertEntity domainCertEntity = domainCertMapper.selectOne(
+                    new LambdaQueryWrapper<DomainCertEntity>()
+                            .select(ListUtil.toList(DomainCertEntity::getBlockchainId))
+                            .eq(DomainCertEntity::getDomain, domain)
+            );
+            if (ObjectUtil.isNull(domainCertEntity)) {
+                return false;
+            }
+            blockchainId = domainCertEntity.getBlockchainId();
+        }
+
+        if (StrUtil.isAllNotEmpty(domain, blockchainId)) {
+            blockchainIdToDomainCache.put(blockchainId, domain);
+        }
+
+        if (blockchainMetaCache.containsKey(getDomainBlockchainMetaCacheKey(domain))) {
+            return true;
+        }
+
+        return blockchainService.getBaseMapper().exists(
+                new LambdaQueryWrapper<BlockchainEntity>()
+                        .eq(BlockchainEntity::getBlockchainId, blockchainId)
+        );
     }
 
     @Override
@@ -253,6 +319,10 @@ public class BlockchainRepository implements IBlockchainRepository {
 
     @Override
     public BlockchainMeta getBlockchainMeta(String product, String blockchainId) {
+        if (blockchainMetaCache.containsKey(blockchainId)) {
+            return blockchainMetaCache.get(blockchainId);
+        }
+
         BlockchainEntity blockchainEntity = blockchainService.lambdaQuery()
                 .eq(BlockchainEntity::getProduct, product)
                 .eq(BlockchainEntity::getBlockchainId, blockchainId)
@@ -268,12 +338,18 @@ public class BlockchainRepository implements IBlockchainRepository {
         if (ObjectUtil.isNull(blockchainEntity)) {
             return null;
         }
-        return ConvertUtil.convertFromBlockchainEntity(blockchainEntity);
+        BlockchainMeta blockchainMeta = ConvertUtil.convertFromBlockchainEntity(blockchainEntity);
+        blockchainMetaCache.put(blockchainId, blockchainMeta);
+        return blockchainMeta;
     }
 
     @Override
     public boolean hasBlockchain(String product, String blockchainId) {
         try {
+            if (blockchainMetaCache.containsKey(blockchainId)) {
+                return true;
+            }
+
             return blockchainService.exists(
                     new LambdaQueryWrapper<BlockchainEntity>()
                             .eq(BlockchainEntity::getProduct, product)
@@ -293,6 +369,9 @@ public class BlockchainRepository implements IBlockchainRepository {
     @Override
     public String getBlockchainDomain(String product, String blockchainId) {
         try {
+            if (blockchainIdToDomainCache.containsKey(blockchainId)) {
+                return blockchainIdToDomainCache.get(blockchainId);
+            }
             DomainCertEntity entity = domainCertMapper.selectOne(
                     new LambdaQueryWrapper<DomainCertEntity>()
                             .eq(DomainCertEntity::getProduct, product)
@@ -301,6 +380,9 @@ public class BlockchainRepository implements IBlockchainRepository {
             if (ObjectUtil.isNull(entity)) {
                 return "";
             }
+
+            blockchainIdToDomainCache.put(blockchainId, entity.getDomain());
+
             return entity.getDomain();
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
@@ -355,6 +437,10 @@ public class BlockchainRepository implements IBlockchainRepository {
     @Override
     public DomainCertWrapper getDomainCert(String domain) {
         try {
+            if (domainCertWrapperCache.containsKey(domain)) {
+                return domainCertWrapperCache.get(domain);
+            }
+
             DomainCertEntity entity = domainCertMapper.selectOne(
                     new LambdaQueryWrapper<DomainCertEntity>()
                             .eq(DomainCertEntity::getDomain, domain)
@@ -362,7 +448,11 @@ public class BlockchainRepository implements IBlockchainRepository {
             if (ObjectUtil.isNull(entity)) {
                 return null;
             }
-            return ConvertUtil.convertFromDomainCertEntity(entity);
+
+            DomainCertWrapper domainCertWrapper = ConvertUtil.convertFromDomainCertEntity(entity);
+            domainCertWrapperCache.put(domain, domainCertWrapper);
+
+            return domainCertWrapper;
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
@@ -432,5 +522,24 @@ public class BlockchainRepository implements IBlockchainRepository {
     private void setAnchorProcessHeightsToCache(AnchorProcessHeights heights) {
         redissonClient.getBucket(AnchorProcessHeights.getKey(heights.getProduct(), heights.getBlockchainId()), ByteArrayCodec.INSTANCE)
                 .set(heights.encode(), Duration.of(ttlForHeightsCache, ChronoUnit.MILLIS));
+    }
+
+    private String getDomainBlockchainMetaCacheKey(String domain) {
+        return "%domain%" + domain;
+    }
+
+    @Bean
+    public Cache<String, DomainCertWrapper> domainCertWrapperCache() {
+        return CacheUtil.newLRUCache(30, domainCertCacheTTL);
+    }
+
+    @Bean
+    public Cache<String, BlockchainMeta> blockchainMetaCache() {
+        return CacheUtil.newLRUCache(30, blockchainMetaCacheTTL);
+    }
+
+    @Bean
+    public Cache<String, String> blockchainIdToDomainCache() {
+        return CacheUtil.newLRUCache(30);
     }
 }

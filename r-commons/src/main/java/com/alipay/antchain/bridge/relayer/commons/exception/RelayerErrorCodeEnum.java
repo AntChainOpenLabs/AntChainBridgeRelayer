@@ -69,7 +69,11 @@ public enum RelayerErrorCodeEnum {
 
     CORE_RELAYER_NETWORK_ERROR("0205", "relayer network error"),
 
-    SERVER_REQUEST_FROM_RELAYER_REJECT("0301", "relayer request rejected"),
+    SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED("0301", "process auth msg failed"),
+
+    SERVICE_CORE_PROCESS_PROCESS_CCMSG_FAILED("0302", "process service failed"),
+
+    SERVER_REQUEST_FROM_RELAYER_REJECT("0401", "relayer request rejected"),
 
     /**
      *

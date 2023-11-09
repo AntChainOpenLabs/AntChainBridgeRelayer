@@ -20,6 +20,7 @@ import java.util.Map;
 
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.HexUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.commons.core.am.AuthMessageFactory;
 import com.alipay.antchain.bridge.commons.core.am.AuthMessageV2;
@@ -81,9 +82,9 @@ public class AuthMsgWrapper {
 
     private long authMsgId;
 
-    private String product;
+    private String product = StrUtil.EMPTY;
 
-    private String blockchainId;
+    private String blockchainId = StrUtil.EMPTY;
 
     private String domain;
 
@@ -104,6 +105,8 @@ public class AuthMsgWrapper {
     private IAuthMessage authMessage;
 
     private Map<String, String> ledgerInfo = MapUtil.newHashMap();
+
+    private boolean isNetworkAM;
 
     public AuthMsgWrapper(
             String product,

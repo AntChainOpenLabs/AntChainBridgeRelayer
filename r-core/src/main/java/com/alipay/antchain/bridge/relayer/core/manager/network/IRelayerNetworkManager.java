@@ -107,13 +107,17 @@ public interface IRelayerNetworkManager {
      */
     RelayerNetwork findNetworkByDomainName(String domainName);
 
+    //**********************************************
+    // relayer 网络管理
+    //**********************************************
+
     /**
-     * 新建Relayer网络
+     * 查找domain name所在的网络
      *
-     * @param network
+     * @param domainName
      * @return
      */
-    boolean addRelayerNetwork(RelayerNetwork network);
+    RelayerNetwork.Item findNetworkItemByDomainName(String domainName);
 
     /**
      * 往Relayer网络新增路由信息
@@ -151,13 +155,6 @@ public interface IRelayerNetworkManager {
      * @return
      */
     RelayerNetwork getRelayerNetwork(String networkId);
-
-    /**
-     * 获取所有Relayer网络
-     *
-     * @return
-     */
-    List<RelayerNetwork> getRelayerNetworks();
 
     /**
      * 获取domain对应的relayer的Node Info
@@ -198,7 +195,7 @@ public interface IRelayerNetworkManager {
     /**
      * 在amRequest和udagRequest的时候，从发现中心获取域名对应的relayer信息，
      * 尝试握手获取并验证对应的信息，存储域名到数据库。
-     *
+     *     TODO: <a href="https://crosschain.yuque.com/org-wiki-crosschain-zvbyzk/zg3xnv/pguzbyb4r4obpxfb#Da3Vt">Need to implement</a>
      * @param domainName
      * @return
      */

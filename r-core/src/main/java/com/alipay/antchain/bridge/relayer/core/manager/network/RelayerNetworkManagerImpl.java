@@ -357,42 +357,70 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
 
     @Override
     public RelayerNetwork findNetworkByDomainName(String domainName) {
-        return null;
+        return relayerNetworkRepository.getRelayerNetworkByDomain(domainName);
     }
 
     @Override
-    public boolean addRelayerNetwork(RelayerNetwork network) {
-        return false;
+    public RelayerNetwork.Item findNetworkItemByDomainName(String domainName) {
+        return relayerNetworkRepository.getNetworkItem(domainName);
     }
 
     @Override
     public boolean addRelayerNetworkItem(String networkId, String domain, String nodeId) {
-        return false;
+        return addRelayerNetworkItem(
+                networkId,
+                domain,
+                nodeId,
+                RelayerNodeSyncStateEnum.INIT
+        );
     }
 
     @Override
     public boolean addRelayerNetworkItem(String networkId, String domain, String nodeId, RelayerNodeSyncStateEnum syncState) {
-        return false;
+        try {
+            relayerNetworkRepository.addNetworkItem(
+                    networkId,
+                    domain,
+                    nodeId,
+                    syncState
+            );
+        } catch (Exception e) {
+            log.error(
+                    "failed to add network item (network_id: {}, domain: {}, node_id: {}, state: {})",
+                    networkId, domain, nodeId, syncState.getCode(),
+                    e
+            );
+            return false;
+        }
+        return true;
     }
 
     @Override
     public boolean deleteRelayerNetworkItem(String domain, String nodeId) {
-        return false;
+        try {
+            relayerNetworkRepository.deleteNetworkItem(domain, nodeId);
+        } catch (Exception e) {
+            log.error("failed to delete relayer network (domain: {}, node_id: {})", domain, nodeId, e);
+            return false;
+        }
+        return true;
     }
 
     @Override
     public RelayerNetwork getRelayerNetwork(String networkId) {
-        return null;
+        return relayerNetworkRepository.getRelayerNetwork(networkId);
     }
 
     @Override
-    public List<RelayerNetwork> getRelayerNetworks() {
-        return null;
-    }
-
-    @Override
+    @Transactional
     public RelayerNodeInfo getRelayerNodeInfoForDomain(String domain) {
-        return null;
+        String remoteNodeId = relayerNetworkRepository.getRelayerNodeIdForDomain(domain);
+        if (StrUtil.isEmpty(remoteNodeId)) {
+            return relayerNetworkRepository.getRelayerNode(remoteNodeId);
+        }
+
+        RelayerNodeInfo localRelayerNodeInfo = getRelayerNodeInfo();
+        return localRelayerNodeInfo.getDomains().contains(domain) ? localRelayerNodeInfo : null;
     }
 
     @Override
@@ -402,17 +430,17 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
 
     @Override
     public void registerDomainToDiscoveryServer(RelayerNodeInfo nodeInfo, String networkId) throws Exception {
-
+        throw new RuntimeException("not implemented");
     }
 
     @Override
     public void updateDomainToDiscoveryServer(RelayerNodeInfo nodeInfo) throws Exception {
-
+        throw new RuntimeException("not implemented");
     }
 
     @Override
     public void deleteDomainToDiscoveryServer(RelayerNodeInfo nodeInfo) throws Exception {
-
+        throw new RuntimeException("not implemented");
     }
 
     @Override
@@ -427,7 +455,7 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
 
     @Override
     public List<RelayerHealthInfo> healthCheckRelayers() {
-        return null;
+        return relayerNetworkRepository.getAllRelayerHealthInfo();
     }
 
     @Override

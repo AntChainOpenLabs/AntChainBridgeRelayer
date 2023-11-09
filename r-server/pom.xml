@@ -20,7 +20,7 @@
     <dependencies>
         <dependency>
             <groupId>com.alipay.antchain.bridge</groupId>
-            <artifactId>r-service</artifactId>
+            <artifactId>r-core</artifactId>
         </dependency>
     </dependencies>
 

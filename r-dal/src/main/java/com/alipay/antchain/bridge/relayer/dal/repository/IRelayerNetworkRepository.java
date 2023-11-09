@@ -32,6 +32,8 @@ public interface IRelayerNetworkRepository {
 
     RelayerNetwork.Item getNetworkItem(String networkId, String domain, String nodeId);
 
+    RelayerNetwork.Item getNetworkItem(String domain);
+
     void addNetworkItem(String networkId, String domain, String nodeId, RelayerNodeSyncStateEnum syncState);
 
     boolean updateNetworkItem(String networkId, String domain, String nodeId, RelayerNodeSyncStateEnum syncState);
@@ -43,6 +45,8 @@ public interface IRelayerNetworkRepository {
     List<RelayerNetwork> getAllNetworks();
 
     RelayerNetwork getRelayerNetwork(String networkId);
+
+    RelayerNetwork getRelayerNetworkByDomain(String domain);
 
     String getRelayerNodeIdForDomain(String domain);
 
