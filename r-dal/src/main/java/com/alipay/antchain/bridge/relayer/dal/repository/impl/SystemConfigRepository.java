@@ -22,7 +22,6 @@ import java.util.concurrent.locks.Lock;
 import javax.annotation.Resource;
 
 import cn.hutool.cache.Cache;
-import cn.hutool.cache.CacheUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -57,7 +56,8 @@ public class SystemConfigRepository implements ISystemConfigRepository {
     @Value("${relayer.network.id:1}")
     private String networkIdInConfig;
 
-    private final Cache<String, String> systemConfigCache = CacheUtil.newLFUCache(100);
+    @Resource(name = "systemConfigCache")
+    private Cache<String, String> systemConfigCache;
 
     @Override
     public String getSystemConfig(String key) {

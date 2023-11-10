@@ -27,7 +27,7 @@ import com.alipay.antchain.bridge.commons.utils.codec.tlv.TLVTypeEnum;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.TLVUtils;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.annotation.TLVField;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
-import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -58,38 +58,38 @@ public class RelayerResponse {
 
     public static RelayerResponse createSuccessResponse(
             IResponsePayload payload,
-            IRelayerNetworkManager relayerNetworkManager
+            IRelayerCredentialManager relayerCredentialManager
     ) {
         return createResponse(
                 SUCCESS,
                 "",
                 payload,
-                relayerNetworkManager
+                relayerCredentialManager
         );
     }
 
     public static RelayerResponse createFailureResponse(
             String errorMsg,
             IResponsePayload payload,
-            IRelayerNetworkManager relayerNetworkManager
+            IRelayerCredentialManager relayerCredentialManager
     ) {
         return createResponse(
                 FAILED,
                 errorMsg,
                 payload,
-                relayerNetworkManager
+                relayerCredentialManager
         );
     }
 
     public static RelayerResponse createFailureResponse(
             String errorMsg,
-            IRelayerNetworkManager relayerNetworkManager
+            IRelayerCredentialManager relayerCredentialManager
     ) {
         return createResponse(
                 FAILED,
                 errorMsg,
                 null,
-                relayerNetworkManager
+                relayerCredentialManager
         );
     }
 
@@ -97,13 +97,13 @@ public class RelayerResponse {
             int errorCode,
             String message,
             IResponsePayload payload,
-            IRelayerNetworkManager relayerNetworkManager
+            IRelayerCredentialManager relayerCredentialManager
     ) {
         RelayerResponse relayerResponse = new RelayerResponse();
         relayerResponse.setResponseCode(errorCode);
         relayerResponse.setResponseMessage(message);
         relayerResponse.setResponsePayload(ObjectUtil.isNull(payload) ? "" : payload.encode());
-        relayerNetworkManager.signRelayerResponse(relayerResponse);
+        relayerCredentialManager.signRelayerResponse(relayerResponse);
 
         return relayerResponse;
     }

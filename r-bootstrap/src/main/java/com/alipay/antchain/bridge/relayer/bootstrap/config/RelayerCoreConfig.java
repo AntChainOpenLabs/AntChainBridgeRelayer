@@ -17,6 +17,7 @@
 package com.alipay.antchain.bridge.relayer.bootstrap.config;
 
 import java.io.ByteArrayInputStream;
+import java.security.PrivateKey;
 import java.util.concurrent.*;
 import javax.annotation.Resource;
 
@@ -27,18 +28,14 @@ import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
+import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.GRpcBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
-import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
+import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
-import com.alipay.antchain.bridge.relayer.core.manager.network.RelayerNetworkManagerImpl;
-import com.alipay.antchain.bridge.relayer.core.types.network.RelayerClientPool;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
-import com.alipay.antchain.bridge.relayer.server.network.WSRelayerServer;
-import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository;
-import com.alipay.antchain.bridge.relayer.dal.repository.IRelayerNetworkRepository;
-import com.alipay.antchain.bridge.relayer.dal.repository.ISystemConfigRepository;
+import com.alipay.antchain.bridge.relayer.server.network.WSRelayerServer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,9 +66,6 @@ public class RelayerCoreConfig {
     @Value("${relayer.plugin_server_manager.grpc.heartbeat.error_limit:5}")
     private int errorLimitForHeartbeat;
 
-    @Value("${relayer.network.node.sig_algo:SHA256WithRSA}")
-    private String sigAlgo;
-
     @Value("${relayer.network.node.crosschain_cert_path:null}")
     private String relayerCrossChainCertPath;
 
@@ -92,6 +86,29 @@ public class RelayerCoreConfig {
 
     @Resource
     private TransactionTemplate transactionTemplate;
+
+    public AbstractCrossChainCertificate getLocalRelayerCrossChainCertificate() {
+        AbstractCrossChainCertificate relayerCertificate = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+                FileUtil.readBytes(relayerCrossChainCertPath)
+        );
+        Assert.equals(
+                CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
+                relayerCertificate.getType()
+        );
+        return relayerCertificate;
+    }
+
+    public RelayerCredentialSubject getLocalRelayerCredentialSubject() {
+        return RelayerCredentialSubject.decode(getLocalRelayerCrossChainCertificate().getCredentialSubject());
+    }
+
+    public PrivateKey getLocalPrivateKey() {
+        return PemUtil.readPemPrivateKey(new ByteArrayInputStream(FileUtil.readBytes(relayerPrivateKeyPath)));
+    }
+
+    public String getLocalRelayerNodeId() {
+        return RelayerNodeInfo.calculateNodeId(getLocalRelayerCrossChainCertificate());
+    }
 
     @Bean
     @Autowired
@@ -121,41 +138,11 @@ public class RelayerCoreConfig {
 
     @Bean
     @Autowired
-    public IRelayerNetworkManager relayerNetworkManager(
-            IRelayerNetworkRepository relayerNetworkRepository,
-            IBlockchainRepository blockchainRepository,
-            ISystemConfigRepository systemConfigRepository,
-            IBCDNSManager bcdnsManager,
-            RelayerClientPool relayerClientPool
-    ) {
-        AbstractCrossChainCertificate relayerCertificate = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
-                FileUtil.readBytes(relayerCrossChainCertPath)
-        );
-        Assert.equals(
-                CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
-                relayerCertificate.getType()
-        );
-
-        return new RelayerNetworkManagerImpl(
-                sigAlgo,
-                localNodeServerMode,
-                relayerCertificate,
-                RelayerCredentialSubject.decode(relayerCertificate.getCredentialSubject()),
-                PemUtil.readPemPrivateKey(new ByteArrayInputStream(FileUtil.readBytes(relayerPrivateKeyPath))),
-                relayerNetworkRepository,
-                blockchainRepository,
-                systemConfigRepository,
-                bcdnsManager,
-                relayerClientPool
-        );
-    }
-
-    @Bean
-    @Autowired
     public WSRelayerServer wsRelayerServer(
             @Qualifier("wsRelayerServerExecutorService") ExecutorService wsRelayerServerExecutorService,
             WsSslFactory wsSslFactory,
-            IRelayerNetworkManager relayerNetworkManager
+            IRelayerNetworkManager relayerNetworkManager,
+            IRelayerCredentialManager relayerCredentialManager
     ) {
         try {
             return new WSRelayerServer(
@@ -165,6 +152,7 @@ public class RelayerCoreConfig {
                     wsRelayerServerExecutorService,
                     wsSslFactory,
                     relayerNetworkManager,
+                    relayerCredentialManager,
                     isDiscoveryService
             );
         } catch (Exception e) {

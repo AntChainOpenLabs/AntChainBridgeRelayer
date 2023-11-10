@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.cache.Cache;
-import cn.hutool.cache.CacheUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -50,7 +49,6 @@ import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,17 +67,11 @@ public class BlockchainRepository implements IBlockchainRepository {
     @Resource
     private RedissonClient redissonClient;
 
-    @Value("${anchor.process.cache.heights.ttl:240_000}")
+    @Value("${anchor.process.cache.heights.ttl:240000}")
     private long ttlForHeightsCache;
 
     @Value("${anchor.process.cache.flush.period:0}")
     private long flushPeriodForHeightsCache;
-
-    @Value("${relayer.cache.domain_cert.ttl:10000}")
-    private long domainCertCacheTTL;
-
-    @Value("${relayer.cache.domain_cert.ttl:3000}")
-    private long blockchainMetaCacheTTL;
 
     @Resource
     private Cache<String, DomainCertWrapper> domainCertWrapperCache;
@@ -87,7 +79,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     @Resource
     private Cache<String, BlockchainMeta> blockchainMetaCache;
 
-    @Resource
+    @Resource(name = "blockchainIdToDomainCache")
     private Cache<String, String> blockchainIdToDomainCache;
 
     @Override
@@ -526,20 +518,5 @@ public class BlockchainRepository implements IBlockchainRepository {
 
     private String getDomainBlockchainMetaCacheKey(String domain) {
         return "%domain%" + domain;
-    }
-
-    @Bean
-    public Cache<String, DomainCertWrapper> domainCertWrapperCache() {
-        return CacheUtil.newLRUCache(30, domainCertCacheTTL);
-    }
-
-    @Bean
-    public Cache<String, BlockchainMeta> blockchainMetaCache() {
-        return CacheUtil.newLRUCache(30, blockchainMetaCacheTTL);
-    }
-
-    @Bean
-    public Cache<String, String> blockchainIdToDomainCache() {
-        return CacheUtil.newLRUCache(30);
     }
 }

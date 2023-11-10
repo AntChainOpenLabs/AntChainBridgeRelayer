@@ -22,7 +22,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
-import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.*;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.HandshakeRespPayload;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.RelayerResponse;
@@ -40,17 +40,17 @@ public abstract class BaseRelayerClient implements RelayerClient {
 
     private RelayerNodeInfo remoteNodeInfo;
 
-    private IRelayerNetworkManager relayerNetworkManager;
+    private IRelayerCredentialManager relayerCredentialManager;
 
     private String defaultNetworkId;
 
     public BaseRelayerClient(
             RelayerNodeInfo remoteNodeInfo,
-            IRelayerNetworkManager relayerNetworkManager,
+            IRelayerCredentialManager relayerCredentialManager,
             String defaultNetworkId
     ) {
         this.remoteNodeInfo = remoteNodeInfo;
-        this.relayerNetworkManager = relayerNetworkManager;
+        this.relayerCredentialManager = relayerCredentialManager;
         this.defaultNetworkId = defaultNetworkId;
     }
 
@@ -69,7 +69,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
     @Override
     public RelayerNodeInfo getRelayerNodeInfo() {
         RelayerRequest request = new GetRelayerNodeInfoRelayerRequest();
-        relayerNetworkManager.signRelayerRequest(request);
+        relayerCredentialManager.signRelayerRequest(request);
 
         RelayerResponse response = validateRelayerResponse(sendRequest(request));
         if (ObjectUtil.isNull(response) || !response.isSuccess()) {
@@ -87,7 +87,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
     @Override
     public RelayerBlockchainInfo getRelayerBlockchainInfo(String domainToQuery) {
         RelayerRequest request = new GetRelayerBlockchainInfoRelayerRequest(domainToQuery);
-        relayerNetworkManager.signRelayerRequest(request);
+        relayerCredentialManager.signRelayerRequest(request);
 
         RelayerResponse response = validateRelayerResponse(sendRequest(request));
         if (ObjectUtil.isNull(response) || !response.isSuccess()) {
@@ -107,7 +107,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
     @Override
     public RelayerBlockchainContent getRelayerBlockchainContent() {
         RelayerRequest request = new GetRelayerBlockchainContentRelayerRequest();
-        relayerNetworkManager.signRelayerRequest(request);
+        relayerCredentialManager.signRelayerRequest(request);
 
         RelayerResponse response = validateRelayerResponse(sendRequest(request));
         if (ObjectUtil.isNull(response) || !response.isSuccess()) {
@@ -132,7 +132,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
                 domainName,
                 ledgerInfo
         );
-        relayerNetworkManager.signRelayerRequest(request);
+        relayerCredentialManager.signRelayerRequest(request);
 
         RelayerResponse response = validateRelayerResponse(sendRequest(request));
         if (ObjectUtil.isNull(response)) {
@@ -193,7 +193,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
     }
 
     private RelayerResponse validateRelayerResponse(RelayerResponse relayerResponse) {
-        if (relayerNetworkManager.validateRelayerResponse(relayerResponse)) {
+        if (relayerCredentialManager.validateRelayerResponse(relayerResponse)) {
             throw new RuntimeException(
                     StrUtil.format(
                             "response from relayer {} sig is invalid",

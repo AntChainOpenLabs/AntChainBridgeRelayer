@@ -7,6 +7,7 @@ import javax.annotation.Resource;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
+import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.client.WSRelayerClient;
@@ -14,10 +15,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class RelayerClientPool {
+public class RelayerClientPool implements IRelayerClientPool {
 
     @Resource
-    private IRelayerNetworkManager relayerNetworkManager;
+    private IRelayerCredentialManager relayerCredentialManager;
 
     @Resource(name = "wsRelayerClientThreadsPool")
     private ExecutorService wsRelayerClientThreadsPool;
@@ -36,7 +37,7 @@ public class RelayerClientPool {
             if (!clientMap.containsKey(remoteRelayerNodeInfo.getNodeId())) {
                 WSRelayerClient client = new WSRelayerClient(
                         remoteRelayerNodeInfo,
-                        relayerNetworkManager,
+                        relayerCredentialManager,
                         defaultNetworkId,
                         wsRelayerClientThreadsPool,
                         wsSslFactory.getSslContext().getSocketFactory()

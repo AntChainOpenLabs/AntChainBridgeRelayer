@@ -25,7 +25,7 @@ import javax.xml.ws.BindingProvider;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
-import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.BaseRelayerClient;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.RelayerRequest;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.RelayerResponse;
@@ -45,12 +45,12 @@ public class WSRelayerClient extends BaseRelayerClient {
 
     public WSRelayerClient(
             RelayerNodeInfo remoteNodeInfo,
-            IRelayerNetworkManager relayerNetworkManager,
+            IRelayerCredentialManager relayerCredentialManager,
             String defaultNetworkId,
             ExecutorService workers,
             SSLSocketFactory sslSocketFactory
     ) {
-        super(remoteNodeInfo, relayerNetworkManager, defaultNetworkId);
+        super(remoteNodeInfo, relayerCredentialManager, defaultNetworkId);
         this.workers = workers;
         this.sslSocketFactory = sslSocketFactory;
     }

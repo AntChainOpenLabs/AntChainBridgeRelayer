@@ -17,6 +17,7 @@
 package com.alipay.antchain.bridge.relayer.server.network;
 
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
+import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.RelayerRequestType;
 import lombok.Getter;
@@ -35,6 +36,8 @@ public abstract class BaseRelayerServer {
 
     private IRelayerNetworkManager relayerNetworkManager;
 
+    private IRelayerCredentialManager relayerCredentialManager;
+
     private boolean isDiscoveryServer;
 
     private String defaultNetworkId;
@@ -43,10 +46,12 @@ public abstract class BaseRelayerServer {
 
     public BaseRelayerServer(
             IRelayerNetworkManager relayerNetworkManager,
+            IRelayerCredentialManager relayerCredentialManager,
             String defaultNetworkId,
             boolean isDiscoveryServer
     ) {
         this.relayerNetworkManager = relayerNetworkManager;
+        this.relayerCredentialManager = relayerCredentialManager;
         this.defaultNetworkId = defaultNetworkId;
         this.isDiscoveryServer = isDiscoveryServer;
 //        ServiceManagerModule serviceManagerModule = ServerContext.getInstance().getServerModule(

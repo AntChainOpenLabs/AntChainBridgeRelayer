@@ -17,7 +17,7 @@ import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.manager.gov.IGovernManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
-import com.alipay.antchain.bridge.relayer.core.types.network.RelayerClientPool;
+import com.alipay.antchain.bridge.relayer.core.types.network.IRelayerClientPool;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.impl.BlockchainIdleDCache;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +51,7 @@ public class AuthenticMessageProcess {
     private BlockchainIdleDCache blockchainIdleDCache;
 
     @Resource
-    private RelayerClientPool relayerClientPool;
+    private IRelayerClientPool relayerClientPool;
 
     @Value("${relayer.service.process.sdp.acl_on:true}")
     private boolean sdpACLOn;

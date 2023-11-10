@@ -26,6 +26,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
+import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.exception.RejectRequestException;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.*;
@@ -42,10 +43,11 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
     public WSRelayerServerAPImpl(
             IRelayerNetworkManager relayerNetworkManager,
+            IRelayerCredentialManager relayerCredentialManager,
             String defaultNetworkId,
             boolean isDiscoveryServer
     ) {
-        super(relayerNetworkManager, defaultNetworkId, isDiscoveryServer);
+        super(relayerNetworkManager, relayerCredentialManager, defaultNetworkId, isDiscoveryServer);
     }
 
     @Override
@@ -77,7 +79,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                 log.error("Invalid relayer request that failed to decode");
                 return RelayerResponse.createFailureResponse(
                         "failed to decode request",
-                        getRelayerNetworkManager()
+                        getRelayerCredentialManager()
                 ).encode();
             }
 
@@ -85,7 +87,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                 log.error("Invalid relayer request from relayer {} that sending request about Discovery Service", request.calcRelayerNodeId());
                 return RelayerResponse.createFailureResponse(
                         "node you connected isn't a relayer discovery server",
-                        getRelayerNetworkManager()
+                        getRelayerCredentialManager()
                 ).encode();
             }
 
@@ -111,14 +113,14 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                 default:
                     return RelayerResponse.createFailureResponse(
                             "request type not supported: " + request.getRequestType().getCode(),
-                            getRelayerNetworkManager()
+                            getRelayerCredentialManager()
                     ).encode();
             }
         } catch (Exception e) {
             log.error("unexpected exception happened: ", e);
             return RelayerResponse.createFailureResponse(
                     "unexpected exception happened",
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             ).encode();
         }
     }
@@ -126,16 +128,16 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
     private RelayerResponse processGetRelayerNodeInfo() {
         return RelayerResponse.createSuccessResponse(
                 () -> Base64.encode(getRelayerNetworkManager().getRelayerNodeInfo().getEncode()),
-                getRelayerNetworkManager()
+                getRelayerCredentialManager()
         );
     }
 
     private RelayerResponse processGetRelayerBlockchainInfo(GetRelayerBlockchainInfoRelayerRequest request) {
-        if (!getRelayerNetworkManager().validateRelayerRequest(request)) {
+        if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
             log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
                     "verify sig failed",
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             );
         }
 
@@ -148,28 +150,28 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
             log.error("failed to query blockchain info for domain {}", request.getDomainToQuery(), e);
             return RelayerResponse.createFailureResponse(
                     e.getMsg(),
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             );
         }
         if (ObjectUtil.isNull(blockchainInfo)) {
             return RelayerResponse.createFailureResponse(
                     "empty result",
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             );
         }
 
         return RelayerResponse.createSuccessResponse(
                 blockchainInfo::encode,
-                getRelayerNetworkManager()
+                getRelayerCredentialManager()
         );
     }
 
     private RelayerResponse processGetRelayerBlockchainContent(GetRelayerBlockchainContentRelayerRequest request) {
-        if (!getRelayerNetworkManager().validateRelayerRequest(request)) {
+        if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
             log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
                     "verify sig failed",
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             );
         }
 
@@ -181,28 +183,28 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
             log.error("failed to query local blockchain content", e);
             return RelayerResponse.createFailureResponse(
                     e.getMsg(),
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             );
         }
         if (ObjectUtil.isNull(blockchainContent)) {
             return RelayerResponse.createFailureResponse(
                     "empty result",
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             );
         }
 
         return RelayerResponse.createSuccessResponse(
                 blockchainContent::encodeToJson,
-                getRelayerNetworkManager()
+                getRelayerCredentialManager()
         );
     }
 
     private RelayerResponse processAMRequest(AMRelayerRequest request) {
-        if (!getRelayerNetworkManager().validateRelayerRequest(request)) {
+        if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
             log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
                     "verify sig failed",
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             );
         }
 
@@ -221,7 +223,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
             );
             return RelayerResponse.createFailureResponse(
                     e.getErrorMsg(),
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             );
         } catch (AntChainBridgeRelayerException e) {
             log.error(
@@ -231,7 +233,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
             );
             return RelayerResponse.createFailureResponse(
                     e.getMsg(),
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             );
         }
 
@@ -239,16 +241,16 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
         return RelayerResponse.createSuccessResponse(
                 () -> null,
-                getRelayerNetworkManager()
+                getRelayerCredentialManager()
         );
     }
 
     private RelayerResponse processHandshakeRequest(HandshakeRelayerRequest request) {
-        if (!getRelayerNetworkManager().validateRelayerRequest(request)) {
+        if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
             log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
                     "verify sig failed",
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             );
         }
 
@@ -265,7 +267,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
             );
             return RelayerResponse.createFailureResponse(
                     e.getMsg(),
-                    getRelayerNetworkManager()
+                    getRelayerCredentialManager()
             );
         }
 
@@ -278,7 +280,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                                 getRelayerNetworkManager().getRelayerNodeInfoWithContent().encodeWithProperties()
                         )
                 ),
-                getRelayerNetworkManager()
+                getRelayerCredentialManager()
         );
     }
 }
