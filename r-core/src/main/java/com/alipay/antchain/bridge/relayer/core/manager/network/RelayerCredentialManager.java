@@ -72,6 +72,7 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_RELAYER_NETWORK_ERROR,
+                    e,
                     "failed to sign for request type {}", relayerRequest.getRequestType().getCode()
             );
         }
@@ -90,7 +91,8 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_RELAYER_NETWORK_ERROR,
-                    "failed to sign response"
+                    "failed to sign response",
+                    e
             );
         }
     }

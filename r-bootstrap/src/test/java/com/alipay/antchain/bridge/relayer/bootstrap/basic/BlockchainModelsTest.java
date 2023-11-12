@@ -35,7 +35,7 @@ import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
 import com.alipay.antchain.bridge.commons.bcdns.DomainNameCredentialSubject;
 import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
-import com.alipay.antchain.bridge.relayer.commons.constant.AMServiceStatusEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.OnChainServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
@@ -193,7 +193,7 @@ public class BlockchainModelsTest {
         BlockchainMeta.BlockchainProperties properties = BlockchainMeta.BlockchainProperties.decode(BLOCKCHAIN_META_EXAMPLE.getBytes());
         Assert.assertNotNull(properties);
         Assert.assertEquals(BlockchainStateEnum.RUNNING, properties.getAnchorRuntimeStatus());
-        Assert.assertEquals(AMServiceStatusEnum.FINISH_DEPLOY_AM_CONTRACT, properties.getAmServiceStatus());
+        Assert.assertEquals(OnChainServiceStatusEnum.DEPLOY_FINISHED, properties.getAmServiceStatus());
         Assert.assertNotNull(properties.getBbcContext());
         Assert.assertEquals(ContractStatusEnum.CONTRACT_READY, properties.getBbcContext().getSdpContract().getStatus());
     }
@@ -203,7 +203,7 @@ public class BlockchainModelsTest {
         BlockchainMeta.BlockchainProperties properties = BlockchainMeta.BlockchainProperties.decode(BLOCKCHAIN_META_EXAMPLE_OBJ.getBytes());
         Assert.assertNotNull(properties);
         Assert.assertEquals(BlockchainStateEnum.RUNNING, properties.getAnchorRuntimeStatus());
-        Assert.assertEquals(AMServiceStatusEnum.FINISH_DEPLOY_AM_CONTRACT, properties.getAmServiceStatus());
+        Assert.assertEquals(OnChainServiceStatusEnum.DEPLOY_FINISHED, properties.getAmServiceStatus());
         Assert.assertNotNull(properties.getBbcContext());
         Assert.assertEquals(ContractStatusEnum.CONTRACT_READY, properties.getBbcContext().getSdpContract().getStatus());
     }

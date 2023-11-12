@@ -30,7 +30,8 @@ public class SDPMsgClientHeteroBlockchainImpl implements ISDPMsgClientContract {
                     String.format(
                             "failed to queryP2PMsgSeqOnChain for channel ( senderDomain: %s, from: %s, receiverDomain: %s, to: %s )",
                             senderDomain, from, receiverDomain, to
-                    )
+                    ),
+                    e
             );
         }
     }

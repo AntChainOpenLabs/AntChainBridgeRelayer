@@ -16,9 +16,11 @@
 
 package com.alipay.antchain.bridge.relayer.commons.constant;
 
-public enum AMServiceStatusEnum {
+public enum OnChainServiceStatusEnum {
 
     INIT,
 
-    FINISH_DEPLOY_AM_CONTRACT;
+    DEPLOY_FINISHED,
+
+    SETUP_FINISHED;
 }

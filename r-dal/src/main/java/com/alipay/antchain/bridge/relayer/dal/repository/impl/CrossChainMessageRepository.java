@@ -246,7 +246,8 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                                     throw new RuntimeException(
                                             StrUtil.format(
                                                     "failed to update sdp message with txhash {} from ( product: {} , blockchain_id: {} )",
-                                                    result.getTxHash(), result.getReceiveProduct(), result.getReceiveBlockchainId()
+                                                    result.getTxHash(), result.getReceiveProduct(), result.getReceiveBlockchainId(),
+                                                    e
                                             )
                                     );
                                 }

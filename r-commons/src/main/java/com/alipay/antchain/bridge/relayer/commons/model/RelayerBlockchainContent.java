@@ -256,7 +256,8 @@ public class RelayerBlockchainContent {
         } catch (Exception e) {
             log.error(
                     "Failed to validate crosschain cert {} with parent {} for domain or space {}",
-                    domainOrSpaceCert.encodeToBase64(), parent.encodeToBase64(), domainOrSpace
+                    domainOrSpaceCert.encodeToBase64(), parent.encodeToBase64(), domainOrSpace,
+                    e
             );
             return false;
         }

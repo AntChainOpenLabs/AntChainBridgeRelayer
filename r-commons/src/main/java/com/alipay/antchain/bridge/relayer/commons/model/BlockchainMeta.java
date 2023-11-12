@@ -28,7 +28,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.alipay.antchain.bridge.commons.bbc.DefaultBBCContext;
-import com.alipay.antchain.bridge.relayer.commons.constant.AMServiceStatusEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.OnChainServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.utils.HeteroBBCContextDeserializer;
 import lombok.Getter;
@@ -45,6 +45,8 @@ public class BlockchainMeta {
     @Getter
     @Setter
     public static class BlockchainProperties {
+
+        public static final String AM_SERVICE_STATUS = "am_service_status";
 
         public static BlockchainProperties decode(byte[] rawData) {
             JSONObject jsonObject = JSON.parseObject(new String(rawData));
@@ -74,7 +76,7 @@ public class BlockchainMeta {
                 "is_domain_registered",
                 "heterogeneous_bbc_context",
                 "plugin_server_id",
-                "am_service_status",
+                AM_SERVICE_STATUS,
                 "extra_properties"
         );
 
@@ -99,8 +101,8 @@ public class BlockchainMeta {
         @JSONField(name = "plugin_server_id")
         private String pluginServerId;
 
-        @JSONField(name = "am_service_status")
-        private AMServiceStatusEnum amServiceStatus;
+        @JSONField(name = AM_SERVICE_STATUS)
+        private OnChainServiceStatusEnum amServiceStatus;
 
         @JSONField(name = "extra_properties")
         private Map<String, String> extraProperties = MapUtil.newHashMap();

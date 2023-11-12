@@ -27,7 +27,7 @@ import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.commons.bbc.AbstractBBCContext;
 import com.alipay.antchain.bridge.commons.bbc.DefaultBBCContext;
 import com.alipay.antchain.bridge.commons.bbc.syscontract.ContractStatusEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.AMServiceStatusEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.OnChainServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
@@ -396,7 +396,7 @@ public class BlockchainManager implements IBlockchainManager {
             if (ObjectUtil.isNull(blockchainMeta)) {
                 return false;
             }
-            return AMServiceStatusEnum.FINISH_DEPLOY_AM_CONTRACT == blockchainMeta.getProperties().getAmServiceStatus();
+            return OnChainServiceStatusEnum.DEPLOY_FINISHED == blockchainMeta.getProperties().getAmServiceStatus();
         } catch (Exception e) {
             log.error("failed to query blockchain by domain {}", domain, e);
             return false;
