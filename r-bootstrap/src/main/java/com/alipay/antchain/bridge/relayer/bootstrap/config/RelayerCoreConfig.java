@@ -18,10 +18,7 @@ package com.alipay.antchain.bridge.relayer.bootstrap.config;
 
 import java.io.ByteArrayInputStream;
 import java.security.PrivateKey;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import javax.annotation.Resource;
 
 import cn.hutool.core.io.FileUtil;
@@ -36,6 +33,7 @@ import com.alipay.antchain.bridge.relayer.core.manager.bbc.GRpcBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
 import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository;
 import com.alipay.antchain.bridge.relayer.server.network.WSRelayerServer;
@@ -116,7 +114,10 @@ public class RelayerCoreConfig {
 
     @Bean
     @Autowired
-    public IBBCPluginManager bbcPluginManager(IPluginServerRepository pluginServerRepository, RedissonClient redisson) {
+    public IBBCPluginManager bbcPluginManager(
+            IPluginServerRepository pluginServerRepository,
+            RedissonClient redisson
+    ) {
         return new GRpcBBCPluginManager(
                 clientKeyPath,
                 clientCaPath,
@@ -131,8 +132,9 @@ public class RelayerCoreConfig {
                         new ThreadFactoryBuilder().setNameFormat("plugin_manager-grpc-%d").build(),
                         new ThreadPoolExecutor.CallerRunsPolicy()
                 ),
-                redisson.getExecutorService(
-                        "plugin_manager-heartbeat-service"
+                new ScheduledThreadPoolExecutor(
+                        clientHeartbeatThreadNum,
+                        new ThreadFactoryBuilder().setNameFormat("plugin_manager-heartbeat-%d").build()
                 ),
                 heartbeatDelayedTime,
                 errorLimitForHeartbeat
@@ -145,7 +147,8 @@ public class RelayerCoreConfig {
             @Qualifier("wsRelayerServerExecutorService") ExecutorService wsRelayerServerExecutorService,
             WsSslFactory wsSslFactory,
             IRelayerNetworkManager relayerNetworkManager,
-            IRelayerCredentialManager relayerCredentialManager
+            IRelayerCredentialManager relayerCredentialManager,
+            ReceiverService receiverService
     ) {
         try {
             return new WSRelayerServer(
@@ -156,6 +159,7 @@ public class RelayerCoreConfig {
                     wsSslFactory,
                     relayerNetworkManager,
                     relayerCredentialManager,
+                    receiverService,
                     isDiscoveryService
             );
         } catch (Exception e) {

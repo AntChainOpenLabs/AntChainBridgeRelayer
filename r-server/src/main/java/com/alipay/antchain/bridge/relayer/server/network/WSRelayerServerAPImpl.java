@@ -28,6 +28,7 @@ import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.exception.RejectRequestException;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.*;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.HandshakeRespPayload;
@@ -44,10 +45,11 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
     public WSRelayerServerAPImpl(
             IRelayerNetworkManager relayerNetworkManager,
             IRelayerCredentialManager relayerCredentialManager,
+            ReceiverService receiverService,
             String defaultNetworkId,
             boolean isDiscoveryServer
     ) {
-        super(relayerNetworkManager, relayerCredentialManager, defaultNetworkId, isDiscoveryServer);
+        super(relayerNetworkManager, relayerCredentialManager, receiverService, defaultNetworkId, isDiscoveryServer);
     }
 
     @Override

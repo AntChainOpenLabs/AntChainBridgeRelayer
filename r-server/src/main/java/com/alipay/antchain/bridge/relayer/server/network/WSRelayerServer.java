@@ -24,6 +24,7 @@ import javax.xml.ws.Endpoint;
 
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
@@ -60,6 +61,7 @@ public class WSRelayerServer {
             WsSslFactory wsSslFactory,
             IRelayerNetworkManager relayerNetworkManager,
             IRelayerCredentialManager relayerCredentialManager,
+            ReceiverService receiverService,
             boolean isDiscoveryService
     ) {
         this.serverMode = serverMode;
@@ -67,6 +69,7 @@ public class WSRelayerServer {
         this.wsRelayerServerAPI = new WSRelayerServerAPImpl(
                 relayerNetworkManager,
                 relayerCredentialManager,
+                receiverService,
                 defaultNetworkId,
                 isDiscoveryService
         );

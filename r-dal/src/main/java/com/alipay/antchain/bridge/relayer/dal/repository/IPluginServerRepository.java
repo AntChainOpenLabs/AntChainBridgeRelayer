@@ -17,11 +17,11 @@
 package com.alipay.antchain.bridge.relayer.dal.repository;
 
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import com.alipay.antchain.bridge.relayer.commons.constant.PluginServerStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.PluginServerDO;
 import com.alipay.antchain.bridge.relayer.commons.model.PluginServerInfo;
-import org.redisson.api.RLock;
 
 public interface IPluginServerRepository {
 
@@ -43,5 +43,5 @@ public interface IPluginServerRepository {
 
     PluginServerInfo getPluginServerInfo(String psId);
 
-    RLock getHeartbeatLock(String psId);
+    Lock getHeartbeatLock(String psId);
 }

@@ -17,6 +17,7 @@
 package com.alipay.antchain.bridge.relayer.dal.repository.impl;
 
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import javax.annotation.Resource;
 
@@ -34,7 +35,6 @@ import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
@@ -235,7 +235,7 @@ public class PluginServerRepository implements IPluginServerRepository {
     }
 
     @Override
-    public RLock getHeartbeatLock(String psId) {
+    public Lock getHeartbeatLock(String psId) {
         return redisson.getLock(getHeartbeatLockKey(psId));
     }
 

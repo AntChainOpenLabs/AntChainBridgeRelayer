@@ -1,12 +1,9 @@
 package com.alipay.antchain.bridge.relayer.core.manager.bbc;
 
 import java.io.ByteArrayInputStream;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
 
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.io.resource.Resource;
@@ -36,8 +33,6 @@ import io.grpc.TlsChannelCredentials;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
-import org.redisson.api.RScheduledExecutorService;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
@@ -48,7 +43,7 @@ public class GRpcBBCPluginManager implements IBBCPluginManager {
 
     private final ExecutorService clientExecutorService;
 
-    private final RScheduledExecutorService heartbeatExecutorService;
+    private final ScheduledExecutorService heartbeatExecutorService;
 
     private final Resource tlsClientKeyFile;
 
@@ -74,7 +69,7 @@ public class GRpcBBCPluginManager implements IBBCPluginManager {
             IPluginServerRepository pluginServerRepository,
             TransactionTemplate transactionTemplate,
             ExecutorService clientExecutorService,
-            RScheduledExecutorService heartbeatExecutorService,
+            ScheduledExecutorService heartbeatExecutorService,
             long heartbeatDelayedTime,
             int errorLimitForHeartbeat
     ) {
@@ -366,9 +361,8 @@ public class GRpcBBCPluginManager implements IBBCPluginManager {
 
         IPluginServerClient pluginServerClient = this.pluginServerClientMap.get(psId);
         ScheduledFuture future = this.heartbeatExecutorService.scheduleWithFixedDelay(
-                "relayer-ps-heartbeat:" + psId,
                 () -> {
-                    RLock lock;
+                    Lock lock;
                     try {
                         lock = pluginServerRepository.getHeartbeatLock(psId);
                     } catch (Exception e) {
@@ -432,8 +426,9 @@ public class GRpcBBCPluginManager implements IBBCPluginManager {
                             }
                     );
                 },
-                Duration.of(1, ChronoUnit.SECONDS),
-                Duration.of(heartbeatDelayedTime, ChronoUnit.MILLIS)
+                1000,
+                heartbeatDelayedTime,
+                TimeUnit.MILLISECONDS
         );
         this.heartbeatFutureMap.put(psId, future);
     }

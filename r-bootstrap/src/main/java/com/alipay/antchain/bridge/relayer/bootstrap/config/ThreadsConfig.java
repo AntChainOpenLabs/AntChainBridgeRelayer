@@ -59,6 +59,12 @@ public class ThreadsConfig {
     @Value("${relayer.service.anchor.sync_task.threads.total_size:256}")
     private int blockSyncTaskTotalSize;
 
+    @Value("${relayer.service.confirm.threads.core_size:16}")
+    private int confirmServiceCoreSize;
+
+    @Value("${relayer.service.confirm.threads.total_size:64}")
+    private int confirmServiceTotalSize;
+
     @Bean(name = "wsRelayerServerExecutorService")
     public ExecutorService wsRelayerServerExecutorService() {
         return new ThreadPoolExecutor(
@@ -120,6 +126,18 @@ public class ThreadsConfig {
                 TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(1280),
                 new ThreadFactoryBuilder().setNameFormat("BlockSyncTask-worker-%d").build(),
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+    }
+
+    @Bean(name = "confirmServiceThreadsPool")
+    public ExecutorService confirmServiceThreadsPool() {
+        return new ThreadPoolExecutor(
+                confirmServiceCoreSize,
+                confirmServiceTotalSize,
+                5000L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(1000),
+                new ThreadFactoryBuilder().setNameFormat("AMConfirm-worker-%d").build(),
                 new ThreadPoolExecutor.CallerRunsPolicy()
         );
     }

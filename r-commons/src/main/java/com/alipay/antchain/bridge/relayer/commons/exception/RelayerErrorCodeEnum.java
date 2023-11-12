@@ -85,6 +85,8 @@ public enum RelayerErrorCodeEnum {
 
     SERVICE_MULTI_ANCHOR_PROCESS_REMOTE_AM_PROCESS_FAILED("0308", "remote am process failed"),
 
+    SERVICE_ARCHIVE_PRECESS_FAILED("0309", "archive process failed"),
+
     SERVER_REQUEST_FROM_RELAYER_REJECT("0401", "relayer request rejected"),
 
     /**

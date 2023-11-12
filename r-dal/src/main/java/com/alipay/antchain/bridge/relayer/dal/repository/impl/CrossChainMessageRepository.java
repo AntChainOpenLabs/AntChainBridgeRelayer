@@ -21,6 +21,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -353,6 +354,34 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                     StrUtil.format(
                             "failed to peek {} sdp messages for chain (product: {}, blockchain_id: {})",
                             processState.getCode(), receiverBlockchainProduct, receiverBlockchainId
+                    ), e
+            );
+        }
+    }
+
+    @Override
+    public List<SDPMsgWrapper> peekTxPendingSDPMessageIds(String receiverBlockchainProduct, String receiverBlockchainId, int limit) {
+        try {
+            List<SDPMsgPoolEntity> entities = sdpMsgPoolMapper.selectList(
+                    new LambdaQueryWrapper<SDPMsgPoolEntity>()
+                            .select(ListUtil.toList(BaseEntity::getId, SDPMsgPoolEntity::getAuthMsgId))
+                            .eq(SDPMsgPoolEntity::getReceiverBlockchainProduct, receiverBlockchainProduct)
+                            .eq(SDPMsgPoolEntity::getReceiverBlockchainId, receiverBlockchainId)
+                            .last("limit " + limit)
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return ListUtil.empty();
+            }
+
+            return entities.stream()
+                    .map(sdpMsgPoolEntity -> BeanUtil.copyProperties(sdpMsgPoolEntity, SDPMsgWrapper.class))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    StrUtil.format(
+                            "failed to peek tx_pending sdp messages ids for chain (product: {}, blockchain_id: {})",
+                            receiverBlockchainProduct, receiverBlockchainId
                     ), e
             );
         }

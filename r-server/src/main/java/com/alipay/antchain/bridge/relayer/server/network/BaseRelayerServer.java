@@ -19,6 +19,7 @@ package com.alipay.antchain.bridge.relayer.server.network;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.RelayerRequestType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,37 +43,25 @@ public abstract class BaseRelayerServer {
 
     private String defaultNetworkId;
 
-//    private Receiver receiver;
+    private ReceiverService receiverService;
 
     public BaseRelayerServer(
             IRelayerNetworkManager relayerNetworkManager,
             IRelayerCredentialManager relayerCredentialManager,
+            ReceiverService receiverService,
             String defaultNetworkId,
             boolean isDiscoveryServer
     ) {
         this.relayerNetworkManager = relayerNetworkManager;
         this.relayerCredentialManager = relayerCredentialManager;
+        this.receiverService = receiverService;
         this.defaultNetworkId = defaultNetworkId;
         this.isDiscoveryServer = isDiscoveryServer;
-//        ServiceManagerModule serviceManagerModule = ServerContext.getInstance().getServerModule(
-//                ServiceManagerModule.class);
-//
-//        this.oracleManager = serviceManagerModule.getOracleManager();
-//        this.relayerNetworkManager = serviceManagerModule.getRelayerNetworkManager();
-//
-//        OracleServiceCoreServiceModule coreServiceModule = ServerContext.getInstance().getServerModule(
-//                OracleServiceCoreServiceModule.class);
-//        this.receiver = coreServiceModule.getInnerReceiver();
-//
-//        if (ServerContext.getInstance().getLocalConfig().getBoolean(LocalConfig.RELAYER_DISCOVERY_SERVER_SWITCH)) {
-//            this.isDiscoveryServer = true;
-//            LOGGER.info("[BaseRelayerServer] start service of relayer discovery server. ");
-//        }
     }
 
     public void amRequest(String domainName, String authMsg, String udagProof, String ledgerInfo) {
 
-//        this.receiver.receiveOffChainAMRequest(domainName, authMsg, udagProof, ledgerInfo);
+        receiverService.receiveOffChainAMRequest(domainName, authMsg, udagProof, ledgerInfo);
     }
 
     public void doHandshake(RelayerNodeInfo nodeInfo, String networkId) {
