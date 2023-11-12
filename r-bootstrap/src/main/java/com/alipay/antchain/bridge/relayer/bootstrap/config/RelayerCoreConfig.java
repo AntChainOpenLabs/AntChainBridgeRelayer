@@ -18,7 +18,10 @@ package com.alipay.antchain.bridge.relayer.bootstrap.config;
 
 import java.io.ByteArrayInputStream;
 import java.security.PrivateKey;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 
 import cn.hutool.core.io.FileUtil;
@@ -37,6 +40,7 @@ import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
 import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository;
 import com.alipay.antchain.bridge.relayer.server.network.WSRelayerServer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -112,7 +116,7 @@ public class RelayerCoreConfig {
 
     @Bean
     @Autowired
-    public IBBCPluginManager bbcPluginManager(IPluginServerRepository pluginServerRepository) {
+    public IBBCPluginManager bbcPluginManager(IPluginServerRepository pluginServerRepository, RedissonClient redisson) {
         return new GRpcBBCPluginManager(
                 clientKeyPath,
                 clientCaPath,
@@ -123,13 +127,12 @@ public class RelayerCoreConfig {
                         clientThreadNum,
                         3000,
                         TimeUnit.MILLISECONDS,
-                        new ArrayBlockingQueue<Runnable>(clientThreadNum * 20),
+                        new ArrayBlockingQueue<>(clientThreadNum * 20),
                         new ThreadFactoryBuilder().setNameFormat("plugin_manager-grpc-%d").build(),
                         new ThreadPoolExecutor.CallerRunsPolicy()
                 ),
-                new ScheduledThreadPoolExecutor(
-                        clientHeartbeatThreadNum,
-                        new ThreadFactoryBuilder().setNameFormat("plugin_manager-heartbeat-%d").build()
+                redisson.getExecutorService(
+                        "plugin_manager-heartbeat-service"
                 ),
                 heartbeatDelayedTime,
                 errorLimitForHeartbeat

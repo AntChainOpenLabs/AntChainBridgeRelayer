@@ -21,9 +21,9 @@ public class HeteroBlockchainClient extends AbstractBlockchainClient {
 
     private final IBBCServiceClient bbcClient;
 
-    private IAMClientContract amClientContract;
+    private final IAMClientContract amClientContract;
 
-    private ISDPMsgClientContract sdpMsgClient;
+    private final ISDPMsgClientContract sdpMsgClient;
 
     public HeteroBlockchainClient(IBBCServiceClient bbcClient, BlockchainMeta blockchainMeta) {
         super(blockchainMeta, bbcClient.getDomain());

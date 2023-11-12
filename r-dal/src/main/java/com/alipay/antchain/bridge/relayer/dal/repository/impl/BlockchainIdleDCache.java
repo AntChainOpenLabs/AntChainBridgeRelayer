@@ -63,7 +63,7 @@ public class BlockchainIdleDCache {
     private long idleTime;
     
     @Resource
-    private RedissonClient redissonClient;
+    private RedissonClient redisson;
     
     public void setLastAMReceiveTime(String product, String blockchainId) {
         setIdleState(product, blockchainId, LAST_AM_RECEIVE_TIME, System.currentTimeMillis());
@@ -173,7 +173,7 @@ public class BlockchainIdleDCache {
 
     private long getIdleState(String product, String blockchainId, String type) {
 
-        RBucket<String> bucket = redissonClient.getBucket(genKey(product, blockchainId, type), StringCodec.INSTANCE);
+        RBucket<String> bucket = redisson.getBucket(genKey(product, blockchainId, type), StringCodec.INSTANCE);
         String rawTime = bucket.get();
         if (StrUtil.isEmpty(rawTime)) {
             return 0;
@@ -183,7 +183,7 @@ public class BlockchainIdleDCache {
 
     private void setIdleState(String product, String blockchainId, String type, long time) {
         log.info("set idle state : {}-{}-{}-{} ", product, blockchainId, type, time);
-        redissonClient.getBucket(genKey(product, blockchainId, type), StringCodec.INSTANCE)
+        redisson.getBucket(genKey(product, blockchainId, type), StringCodec.INSTANCE)
                 .set(Long.valueOf(time).toString());
     }
 

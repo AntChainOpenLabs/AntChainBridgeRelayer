@@ -65,7 +65,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     private DomainCertMapper domainCertMapper;
 
     @Resource
-    private RedissonClient redissonClient;
+    private RedissonClient redisson;
 
     @Value("${anchor.process.cache.heights.ttl:240000}")
     private long ttlForHeightsCache;
@@ -494,7 +494,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     }
 
     private AnchorProcessHeights getAnchorProcessHeightsFromCache(String product, String blockchainId) {
-        RBucket<byte[]> bucket = redissonClient.getBucket(AnchorProcessHeights.getKey(product, blockchainId), ByteArrayCodec.INSTANCE);
+        RBucket<byte[]> bucket = redisson.getBucket(AnchorProcessHeights.getKey(product, blockchainId), ByteArrayCodec.INSTANCE);
         byte[] rawHeights = bucket.get();
         if (ObjectUtil.isEmpty(rawHeights)) {
             return null;
@@ -512,7 +512,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     }
 
     private void setAnchorProcessHeightsToCache(AnchorProcessHeights heights) {
-        redissonClient.getBucket(AnchorProcessHeights.getKey(heights.getProduct(), heights.getBlockchainId()), ByteArrayCodec.INSTANCE)
+        redisson.getBucket(AnchorProcessHeights.getKey(heights.getProduct(), heights.getBlockchainId()), ByteArrayCodec.INSTANCE)
                 .set(heights.encode(), Duration.of(ttlForHeightsCache, ChronoUnit.MILLIS));
     }
 

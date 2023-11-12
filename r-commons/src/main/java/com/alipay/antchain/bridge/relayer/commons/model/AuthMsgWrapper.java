@@ -161,4 +161,8 @@ public class AuthMsgWrapper {
     public void addLedgerInfo(String key, String value) {
         this.ledgerInfo.put(key, value);
     }
+
+    public void setLedgerInfo(String raw) {
+        JSON.parseObject(raw).forEach((key, value) -> ledgerInfo.put(key, (String) value));
+    }
 }

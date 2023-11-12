@@ -14,20 +14,9 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.mapper;
+package com.alipay.antchain.bridge.relayer.core.utils;
 
-import java.util.List;
+public class ProcessUtils {
 
-import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
-import com.alipay.antchain.bridge.relayer.dal.entities.AuthMsgPoolEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Param;
 
-public interface AuthMsgPoolMapper extends BaseMapper<AuthMsgPoolEntity> {
-
-    int saveAuthMessages(List<AuthMsgWrapper> authMsgWrappers);
-
-    long lastInsertId();
-
-    int archiveAuthMessages(@Param("idList") List<Long> idList);
 }

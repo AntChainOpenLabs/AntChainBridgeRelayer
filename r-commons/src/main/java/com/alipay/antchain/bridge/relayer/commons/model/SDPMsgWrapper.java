@@ -30,6 +30,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class SDPMsgWrapper {
 
+    public final static int UNORDERED_SDP_MSG_SEQ = -1;
+
+    public final static String UNORDERED_SDP_MSG_SESSION = "UNORDERED";
+
     private long id;
 
     private AuthMsgWrapper authMsgWrapper;
@@ -118,5 +122,23 @@ public class SDPMsgWrapper {
     public boolean isBlockchainSelfCall() {
         return StrUtil.equals(getSenderBlockchainDomain(), getReceiverBlockchainDomain())
                 && StrUtil.equalsIgnoreCase(getMsgSender(), getMsgReceiver());
+    }
+
+    /**
+     * getSessionKey returns session key e.g: "domainA.idA:domainB.idB"
+     */
+    public String getSessionKey() {
+        String key = String.format(
+                "%s.%s:%s.%s",
+                getSenderBlockchainDomain(),
+                getMsgSender(),
+                getReceiverBlockchainDomain(),
+                getMsgReceiver()
+        );
+        if (UNORDERED_SDP_MSG_SEQ == getMsgSequence()) {
+            // 将无序消息单拎出来，完全异步发送
+            return String.format("%s-%s", UNORDERED_SDP_MSG_SESSION, key);
+        }
+        return key;
     }
 }

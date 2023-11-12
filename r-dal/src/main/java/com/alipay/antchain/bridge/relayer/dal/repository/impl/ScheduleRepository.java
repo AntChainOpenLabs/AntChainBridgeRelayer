@@ -47,7 +47,7 @@ public class ScheduleRepository implements IScheduleRepository {
     private static final String SCHEDULE_LOCK_KEY = "RELAYER_SCHEDULE_LOCK";
 
     @Resource
-    private RedissonClient redissonClient;
+    private RedissonClient redisson;
 
     @Resource
     private DTActiveNodeMapper dtActiveNodeMapper;
@@ -57,7 +57,7 @@ public class ScheduleRepository implements IScheduleRepository {
 
     @Override
     public Lock getDispatchLock() {
-        return redissonClient.getLock(SCHEDULE_LOCK_KEY);
+        return redisson.getLock(SCHEDULE_LOCK_KEY);
     }
 
     @Override

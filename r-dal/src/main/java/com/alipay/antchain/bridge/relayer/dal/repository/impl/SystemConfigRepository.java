@@ -48,7 +48,7 @@ public class SystemConfigRepository implements ISystemConfigRepository {
     public static final String DEFAULT_RELAYER_NETWORK_ID_KEY = "default_network_id";
 
     @Resource
-    private RedissonClient redissonClient;
+    private RedissonClient redisson;
 
     @Resource
     private SystemConfigMapper systemConfigMapper;
@@ -153,7 +153,7 @@ public class SystemConfigRepository implements ISystemConfigRepository {
 
     @Override
     public Lock getDistributedLockForDeployTask(String product, String blockchainId) {
-        return redissonClient.getLock(getDeployLockKey(product, blockchainId));
+        return redisson.getLock(getDeployLockKey(product, blockchainId));
     }
 
     @Override

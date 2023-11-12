@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.mapper;
+package com.alipay.antchain.bridge.relayer.core.service.anchor.tasks;
 
-import java.util.List;
+import com.alipay.antchain.bridge.relayer.core.types.blockchain.AbstractBlock;
 
-import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
-import com.alipay.antchain.bridge.relayer.dal.entities.AuthMsgPoolEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Param;
+public interface IBlockQueue {
 
-public interface AuthMsgPoolMapper extends BaseMapper<AuthMsgPoolEntity> {
+    void putBlockIntoQueue(AbstractBlock block);
 
-    int saveAuthMessages(List<AuthMsgWrapper> authMsgWrappers);
-
-    long lastInsertId();
-
-    int archiveAuthMessages(@Param("idList") List<Long> idList);
+    AbstractBlock getBlockFromQueue(long height);
 }

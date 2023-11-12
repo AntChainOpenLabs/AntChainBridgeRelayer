@@ -15,6 +15,7 @@ import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.impl.BlockchainIdleDCache;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @Slf4j
+@Getter
 public class ProcessService {
 
     @Resource
@@ -93,7 +95,7 @@ public class ProcessService {
                 } catch (InterruptedException e) {
                     log.error("worker interrupted exception for blockchain {}-{}.", blockchainProduct, blockchainId, e);
                 } catch (ExecutionException e) {
-                    log.error("[Process] worker execution fail for blockchain {}-{}.", blockchainProduct, blockchainId, e);
+                    log.error("worker execution fail for blockchain {}-{}.", blockchainProduct, blockchainId, e);
                 } catch (TimeoutException e) {
                     log.warn("worker query timeout exception for blockchain {}-{}.", blockchainProduct, blockchainId, e);
                 } finally {

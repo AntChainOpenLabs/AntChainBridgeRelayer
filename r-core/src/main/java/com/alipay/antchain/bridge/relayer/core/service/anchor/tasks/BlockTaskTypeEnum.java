@@ -14,20 +14,27 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.mapper;
+package com.alipay.antchain.bridge.relayer.core.service.anchor.tasks;
 
-import java.util.List;
+import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
-import com.alipay.antchain.bridge.relayer.dal.entities.AuthMsgPoolEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Param;
+@Getter
+@AllArgsConstructor
+public enum BlockTaskTypeEnum {
 
-public interface AuthMsgPoolMapper extends BaseMapper<AuthMsgPoolEntity> {
+    POLLING("polling"),
 
-    int saveAuthMessages(List<AuthMsgWrapper> authMsgWrappers);
+    SYNC("sync"),
 
-    long lastInsertId();
+    NOTIFY("notify");
 
-    int archiveAuthMessages(@Param("idList") List<Long> idList);
+    private final String code;
+
+    public String toNotifyWorkerHeightType(String workerName) {
+        Assert.equals(this, NOTIFY);
+        return StrUtil.format("{}_{}", code, workerName);
+    }
 }

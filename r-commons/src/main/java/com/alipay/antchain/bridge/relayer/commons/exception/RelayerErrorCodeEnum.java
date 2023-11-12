@@ -71,7 +71,19 @@ public enum RelayerErrorCodeEnum {
 
     SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED("0301", "process auth msg failed"),
 
-    SERVICE_CORE_PROCESS_PROCESS_CCMSG_FAILED("0302", "process service failed"),
+    SERVICE_CORE_PROCESS_PROCESS_CCMSG_FAILED("0302", "process ccmsg failed"),
+
+    SERVICE_COMMITTER_PROCESS_CCMSG_FAILED("0303", "commit ccmsg failed"),
+
+    SERVICE_COMMITTER_PROCESS_COMMIT_SDP_FAILED("0304", "commit ccmsg to blockchain failed"),
+
+    SERVICE_MULTI_ANCHOR_PROCESS_START_ANCHOR_FAILED("0305", "start anchor for blockchain failed"),
+
+    SERVICE_MULTI_ANCHOR_PROCESS_POLLING_TASK_FAILED("0306", "polling block task failed"),
+
+    SERVICE_MULTI_ANCHOR_PROCESS_SYNC_TASK_FAILED("0307", "sync block task failed"),
+
+    SERVICE_MULTI_ANCHOR_PROCESS_REMOTE_AM_PROCESS_FAILED("0308", "remote am process failed"),
 
     SERVER_REQUEST_FROM_RELAYER_REJECT("0401", "relayer request rejected"),
 

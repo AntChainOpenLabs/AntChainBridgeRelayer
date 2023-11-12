@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.mapper;
+package com.alipay.antchain.bridge.relayer.core.service.anchor.tasks;
 
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
-import com.alipay.antchain.bridge.relayer.dal.entities.AuthMsgPoolEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Param;
+@Getter
+@AllArgsConstructor
+public enum NotifyTaskTypeEnum {
 
-public interface AuthMsgPoolMapper extends BaseMapper<AuthMsgPoolEntity> {
+    CROSSCHAIN_MSG_WORKER("CONTRACT_AM_CLIENT"),
 
-    int saveAuthMessages(List<AuthMsgWrapper> authMsgWrappers);
+    SYSTEM_WORKER("CONTRACT_SYSTEM"),
 
-    long lastInsertId();
+    ORACLE_WORKER("CONTRACT_ORACLE");
 
-    int archiveAuthMessages(@Param("idList") List<Long> idList);
+    private final String code;
 }

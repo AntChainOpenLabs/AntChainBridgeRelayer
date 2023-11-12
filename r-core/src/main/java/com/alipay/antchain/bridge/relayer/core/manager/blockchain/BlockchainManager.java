@@ -45,7 +45,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class BlockchainManagerImpl implements IBlockchainManager {
+public class BlockchainManager implements IBlockchainManager {
 
     @Resource
     private IBlockchainRepository blockchainRepository;
@@ -113,7 +113,7 @@ public class BlockchainManagerImpl implements IBlockchainManager {
 
             blockchainRepository.saveBlockchainMeta(blockchainMeta);
 
-            log.info("[BlockchainManagerImpl] add blockchain {} success", blockchainMeta.getMetaKey());
+            log.info("[BlockchainManager] add blockchain {} success", blockchainMeta.getMetaKey());
 
         } catch (AntChainBridgeRelayerException e) {
             throw e;

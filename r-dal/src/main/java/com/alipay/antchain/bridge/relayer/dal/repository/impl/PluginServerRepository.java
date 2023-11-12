@@ -47,7 +47,7 @@ public class PluginServerRepository implements IPluginServerRepository {
     private PluginServerObjectsMapper pluginServerObjectsMapper;
 
     @Resource
-    private RedissonClient redissonClient;
+    private RedissonClient redisson;
 
     @Override
     public void insertNewPluginServer(PluginServerDO pluginServerDO) {
@@ -236,7 +236,7 @@ public class PluginServerRepository implements IPluginServerRepository {
 
     @Override
     public RLock getHeartbeatLock(String psId) {
-        return redissonClient.getLock(getHeartbeatLockKey(psId));
+        return redisson.getLock(getHeartbeatLockKey(psId));
     }
 
     private static String getHeartbeatLockKey(String psId) {

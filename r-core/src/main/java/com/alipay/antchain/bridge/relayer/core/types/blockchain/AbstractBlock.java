@@ -1,6 +1,6 @@
 package com.alipay.antchain.bridge.relayer.core.types.blockchain;
 
-import cn.hutool.core.codec.Base64;
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,17 +10,18 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AbstractBlock {
+public abstract class AbstractBlock {
 
+    @JSONField
     private String product;
 
+    @JSONField
     private String blockchainId;
 
+    @JSONField
     private long height;
 
-    private String blockBASE64Str;
+    public abstract byte[] encode();
 
-    public int getRawBlockSize() {
-        return Base64.decode(this.getBlockBASE64Str()).length;
-    }
+    public abstract void decode(byte[] data);
 }

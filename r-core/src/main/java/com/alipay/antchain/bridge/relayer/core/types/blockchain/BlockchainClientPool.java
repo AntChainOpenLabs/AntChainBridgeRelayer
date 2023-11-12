@@ -14,10 +14,12 @@ import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.types.pluginserver.IBBCServiceClient;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
+import lombok.Getter;
 import lombok.Synchronized;
 import org.springframework.stereotype.Component;
 
 @Component
+@Getter
 public class BlockchainClientPool {
 
     @Resource

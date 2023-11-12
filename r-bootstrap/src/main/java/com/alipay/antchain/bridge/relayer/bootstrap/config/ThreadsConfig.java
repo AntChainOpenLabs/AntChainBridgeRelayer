@@ -47,6 +47,18 @@ public class ThreadsConfig {
     @Value("${relayer.service.process.threads.total_size:64}")
     private int processServiceTotalSize;
 
+    @Value("${relayer.service.committer.threads.core_size:32}")
+    private int committerServiceCoreSize;
+
+    @Value("${relayer.service.committer.threads.total_size:64}")
+    private int committerServiceTotalSize;
+
+    @Value("${relayer.service.anchor.sync_task.threads.core_size:16}")
+    private int blockSyncTaskCoreSize;
+
+    @Value("${relayer.service.anchor.sync_task.threads.total_size:256}")
+    private int blockSyncTaskTotalSize;
+
     @Bean(name = "wsRelayerServerExecutorService")
     public ExecutorService wsRelayerServerExecutorService() {
         return new ThreadPoolExecutor(
@@ -83,6 +95,32 @@ public class ThreadsConfig {
                 new ArrayBlockingQueue<>(10000),
                 new ThreadFactoryBuilder().setNameFormat("Process-worker-%d").build(),
                 new ThreadPoolExecutor.AbortPolicy()
+        );
+    }
+
+    @Bean(name = "committerServiceThreadsPool")
+    public ExecutorService committerServiceThreadsPool() {
+        return new ThreadPoolExecutor(
+                committerServiceCoreSize,
+                committerServiceTotalSize,
+                5000L,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(10000),
+                new ThreadFactoryBuilder().setNameFormat("Committer-worker-%d").build(),
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+    }
+
+    @Bean(name = "blockSyncTaskThreadsPool")
+    public ExecutorService blockSyncTaskThreadsPool() {
+        return new ThreadPoolExecutor(
+                blockSyncTaskCoreSize,
+                blockSyncTaskTotalSize,
+                5000L,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(1280),
+                new ThreadFactoryBuilder().setNameFormat("BlockSyncTask-worker-%d").build(),
+                new ThreadPoolExecutor.CallerRunsPolicy()
         );
     }
 }

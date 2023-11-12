@@ -17,6 +17,7 @@
 package com.alipay.antchain.bridge.relayer.dal.repository;
 
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
@@ -32,6 +33,8 @@ public interface ICrossChainMessageRepository {
     UniformCrosschainPacketContext getUniformCrosschainPacket(byte[] ucpId);
 
     long putAuthMessageWithIdReturned(AuthMsgWrapper authMsgWrapper);
+
+    int putAuthMessages(List<AuthMsgWrapper> authMsgWrappers);
 
     void putSDPMessage(SDPMsgWrapper sdpMsgWrapper);
 
@@ -62,4 +65,6 @@ public interface ICrossChainMessageRepository {
     int deleteAuthMessages(List<Long> authMsgIds);
 
     int deleteSDPMessages(List<Long> ids);
+
+    Lock getSessionLock(String session);
 }
