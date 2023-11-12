@@ -160,7 +160,7 @@ public class ScheduleRepository implements IScheduleRepository {
                     task -> dtTaskMapper.update(
                             DTTaskEntity.builder()
                                     .nodeId(task.getNodeId())
-                                    .timeSlice(new Date(task.getTimeSlice()))
+                                    .timeSlice(new Date(task.getStartTime()))
                                     .build(),
                             new LambdaUpdateWrapper<DTTaskEntity>()
                                     .eq(DTTaskEntity::getTaskType, task.getTaskType())

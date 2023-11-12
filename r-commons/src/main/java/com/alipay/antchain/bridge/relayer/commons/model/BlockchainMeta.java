@@ -192,4 +192,8 @@ public class BlockchainMeta {
         );
         updateProperties(properties);
     }
+
+    public boolean isRunning() {
+        return this.properties.getAnchorRuntimeStatus() == BlockchainStateEnum.RUNNING;
+    }
 }

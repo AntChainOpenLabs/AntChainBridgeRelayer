@@ -19,7 +19,6 @@ package com.alipay.antchain.bridge.relayer.bootstrap.config;
 import java.io.ByteArrayInputStream;
 import java.security.PrivateKey;
 import java.util.concurrent.*;
-import javax.annotation.Resource;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
@@ -38,7 +37,6 @@ import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
 import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository;
 import com.alipay.antchain.bridge.relayer.server.network.WSRelayerServer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -86,9 +84,6 @@ public class RelayerCoreConfig {
     @Value("${relayer.network.node.server.as_discovery:false}")
     private boolean isDiscoveryService;
 
-    @Resource
-    private TransactionTemplate transactionTemplate;
-
     public AbstractCrossChainCertificate getLocalRelayerCrossChainCertificate() {
         AbstractCrossChainCertificate relayerCertificate = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
                 FileUtil.readBytes(relayerCrossChainCertPath)
@@ -116,7 +111,7 @@ public class RelayerCoreConfig {
     @Autowired
     public IBBCPluginManager bbcPluginManager(
             IPluginServerRepository pluginServerRepository,
-            RedissonClient redisson
+            TransactionTemplate transactionTemplate
     ) {
         return new GRpcBBCPluginManager(
                 clientKeyPath,

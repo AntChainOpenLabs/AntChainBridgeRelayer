@@ -37,7 +37,7 @@ public class BlockchainEntity extends BaseEntity {
     private String alias;
 
     @TableField("description")
-    private String desc;
+    private String description;
 
     @TableField("properties")
     private byte[] properties;

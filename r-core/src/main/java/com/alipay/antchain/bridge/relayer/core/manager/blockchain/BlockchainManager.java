@@ -250,7 +250,7 @@ public class BlockchainManager implements IBlockchainManager {
             }
 
             // 已启动的不重复启动
-            if (BlockchainStateEnum.RUNNING == blockchainMeta.getProperties().getAnchorRuntimeStatus()) {
+            if (blockchainMeta.isRunning()) {
                 return;
             }
 
@@ -362,6 +362,21 @@ public class BlockchainManager implements IBlockchainManager {
     }
 
     @Override
+    public List<BlockchainMeta> getAllStoppedBlockchains() {
+        try {
+            return blockchainRepository.getBlockchainMetaByState(BlockchainStateEnum.STOPPED);
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to query all stopped blockchains"
+            );
+        }
+    }
+
+    @Override
     public boolean checkIfDomainPrepared(String domain) {
         try {
             BlockchainMeta blockchainMeta = blockchainRepository.getBlockchainMetaByDomain(domain);
@@ -382,7 +397,7 @@ public class BlockchainManager implements IBlockchainManager {
             if (ObjectUtil.isNull(blockchainMeta)) {
                 return false;
             }
-            return BlockchainStateEnum.RUNNING == blockchainMeta.getProperties().getAnchorRuntimeStatus();
+            return blockchainMeta.isRunning();
         } catch (Exception e) {
             log.error("failed to query blockchain by domain {}", domain, e);
             return false;

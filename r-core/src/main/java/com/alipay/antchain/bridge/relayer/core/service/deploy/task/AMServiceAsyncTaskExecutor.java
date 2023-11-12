@@ -1,7 +1,6 @@
 package com.alipay.antchain.bridge.relayer.core.service.deploy.task;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.OnChainServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,7 @@ public class AMServiceAsyncTaskExecutor extends AbstractAsyncTaskExecutor {
             return false;
         }
         if (
-                blockchainMeta.getProperties().getAnchorRuntimeStatus() != BlockchainStateEnum.RUNNING
+                !blockchainMeta.isRunning()
                         || ObjectUtil.isNull(blockchainMeta.getProperties().getAmServiceStatus())
         ) {
             return false;

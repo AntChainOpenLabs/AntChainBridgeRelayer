@@ -175,6 +175,8 @@ public interface IBlockchainManager {
      */
     List<BlockchainMeta> getAllServingBlockchains();
 
+    List<BlockchainMeta> getAllStoppedBlockchains();
+
     /**
      * 检查domain是否具有blockchain数据
      *

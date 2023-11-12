@@ -16,10 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.bootstrap.config;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -64,6 +61,43 @@ public class ThreadsConfig {
 
     @Value("${relayer.service.confirm.threads.total_size:64}")
     private int confirmServiceTotalSize;
+
+    @Value("${relayer.engine.duty.anchor.threads.core_size:16}")
+    private int anchorScheduleTaskExecutorCoreSize;
+
+    @Value("${relayer.engine.duty.anchor.threads.total_size:32}")
+    private int anchorScheduleTaskExecutorTotalSize;
+
+    @Value("${relayer.engine.duty.committer.threads.core_size:16}")
+    private int committerScheduleTaskExecutorCoreSize;
+
+    @Value("${relayer.engine.duty.committer.threads.total_size:32}")
+    private int committerScheduleTaskExecutorTotalSize;
+
+    @Value("${relayer.engine.duty.process.threads.core_size:16}")
+    private int processScheduleTaskExecutorCoreSize;
+
+    @Value("${relayer.engine.duty.process.threads.total_size:32}")
+    private int processScheduleTaskExecutorTotalSize;
+
+    @Value("${relayer.engine.duty.confirm.threads.core_size:8}")
+    private int confirmScheduleTaskExecutorCoreSize;
+
+    @Value("${relayer.engine.duty.confirm.threads.total_size:16}")
+    private int confirmScheduleTaskExecutorTotalSize;
+
+    @Value("${relayer.engine.duty.archive.threads.core_size:16}")
+    private int archiveScheduleTaskExecutorCoreSize;
+
+    @Value("${relayer.engine.duty.archive.threads.total_size:16}")
+    private int archiveScheduleTaskExecutorTotalSize;
+
+    @Value("${relayer.engine.duty.deploy.threads.core_size:4}")
+    private int deployScheduleTaskExecutorCoreSize;
+
+    @Value("${relayer.engine.duty.deploy.threads.total_size:8}")
+    private int deployScheduleTaskExecutorTotalSize;
+
 
     @Bean(name = "wsRelayerServerExecutorService")
     public ExecutorService wsRelayerServerExecutorService() {
@@ -139,6 +173,86 @@ public class ThreadsConfig {
                 new ArrayBlockingQueue<>(1000),
                 new ThreadFactoryBuilder().setNameFormat("AMConfirm-worker-%d").build(),
                 new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+    }
+
+    @Bean(name = "distributedTaskEngineScheduleThreadsPool")
+    public ScheduledExecutorService distributedTaskEngineScheduleThreadsPool() {
+        return new ScheduledThreadPoolExecutor(
+                4,
+                new ThreadFactoryBuilder().setNameFormat("ScheduleEngine-Executor-%d").build()
+        );
+    }
+
+    @Bean(name = "anchorScheduleTaskExecutorThreadsPool")
+    public ExecutorService anchorScheduleTaskExecutorThreadsPool() {
+        return new ThreadPoolExecutor(
+                anchorScheduleTaskExecutorCoreSize,
+                anchorScheduleTaskExecutorTotalSize,
+                0, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(100),
+                new ThreadFactoryBuilder().setNameFormat("anchor_executor-worker-%d").build(),
+                new ThreadPoolExecutor.DiscardPolicy()
+        );
+    }
+
+    @Bean(name = "committerScheduleTaskExecutorThreadsPool")
+    public ExecutorService committerScheduleTaskExecutorThreadsPool() {
+        return new ThreadPoolExecutor(
+                committerScheduleTaskExecutorCoreSize,
+                committerScheduleTaskExecutorTotalSize,
+                0, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(100),
+                new ThreadFactoryBuilder().setNameFormat("committer_executor-worker-%d").build(),
+                new ThreadPoolExecutor.DiscardPolicy()
+        );
+    }
+
+    @Bean(name = "processScheduleTaskExecutorThreadsPool")
+    public ExecutorService processScheduleTaskExecutorThreadsPool() {
+        return new ThreadPoolExecutor(
+                processScheduleTaskExecutorCoreSize,
+                processScheduleTaskExecutorTotalSize,
+                0, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(100),
+                new ThreadFactoryBuilder().setNameFormat("process_executor-worker-%d").build(),
+                new ThreadPoolExecutor.DiscardPolicy()
+        );
+    }
+
+    @Bean(name = "confirmScheduleTaskExecutorThreadsPool")
+    public ExecutorService confirmScheduleTaskExecutorThreadsPool() {
+        return new ThreadPoolExecutor(
+                confirmScheduleTaskExecutorCoreSize,
+                confirmScheduleTaskExecutorTotalSize,
+                0, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(100),
+                new ThreadFactoryBuilder().setNameFormat("confirm_executor-worker-%d").build(),
+                new ThreadPoolExecutor.DiscardPolicy()
+        );
+    }
+
+    @Bean(name = "archiveScheduleTaskExecutorThreadsPool")
+    public ExecutorService archiveScheduleTaskExecutorThreadsPool() {
+        return new ThreadPoolExecutor(
+                archiveScheduleTaskExecutorCoreSize,
+                archiveScheduleTaskExecutorTotalSize,
+                0, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(100),
+                new ThreadFactoryBuilder().setNameFormat("archive_executor-worker-%d").build(),
+                new ThreadPoolExecutor.DiscardPolicy()
+        );
+    }
+
+    @Bean(name = "deployScheduleTaskExecutorThreadsPool")
+    public ExecutorService deployScheduleTaskExecutorThreadsPool() {
+        return new ThreadPoolExecutor(
+                deployScheduleTaskExecutorCoreSize,
+                deployScheduleTaskExecutorTotalSize,
+                0, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(100),
+                new ThreadFactoryBuilder().setNameFormat("deploy_executor-worker-%d").build(),
+                new ThreadPoolExecutor.DiscardPolicy()
         );
     }
 }

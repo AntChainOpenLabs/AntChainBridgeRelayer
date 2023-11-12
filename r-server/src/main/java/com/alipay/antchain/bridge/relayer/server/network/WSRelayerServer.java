@@ -32,10 +32,14 @@ import com.sun.net.httpserver.HttpsParameters;
 import com.sun.net.httpserver.HttpsServer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 
 @Slf4j
 @Getter
-public class WSRelayerServer {
+@Order
+public class WSRelayerServer implements ApplicationRunner {
 
     private final String serverMode;
 
@@ -75,12 +79,9 @@ public class WSRelayerServer {
         );
         this.workers = wsRelayerServerExecutorService;
         this.wsSslFactory = wsSslFactory;
-
-        startup();
     }
 
-    public void startup() {
-
+    public void run(ApplicationArguments args) throws Exception {
         try {
             log.info("your mode for webservice relayer node server is {}", serverMode);
             switch (serverMode) {

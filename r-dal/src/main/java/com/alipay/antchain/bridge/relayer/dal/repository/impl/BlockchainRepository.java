@@ -190,7 +190,7 @@ public class BlockchainRepository implements IBlockchainRepository {
                 blockchainService.getBaseMapper().update(
                         BlockchainEntity.builder()
                                 .alias(blockchainMeta.getAlias())
-                                .desc(blockchainMeta.getDesc())
+                                .description(blockchainMeta.getDesc())
                                 .properties(blockchainMeta.getProperties().encode())
                                 .build(),
                         new LambdaUpdateWrapper<BlockchainEntity>()
@@ -323,7 +323,7 @@ public class BlockchainRepository implements IBlockchainRepository {
                                 BlockchainEntity::getProduct,
                                 BlockchainEntity::getBlockchainId,
                                 BlockchainEntity::getAlias,
-                                BlockchainEntity::getDesc,
+                                BlockchainEntity::getDescription,
                                 BlockchainEntity::getProperties
                         )
                 ).one();

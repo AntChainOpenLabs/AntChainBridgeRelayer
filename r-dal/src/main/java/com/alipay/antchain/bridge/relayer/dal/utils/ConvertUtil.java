@@ -57,7 +57,7 @@ public class ConvertUtil {
                 .blockchainId(blockchainMeta.getBlockchainId())
                 .product(blockchainMeta.getProduct())
                 .properties(blockchainMeta.getProperties().encode())
-                .desc(blockchainMeta.getDesc())
+                .description(blockchainMeta.getDesc())
                 .alias(blockchainMeta.getAlias())
                 .build();
     }
@@ -67,7 +67,7 @@ public class ConvertUtil {
                 blockchainEntity.getProduct(),
                 blockchainEntity.getBlockchainId(),
                 blockchainEntity.getAlias(),
-                blockchainEntity.getDesc(),
+                blockchainEntity.getDescription(),
                 blockchainEntity.getProperties()
         );
     }
@@ -321,7 +321,7 @@ public class ConvertUtil {
         distributedTask.setTaskType(entity.getTaskType());
         distributedTask.setBlockchainId(entity.getBlockchainId());
         distributedTask.setBlockchainProduct(entity.getProduct());
-        distributedTask.setTimeSlice(entity.getTimeSlice().getTime());
+        distributedTask.setStartTime(entity.getTimeSlice().getTime());
         distributedTask.setExt(entity.getExt());
         return distributedTask;
     }
@@ -332,7 +332,7 @@ public class ConvertUtil {
         entity.setBlockchainId(task.getBlockchainId());
         entity.setProduct(task.getBlockchainProduct());
         entity.setNodeId(task.getNodeId());
-        entity.setTimeSlice(new Date(task.getTimeSlice()));
+        entity.setTimeSlice(new Date(task.getStartTime()));
         entity.setExt(task.getExt());
         return entity;
     }
