@@ -4,13 +4,39 @@ spring:
     url: jdbc:h2:mem:relayer;DB_CLOSE_DELAY=-1;MODE=MySQL;IGNORECASE=TRUE
     password: 123
     username: root
+  sql:
+    init:
+      data-locations: classpath:data/ddl.sql
   redis:
     host: localhost
     port: 6379
-    password: Mychain123!@#
 
 logging:
   file:
     path: ./logs
   level:
     app: INFO
+relayer:
+  network:
+    id: 1
+    node:
+      sig_algo: SM3WITHSM2
+      server:
+        mode: https
+        port: 8082
+      tls:
+        private_key_path: node_keys/relayer/node_tls.key
+        trust_ca_path: node_keys/relayer/node_tls.crt
+      crosschain_cert_path: cc_certs/relayer.crt
+      private_key_path: cc_certs/private_key.pem
+  plugin_server_manager:
+    grpc:
+      auth:
+        tls:
+          client:
+            ca:
+              path: node_keys/ps/relayer.crt
+            key:
+              path: node_keys/ps/relayer.key
+server:
+  port: 8081

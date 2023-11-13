@@ -93,9 +93,9 @@ public class CrossChainMsgACLRepository implements ICrossChainMsgACLRepository {
                     new LambdaQueryWrapper<CrossChainMsgACLEntity>()
                             .select(ListUtil.of(CrossChainMsgACLEntity::getIsDeleted))
                             .eq(CrossChainMsgACLEntity::getOwnerDomain, item.getOwnerDomain())
-                            .eq(CrossChainMsgACLEntity::getOwnerIdHex, item.getOwnerIdentityHex())
+                            .eq(CrossChainMsgACLEntity::getOwnerIdHex, item.getOwnerIdentityHex().toLowerCase())
                             .eq(CrossChainMsgACLEntity::getGrantDomain, item.getGrantDomain())
-                            .eq(CrossChainMsgACLEntity::getGrantIdHex, item.getGrantIdentityHex())
+                            .eq(CrossChainMsgACLEntity::getGrantIdHex, item.getGrantIdentityHex().toLowerCase())
                             .or(
                                     wrapper -> wrapper.eq(CrossChainMsgACLEntity::getOwnerDomain, item.getOwnerDomain())
                                             .eq(CrossChainMsgACLEntity::getGrantDomain, item.getGrantDomain())

@@ -17,9 +17,11 @@
 package com.alipay.antchain.bridge.relayer.dal.repository.impl;
 
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -44,11 +46,14 @@ import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepos
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class CrossChainMessageRepository implements ICrossChainMessageRepository {
+
+    private static final String CCMSG_SESSION_LOCK = "CCMSG_SESSION_LOCK:";
 
     @Resource
     private UCPPoolMapper ucpPoolMapper;
@@ -62,6 +67,9 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     @Resource
     private AuthMsgArchiveMapper authMsgArchiveMapper;
 
+    @Resource
+    private RedissonClient redisson;
+
     @Transactional
     @Override
     public long putAuthMessageWithIdReturned(AuthMsgWrapper authMsgWrapper) {
@@ -74,6 +82,21 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                     String.format(
                             "failed to put am (ucp_id: %s) for chain %s",
                             authMsgWrapper.getUcpIdHex(), authMsgWrapper.getDomain()
+                    ), e
+            );
+        }
+    }
+
+    @Override
+    public int putAuthMessages(List<AuthMsgWrapper> authMsgWrappers) {
+        try {
+            return authMsgPoolMapper.saveAuthMessages(authMsgWrappers);
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    String.format(
+                            "failed to put multiple am for chain %s",
+                            authMsgWrappers.isEmpty() ? "empty list" : authMsgWrappers.get(0).getDomain()
                     ), e
             );
         }
@@ -223,7 +246,8 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                                     throw new RuntimeException(
                                             StrUtil.format(
                                                     "failed to update sdp message with txhash {} from ( product: {} , blockchain_id: {} )",
-                                                    result.getTxHash(), result.getReceiveProduct(), result.getReceiveBlockchainId()
+                                                    result.getTxHash(), result.getReceiveProduct(), result.getReceiveBlockchainId(),
+                                                    e
                                             )
                                     );
                                 }
@@ -337,6 +361,39 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     }
 
     @Override
+    public List<SDPMsgWrapper> peekTxFinishedSDPMessageIds(String receiverBlockchainProduct, String receiverBlockchainId, int limit) {
+        try {
+            List<SDPMsgPoolEntity> entities = sdpMsgPoolMapper.selectList(
+                    new LambdaQueryWrapper<SDPMsgPoolEntity>()
+                            .select(ListUtil.toList(BaseEntity::getId, SDPMsgPoolEntity::getAuthMsgId))
+                            .eq(SDPMsgPoolEntity::getReceiverBlockchainProduct, receiverBlockchainProduct)
+                            .eq(SDPMsgPoolEntity::getReceiverBlockchainId, receiverBlockchainId)
+                            .and(
+                                    wrapper -> wrapper.eq(SDPMsgPoolEntity::getProcessState, SDPMsgProcessStateEnum.TX_SUCCESS)
+                                            .or(
+                                                    wrapper1 -> wrapper1.eq(SDPMsgPoolEntity::getProcessState, SDPMsgProcessStateEnum.TX_FAILED)
+                                            )
+                            ).last("limit " + limit)
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return ListUtil.empty();
+            }
+
+            return entities.stream()
+                    .map(sdpMsgPoolEntity -> BeanUtil.copyProperties(sdpMsgPoolEntity, SDPMsgWrapper.class))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    StrUtil.format(
+                            "failed to peek tx_pending sdp messages ids for chain (product: {}, blockchain_id: {})",
+                            receiverBlockchainProduct, receiverBlockchainId
+                    ), e
+            );
+        }
+    }
+
+    @Override
     public long countSDPMessagesByState(String receiverBlockchainProduct, String receiverBlockchainId, SDPMsgProcessStateEnum processState) {
         try {
             return this.sdpMsgPoolMapper.selectCount(
@@ -414,5 +471,14 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                     ), e
             );
         }
+    }
+
+    @Override
+    public Lock getSessionLock(String session) {
+        return redisson.getLock(getCCMsgSessionLock(session));
+    }
+
+    private String getCCMsgSessionLock(String session) {
+        return String.format("%s%s", CCMSG_SESSION_LOCK, session);
     }
 }

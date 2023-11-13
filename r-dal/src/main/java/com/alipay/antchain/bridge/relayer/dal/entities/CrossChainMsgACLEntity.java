@@ -48,5 +48,5 @@ public class CrossChainMsgACLEntity extends BaseEntity {
     private String grantIdHex;
 
     @TableField("is_deleted")
-    private int isDeleted;
+    private Integer isDeleted;
 }

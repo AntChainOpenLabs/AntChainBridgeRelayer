@@ -37,7 +37,7 @@ public class UCPPoolEntity extends BaseEntity {
     private String blockchainId;
 
     @TableField("version")
-    private int version;
+    private Integer version;
 
     @TableField("src_domain")
     private String srcDomain;
@@ -49,13 +49,13 @@ public class UCPPoolEntity extends BaseEntity {
     private String txHash;
 
     @TableField("ledger_time")
-    private long ledgerTime;
+    private Long ledgerTime;
 
     @TableField("udag_path")
     private String udagPath;
 
     @TableField("protocol_type")
-    private int protocolType;
+    private Integer protocolType;
 
     @TableField("raw_message")
     private byte[] rawMessage;
@@ -67,7 +67,7 @@ public class UCPPoolEntity extends BaseEntity {
     private byte[] tpProof;
 
     @TableField("from_network")
-    private boolean fromNetwork;
+    private Boolean fromNetwork;
 
     @TableField("relayer_id")
     private String relayerId;

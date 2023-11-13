@@ -19,10 +19,12 @@ package com.alipay.antchain.bridge.relayer.commons.model;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class SDPMsgCommitResult {
 
     public final static int TX_MSG_TRUNCATED_LEN = 160;

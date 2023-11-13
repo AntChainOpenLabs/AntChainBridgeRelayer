@@ -57,6 +57,38 @@ public enum RelayerErrorCodeEnum {
 
     DAL_SYSTEM_CONFIG_ERROR("010a", "sys config data error"),
 
+    DAL_DOMAIN_SPACE_ERROR("010b", "domain space cert data error"),
+
+    CORE_BLOCKCHAIN_ERROR("0201", "blockchain error"),
+
+    CORE_BLOCKCHAIN_CLIENT_INIT_ERROR("0202", "blockchain client init error"),
+
+    CORE_PLUGIN_SERVER_ERROR("0203", "plugin server error"),
+
+    CORE_BBC_CALL_ERROR("0204", "call bbc error"),
+
+    CORE_RELAYER_NETWORK_ERROR("0205", "relayer network error"),
+
+    SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED("0301", "process auth msg failed"),
+
+    SERVICE_CORE_PROCESS_PROCESS_CCMSG_FAILED("0302", "process ccmsg failed"),
+
+    SERVICE_COMMITTER_PROCESS_CCMSG_FAILED("0303", "commit ccmsg failed"),
+
+    SERVICE_COMMITTER_PROCESS_COMMIT_SDP_FAILED("0304", "commit ccmsg to blockchain failed"),
+
+    SERVICE_MULTI_ANCHOR_PROCESS_START_ANCHOR_FAILED("0305", "start anchor for blockchain failed"),
+
+    SERVICE_MULTI_ANCHOR_PROCESS_POLLING_TASK_FAILED("0306", "polling block task failed"),
+
+    SERVICE_MULTI_ANCHOR_PROCESS_SYNC_TASK_FAILED("0307", "sync block task failed"),
+
+    SERVICE_MULTI_ANCHOR_PROCESS_REMOTE_AM_PROCESS_FAILED("0308", "remote am process failed"),
+
+    SERVICE_ARCHIVE_PRECESS_FAILED("0309", "archive process failed"),
+
+    SERVER_REQUEST_FROM_RELAYER_REJECT("0401", "relayer request rejected"),
+
     /**
      *
      */

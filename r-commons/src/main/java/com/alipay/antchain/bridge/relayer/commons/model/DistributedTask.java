@@ -37,7 +37,7 @@ public class DistributedTask {
 
     private String ext = StrUtil.EMPTY;
 
-    private long timeSlice = 0;
+    private long startTime = 0;
 
     private long timeSliceLength = 0;
 
@@ -53,22 +53,22 @@ public class DistributedTask {
             String blockchainProduct,
             String blockchainId,
             String ext,
-            long timeSlice
+            long startTime
     ) {
         this.nodeId = nodeId;
         this.taskType = taskType;
         this.blockchainProduct = blockchainProduct;
         this.blockchainId = blockchainId;
         this.ext = ext;
-        this.timeSlice = timeSlice;
+        this.startTime = startTime;
     }
 
     public boolean ifFinish(long timeSliceLength) {
-        return (System.currentTimeMillis() - this.timeSlice) > timeSliceLength;
+        return (System.currentTimeMillis() - this.startTime) > timeSliceLength;
     }
 
     public boolean ifFinish() {
-        return (System.currentTimeMillis() - this.timeSlice) > timeSliceLength;
+        return (System.currentTimeMillis() - this.startTime) > timeSliceLength;
     }
 
     public String getUniqueTaskKey() {

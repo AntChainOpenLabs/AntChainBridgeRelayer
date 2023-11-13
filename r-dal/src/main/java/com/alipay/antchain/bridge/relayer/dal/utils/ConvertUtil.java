@@ -16,13 +16,21 @@
 
 package com.alipay.antchain.bridge.relayer.dal.utils;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.HexUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
+import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
+import com.alipay.antchain.bridge.commons.bcdns.DomainNameCredentialSubject;
 import com.alipay.antchain.bridge.commons.core.am.*;
 import com.alipay.antchain.bridge.commons.core.base.*;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV1;
@@ -49,7 +57,7 @@ public class ConvertUtil {
                 .blockchainId(blockchainMeta.getBlockchainId())
                 .product(blockchainMeta.getProduct())
                 .properties(blockchainMeta.getProperties().encode())
-                .desc(blockchainMeta.getDesc())
+                .description(blockchainMeta.getDesc())
                 .alias(blockchainMeta.getAlias())
                 .build();
     }
@@ -59,7 +67,7 @@ public class ConvertUtil {
                 blockchainEntity.getProduct(),
                 blockchainEntity.getBlockchainId(),
                 blockchainEntity.getAlias(),
-                blockchainEntity.getDesc(),
+                blockchainEntity.getDescription(),
                 blockchainEntity.getProperties()
         );
     }
@@ -167,7 +175,7 @@ public class ConvertUtil {
         context.setBlockchainId(ucpPoolEntity.getBlockchainId());
         context.setUdagPath(ucpPoolEntity.getUdagPath());
         context.setProcessState(ucpPoolEntity.getProcessState());
-        context.setFromNetwork(ucpPoolEntity.isFromNetwork());
+        context.setFromNetwork(ucpPoolEntity.getFromNetwork());
         context.setRelayerId(ucpPoolEntity.getRelayerId());
 
         return context;
@@ -181,7 +189,7 @@ public class ConvertUtil {
         wrapper.setReceiverAMClientContract(sdpMsgPoolEntity.getReceiverAMClientContract());
         wrapper.setProcessState(sdpMsgPoolEntity.getProcessState());
         wrapper.setTxHash(sdpMsgPoolEntity.getTxHash());
-        wrapper.setTxSuccess(sdpMsgPoolEntity.isTxSuccess());
+        wrapper.setTxSuccess(sdpMsgPoolEntity.getTxSuccess());
         wrapper.setTxFailReason(sdpMsgPoolEntity.getTxFailReason());
 
         if (sdpMsgPoolEntity.getVersion() == SDPMessageV1.MY_VERSION) {
@@ -195,7 +203,7 @@ public class ConvertUtil {
             message.setSequence(sdpMsgPoolEntity.getMsgSequence().intValue());
             message.setTargetDomain(new CrossChainDomain(sdpMsgPoolEntity.getReceiverDomainName()));
             message.setTargetIdentity(new CrossChainIdentity(HexUtil.decodeHex(sdpMsgPoolEntity.getReceiverId())));
-            message.setAtomic(sdpMsgPoolEntity.isAtomic());
+            message.setAtomic(sdpMsgPoolEntity.getAtomic());
             wrapper.setSdpMessage(message);
         } else {
             throw new RuntimeException("Invalid version of sdp message: " + sdpMsgPoolEntity.getVersion());
@@ -256,26 +264,42 @@ public class ConvertUtil {
     }
 
     public static RelayerNodeInfo convertFromRelayerNodeEntity(RelayerNodeEntity entity) {
-        RelayerNodeInfo nodeInfo = new RelayerNodeInfo();
-
-        nodeInfo.setNodeId(entity.getNodeId());
-        nodeInfo.setNodePublicKey(entity.getNodePublicKey());
-        nodeInfo.setDomains(StrUtil.split(entity.getDomains(), "^"));
-        nodeInfo.setEndpoints(StrUtil.split(entity.getEndpoints(), "^"));
-        nodeInfo.setProperties(RelayerNodeInfo.RelayerNodeProperties.decodeFromJson(new String(entity.getProperties())));
-
+        RelayerNodeInfo nodeInfo = new RelayerNodeInfo(
+                entity.getNodeId(),
+                CrossChainCertificateFactory.createCrossChainCertificate(
+                        Base64.decode(entity.getNodeCrossChainCert())
+                ),
+                entity.getNodeSigAlgo(),
+                StrUtil.split(entity.getEndpoints(), "^"),
+                StrUtil.split(entity.getDomains(), "^")
+        );
+        if (ObjectUtil.isNotEmpty(entity.getBlockchainContent())) {
+            nodeInfo.setRelayerBlockchainContent(
+                    RelayerBlockchainContent.decodeFromJson(entity.getBlockchainContent())
+            );
+        }
+        nodeInfo.setProperties(
+                RelayerNodeInfo.RelayerNodeProperties.decodeFromJson(
+                        new String(entity.getProperties())
+                )
+        );
         return nodeInfo;
     }
 
-    public static RelayerNodeEntity convertFromRelayerNodeInfo(RelayerNodeInfo nodeInfo) {
+    public static RelayerNodeEntity convertFromRelayerNodeInfo(RelayerNodeInfo nodeInfo) throws IOException {
         RelayerNodeEntity entity = new RelayerNodeEntity();
         entity.setNodeId(nodeInfo.getNodeId());
         entity.setDomains(
                 nodeInfo.getDomains().stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("")
         );
-        entity.setNodePublicKey(nodeInfo.getNodePublicKey());
+        entity.setNodeCrossChainCert(Base64.encode(nodeInfo.getRelayerCrossChainCertificate().encode()));
         entity.setEndpoints(
                 nodeInfo.getEndpoints().stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("")
+        );
+
+        entity.setBlockchainContent(
+                ObjectUtil.isNull(nodeInfo.getRelayerBlockchainContent()) ?
+                        StrUtil.EMPTY : nodeInfo.getRelayerBlockchainContent().encodeToJson()
         );
         entity.setProperties(nodeInfo.marshalProperties().getBytes());
 
@@ -297,7 +321,7 @@ public class ConvertUtil {
         distributedTask.setTaskType(entity.getTaskType());
         distributedTask.setBlockchainId(entity.getBlockchainId());
         distributedTask.setBlockchainProduct(entity.getProduct());
-        distributedTask.setTimeSlice(entity.getTimeSlice().getTime());
+        distributedTask.setStartTime(entity.getTimeSlice().getTime());
         distributedTask.setExt(entity.getExt());
         return distributedTask;
     }
@@ -308,7 +332,7 @@ public class ConvertUtil {
         entity.setBlockchainId(task.getBlockchainId());
         entity.setProduct(task.getBlockchainProduct());
         entity.setNodeId(task.getNodeId());
-        entity.setTimeSlice(new Date(task.getTimeSlice()));
+        entity.setTimeSlice(new Date(task.getStartTime()));
         entity.setExt(task.getExt());
         return entity;
     }
@@ -327,11 +351,11 @@ public class ConvertUtil {
 
         entity.setOwnerDomain(item.getOwnerDomain());
         entity.setOwnerId(item.getOwnerIdentity());
-        entity.setOwnerIdHex(item.getOwnerIdentityHex());
+        entity.setOwnerIdHex(item.getOwnerIdentityHex().toLowerCase());
 
         entity.setGrantDomain(item.getGrantDomain());
         entity.setGrantId(item.getGrantIdentity());
-        entity.setGrantIdHex(item.getGrantIdentityHex());
+        entity.setGrantIdHex(item.getGrantIdentityHex().toLowerCase());
 
         entity.setIsDeleted(item.getIsDeleted());
 
@@ -354,5 +378,52 @@ public class ConvertUtil {
         item.setIsDeleted(entity.getIsDeleted());
 
         return item;
+    }
+
+    public static DomainCertWrapper convertFromDomainCertEntity(DomainCertEntity entity) {
+        AbstractCrossChainCertificate crossChainCertificate = CrossChainCertificateFactory.createCrossChainCertificate(
+                entity.getDomainCert()
+        );
+        Assert.equals(
+                CrossChainCertificateTypeEnum.DOMAIN_NAME_CERTIFICATE,
+                crossChainCertificate.getType()
+        );
+        DomainNameCredentialSubject domainNameCredentialSubject = DomainNameCredentialSubject.decode(
+                crossChainCertificate.getCredentialSubject()
+        );
+
+        return new DomainCertWrapper(
+                crossChainCertificate,
+                domainNameCredentialSubject,
+                entity.getProduct(),
+                entity.getBlockchainId(),
+                entity.getDomain(),
+                entity.getDomainSpace()
+        );
+    }
+
+    public static DomainCertEntity convertFromDomainCertWrapper(DomainCertWrapper wrapper) {
+        DomainCertEntity entity = new DomainCertEntity();
+        entity.setDomainCert(wrapper.getCrossChainCertificate().encode());
+        entity.setDomain(wrapper.getDomain());
+        entity.setProduct(wrapper.getBlockchainProduct());
+        entity.setBlockchainId(wrapper.getBlockchainId());
+        entity.setSubjectOid(
+                wrapper.getDomainNameCredentialSubject().getApplicant().encode()
+        );
+        entity.setIssuerOid(
+                wrapper.getCrossChainCertificate().getIssuer().encode()
+        );
+        entity.setDomainSpace(wrapper.getDomainSpace());
+        return entity;
+    }
+
+    public static DomainSpaceCertEntity convertFromDomainSpaceCertWrapper(DomainSpaceCertWrapper wrapper) {
+        DomainSpaceCertEntity entity = new DomainSpaceCertEntity();
+        entity.setDomainSpace(wrapper.getDomainSpace());
+        entity.setParentSpace(wrapper.getParentDomainSpace());
+        entity.setDesc(wrapper.getDesc());
+        entity.setDomainSpaceCert(wrapper.getDomainSpaceCert().encode());
+        return entity;
     }
 }

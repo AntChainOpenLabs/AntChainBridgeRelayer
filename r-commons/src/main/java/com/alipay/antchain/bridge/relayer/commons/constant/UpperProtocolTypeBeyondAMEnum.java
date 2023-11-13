@@ -20,8 +20,10 @@ import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelaye
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
+@Getter
 public enum UpperProtocolTypeBeyondAMEnum {
 
     SDP(0);

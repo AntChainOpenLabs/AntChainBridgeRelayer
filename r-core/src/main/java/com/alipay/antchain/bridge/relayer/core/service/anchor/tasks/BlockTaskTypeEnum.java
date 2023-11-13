@@ -14,11 +14,27 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.commons.constant;
+package com.alipay.antchain.bridge.relayer.core.service.anchor.tasks;
 
-public enum AMServiceStatusEnum {
+import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.StrUtil;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-    INIT,
+@Getter
+@AllArgsConstructor
+public enum BlockTaskTypeEnum {
 
-    FINISH_DEPLOY_AM_CONTRACT;
+    POLLING("polling"),
+
+    SYNC("sync"),
+
+    NOTIFY("notify");
+
+    private final String code;
+
+    public String toNotifyWorkerHeightType(String workerName) {
+        Assert.equals(this, NOTIFY);
+        return StrUtil.format("{}_{}", code, workerName);
+    }
 }

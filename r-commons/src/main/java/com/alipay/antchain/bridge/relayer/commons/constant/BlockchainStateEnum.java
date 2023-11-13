@@ -17,6 +17,7 @@
 package com.alipay.antchain.bridge.relayer.commons.constant;
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.annotation.JSONField;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import lombok.AllArgsConstructor;
@@ -26,10 +27,15 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum BlockchainStateEnum {
 
+    INIT("INIT"),
+
     RUNNING("RUNNING"),
 
-    STOPPED("STOP");
+    STOPPED("STOP"),
 
+    UPDATE("UPDATE");
+
+    @JSONField
     private final String code;
 
     public static BlockchainStateEnum parseFromValue(String value) {

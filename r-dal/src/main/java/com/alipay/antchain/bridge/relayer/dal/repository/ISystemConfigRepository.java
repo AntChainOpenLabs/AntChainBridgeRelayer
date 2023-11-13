@@ -16,6 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.dal.repository;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
@@ -30,4 +31,8 @@ public interface ISystemConfigRepository {
     void setSystemConfig(String key, String value);
 
     Lock getDistributedLockForDeployTask(String product, String blockchainId);
+
+    List<String> getLocalEndpoints();
+
+    String getDefaultNetworkId();
 }

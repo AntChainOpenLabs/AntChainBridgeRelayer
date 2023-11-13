@@ -25,7 +25,7 @@ import org.apache.ibatis.annotations.Param;
 
 public interface AuthMsgPoolMapper extends BaseMapper<AuthMsgPoolEntity> {
 
-    void saveAuthMessages(List<AuthMsgWrapper> authMsgWrappers);
+    int saveAuthMessages(List<AuthMsgWrapper> authMsgWrappers);
 
     long lastInsertId();
 

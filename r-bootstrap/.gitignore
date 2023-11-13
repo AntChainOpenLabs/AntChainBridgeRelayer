@@ -36,3 +36,7 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+src/main/resources/cc_certs/**
+
+src/main/resources/node_keys/**

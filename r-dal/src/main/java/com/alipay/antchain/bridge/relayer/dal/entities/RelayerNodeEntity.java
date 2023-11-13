@@ -28,14 +28,20 @@ public class RelayerNodeEntity extends BaseEntity {
     @TableField("node_id")
     private String nodeId;
 
-    @TableField("node_public_key")
-    private String nodePublicKey;
+    @TableField("node_crosschain_cert")
+    private String nodeCrossChainCert;
+
+    @TableField("node_sig_algo")
+    private String nodeSigAlgo;
 
     @TableField("domains")
     private String domains;
 
     @TableField("endpoints")
     private String endpoints;
+
+    @TableField("blockchain_content")
+    private String blockchainContent;
 
     @TableField("properties")
     private byte[] properties;

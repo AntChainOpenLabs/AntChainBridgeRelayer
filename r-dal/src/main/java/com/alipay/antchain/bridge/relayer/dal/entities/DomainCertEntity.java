@@ -35,11 +35,14 @@ public class DomainCertEntity extends BaseEntity {
     @TableField("instance")
     private String blockchainId;
 
-    @TableField("cert_pk_hash")
-    private String certPkHash;
+    @TableField("subject_oid")
+    private byte[] subjectOid;
 
-    @TableField("issuer_pk_hash")
-    private String issuerPkHash;
+    @TableField("issuer_oid")
+    private byte[] issuerOid;
+
+    @TableField("domain_space")
+    private String domainSpace;
 
     @TableField("domain_cert")
     private byte[] domainCert;

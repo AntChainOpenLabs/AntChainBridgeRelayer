@@ -19,7 +19,6 @@
         <module>r-bootstrap</module>
         <module>r-dal</module>
         <module>r-cli</module>
-        <module>r-service</module>
         <module>r-core</module>
         <module>r-engine</module>
         <module>r-server</module>
@@ -41,6 +40,11 @@
         <junit.version>4.13.2</junit.version>
         <h2.version>2.2.224</h2.version>
         <embeded-redis.version>0.7.3</embeded-redis.version>
+        <protobuf-plugin.version>0.6.1</protobuf-plugin.version>
+        <protobuf.version>3.19.1</protobuf.version>
+        <grpc.version>1.42.2</grpc.version>
+        <bouncycastle.version>1.76</bouncycastle.version>
+        <commons-collections4.version>4.4</commons-collections4.version>
     </properties>
 
     <dependencyManagement>
@@ -74,6 +78,11 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-jdbc</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web-services</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
             <dependency>
@@ -127,6 +136,21 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-netty-shaded</artifactId>
+                <version>${grpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-stub</artifactId>
+                <version>${grpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-protobuf</artifactId>
+                <version>${grpc.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
@@ -141,11 +165,6 @@
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
                 <artifactId>r-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.alipay.antchain.bridge</groupId>
-                <artifactId>r-service</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -167,6 +186,21 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk15on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections4.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -25,6 +25,10 @@ import lombok.Getter;
 public enum SDPMsgProcessStateEnum {
     PENDING("am_msg_pending"),
 
+    MSG_ILLEGAL("am_msg_fail"),
+
+    MSG_REJECTED("am_msg_rejected"),
+
     TX_PENDING("tx_pending"),
 
     TX_SUCCESS("tx_success"),

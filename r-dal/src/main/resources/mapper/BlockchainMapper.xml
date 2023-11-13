@@ -9,6 +9,10 @@
         blockchain
     </sql>
 
+    <sql id="domain_cert_table_name">
+        domain_cert
+    </sql>
+
     <sql id="all_columns">
         id,
         product,
@@ -27,4 +31,14 @@
         values
         (#{product}, #{blockchainId}, #{alias}, #{description}, #{properties});
     </insert>
+
+    <select id="queryBlockchainByDomain" resultType="com.alipay.antchain.bridge.relayer.dal.entities.BlockchainEntity">
+        SELECT * FROM
+        <include refid="table_name"/>
+        WHERE blockchain_id IN (
+        SELECT instance FROM
+        <include refid="domain_cert_table_name"/>
+        WHERE domain = #{domain}
+        )
+    </select>
 </mapper>

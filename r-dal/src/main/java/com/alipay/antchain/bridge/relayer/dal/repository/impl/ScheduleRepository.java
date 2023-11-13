@@ -47,7 +47,7 @@ public class ScheduleRepository implements IScheduleRepository {
     private static final String SCHEDULE_LOCK_KEY = "RELAYER_SCHEDULE_LOCK";
 
     @Resource
-    private RedissonClient redissonClient;
+    private RedissonClient redisson;
 
     @Resource
     private DTActiveNodeMapper dtActiveNodeMapper;
@@ -57,7 +57,7 @@ public class ScheduleRepository implements IScheduleRepository {
 
     @Override
     public Lock getDispatchLock() {
-        return redissonClient.getLock(SCHEDULE_LOCK_KEY);
+        return redisson.getLock(SCHEDULE_LOCK_KEY);
     }
 
     @Override
@@ -66,7 +66,11 @@ public class ScheduleRepository implements IScheduleRepository {
         try {
             if (
                     1 != dtActiveNodeMapper.update(
-                            DTActiveNodeEntity.builder().build(),
+                            DTActiveNodeEntity.builder()
+                                    .nodeId(nodeId)
+                                    .nodeIp(nodeIp)
+                                    .state(DTActiveNodeStateEnum.ONLINE)
+                                    .build(),
                             new LambdaUpdateWrapper<DTActiveNodeEntity>()
                                     .eq(DTActiveNodeEntity::getNodeId, nodeId)
                     )
@@ -160,7 +164,7 @@ public class ScheduleRepository implements IScheduleRepository {
                     task -> dtTaskMapper.update(
                             DTTaskEntity.builder()
                                     .nodeId(task.getNodeId())
-                                    .timeSlice(new Date(task.getTimeSlice()))
+                                    .timeSlice(new Date(task.getStartTime()))
                                     .build(),
                             new LambdaUpdateWrapper<DTTaskEntity>()
                                     .eq(DTTaskEntity::getTaskType, task.getTaskType())

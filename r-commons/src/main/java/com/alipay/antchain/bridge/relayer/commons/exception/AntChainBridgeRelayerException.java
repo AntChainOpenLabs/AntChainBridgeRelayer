@@ -16,12 +16,21 @@
 
 package com.alipay.antchain.bridge.relayer.commons.exception;
 
+import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.exception.base.AntChainBridgeBaseException;
 
 public class AntChainBridgeRelayerException extends AntChainBridgeBaseException {
 
     public AntChainBridgeRelayerException(RelayerErrorCodeEnum errorCode, String longMsg) {
         super(errorCode.getErrorCode(), errorCode.getShortMsg(), longMsg);
+    }
+
+    public AntChainBridgeRelayerException(RelayerErrorCodeEnum errorCode, String formatStr, Object... objects) {
+        super(errorCode.getErrorCode(), errorCode.getShortMsg(), StrUtil.format(formatStr, objects));
+    }
+
+    public AntChainBridgeRelayerException(RelayerErrorCodeEnum errorCode, Throwable throwable, String formatStr, Object... objects) {
+        super(errorCode.getErrorCode(), errorCode.getShortMsg(), StrUtil.format(formatStr, objects), throwable);
     }
 
     public AntChainBridgeRelayerException(RelayerErrorCodeEnum errorCode, String longMsg, Throwable throwable) {

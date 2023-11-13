@@ -89,8 +89,9 @@ CREATE TABLE `domain_cert`
     `domain`             varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
     `blockchain_product` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
     `instance`           varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-    `cert_pk_hash`       varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
-    `issuer_pk_hash`     varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `subject_oid`        blob                                                          DEFAULT NULL,
+    `issuer_oid`         blob                                                          DEFAULT NULL,
+    `domain_space`       varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
     `domain_cert`        longblob,
     `gmt_create`         datetime                                                      DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`       datetime                                                      DEFAULT CURRENT_TIMESTAMP,
@@ -106,6 +107,7 @@ CREATE TABLE `domain_space_cert`
 (
     `id`                int(11) NOT NULL AUTO_INCREMENT,
     `domain_space`      varchar(128) DEFAULT NULL,
+    `parent_space`      varchar(128) DEFAULT NULL,
     `description`       varchar(128) DEFAULT NULL,
     `domain_space_cert` longblob,
     `gmt_create`        datetime     DEFAULT CURRENT_TIMESTAMP,
@@ -247,14 +249,16 @@ CREATE TABLE `relayer_network`
 drop table if exists relayer_node;
 CREATE TABLE `relayer_node`
 (
-    `id`              int(11) NOT NULL AUTO_INCREMENT,
-    `node_id`         varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
-    `node_public_key` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-    `domains`         varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-    `endpoints`       varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-    `properties`      longblob,
-    `gmt_create`      datetime                                                       DEFAULT CURRENT_TIMESTAMP,
-    `gmt_modified`    datetime                                                       DEFAULT CURRENT_TIMESTAMP,
+    `id`                   int(11) NOT NULL AUTO_INCREMENT,
+    `node_id`              varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
+    `node_crosschain_cert` binary                                                         DEFAULT NULL,
+    `node_sig_algo`        varchar(255)                                                   DEFAULT NULL,
+    `domains`              varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `endpoints`            varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `blockchain_content`   binary                                                         DEFAULT NULL,
+    `properties`           longblob,
+    `gmt_create`           datetime                                                       DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified`         datetime                                                       DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_relayer_node` (`node_id`)
 ) ENGINE = InnoDB

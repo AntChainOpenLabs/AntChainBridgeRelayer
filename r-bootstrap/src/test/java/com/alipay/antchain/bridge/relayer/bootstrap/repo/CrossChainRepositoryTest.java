@@ -16,6 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.bootstrap.repo;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Resource;
 
@@ -37,6 +38,7 @@ import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEn
 import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
+import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
 import com.alipay.antchain.bridge.relayer.dal.entities.*;
 import com.alipay.antchain.bridge.relayer.dal.mapper.AuthMsgArchiveMapper;
@@ -46,10 +48,12 @@ import com.alipay.antchain.bridge.relayer.dal.mapper.SDPMsgPoolMapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+@Slf4j
 public class CrossChainRepositoryTest extends TestBase {
 
     @BeforeClass
@@ -129,14 +133,32 @@ public class CrossChainRepositoryTest extends TestBase {
     }
 
     @Test
+    public void testPutAuthMessages() {
+        List<AuthMsgWrapper> authMsgWrappers = new ArrayList<>();
+        for (int i = 990; i < 1000; i++) {
+            authMsgWrappers.add(
+                    new AuthMsgWrapper(
+                            "test",
+                            "test",
+                            "test",
+                            ByteUtil.intToBytes(i),
+                            "am",
+                            AuthMsgProcessStateEnum.PROVED,
+                            authMessage
+                    )
+            );
+        }
+
+        Assert.assertEquals(10, crossChainMessageRepository.putAuthMessages(authMsgWrappers));
+    }
+
+    @Test
     public void testPutSDPMessage() throws Exception {
         sdpMsgPoolMapper.selectList(null);
 
         saveSomeSDP();
 
         System.out.println(sdpMsgPoolMapper.update(new SDPMsgPoolEntity(), new LambdaUpdateWrapper<SDPMsgPoolEntity>().eq(BaseEntity::getId, 100)));
-
-
     }
 
     @Test
@@ -166,7 +188,7 @@ public class CrossChainRepositoryTest extends TestBase {
         Assert.assertTrue(
                 crossChainMessageRepository.updateSDPMessage(
                         new SDPMsgWrapper(
-                                10,
+                                10L,
                                 new AuthMsgWrapper(
                                         10,
                                         "test",
@@ -203,6 +225,147 @@ public class CrossChainRepositoryTest extends TestBase {
         Assert.assertTrue(sdpMsgWrapper.isTxSuccess());
     }
 
+    @Test
+    public void testUpdateSDPMessageResults() {
+        saveSomeSDP();
+
+        List<SDPMsgCommitResult> results = new ArrayList<>();
+
+        SDPMsgCommitResult sdpMsgCommitResult = new SDPMsgCommitResult();
+        sdpMsgCommitResult.setCommitSuccess(true);
+        sdpMsgCommitResult.setConfirmed(true);
+        sdpMsgCommitResult.setTxHash(DigestUtil.sha256Hex(Integer.toString(10)));
+        sdpMsgCommitResult.setFailReason("test!");
+        sdpMsgCommitResult.setBlockTimestamp(System.currentTimeMillis());
+        sdpMsgCommitResult.setReceiveProduct("eth");
+        sdpMsgCommitResult.setReceiveBlockchainId("ethid");
+
+        results.add(sdpMsgCommitResult);
+
+        crossChainMessageRepository.updateSDPMessageResults(results);
+
+        SDPMsgWrapper sdpMsgWrapper = crossChainMessageRepository.getSDPMessage(DigestUtil.sha256Hex(Integer.toString(10)));
+        Assert.assertEquals(
+                SDPMsgProcessStateEnum.TX_SUCCESS,
+                sdpMsgWrapper.getProcessState()
+        );
+    }
+
+    @Test
+    public void testPeekTxPendingSDPMessageIds() {
+        saveSomeSDP();
+
+        Assert.assertTrue(
+                crossChainMessageRepository.updateSDPMessage(
+                        new SDPMsgWrapper(
+                                10L,
+                                new AuthMsgWrapper(
+                                        10 + 1,
+                                        "test",
+                                        "test",
+                                        "test",
+                                        ByteUtil.intToBytes(10),
+                                        "am",
+                                        AuthMsgProcessStateEnum.PENDING,
+                                        authMessage
+                                ),
+                                "eth",
+                                "ethid",
+                                "am",
+                                SDPMsgProcessStateEnum.TX_SUCCESS,
+                                DigestUtil.sha256Hex(Integer.toString(10)),
+                                true,
+                                "",
+                                sdpMessage
+                        )
+                )
+        );
+
+        Assert.assertTrue(
+                crossChainMessageRepository.updateSDPMessage(
+                        new SDPMsgWrapper(
+                                9L,
+                                new AuthMsgWrapper(
+                                        9 + 1,
+                                        "test",
+                                        "test",
+                                        "test",
+                                        ByteUtil.intToBytes(9),
+                                        "am",
+                                        AuthMsgProcessStateEnum.PENDING,
+                                        authMessage
+                                ),
+                                "eth",
+                                "ethid",
+                                "am",
+                                SDPMsgProcessStateEnum.TX_FAILED,
+                                DigestUtil.sha256Hex(Integer.toString(9)),
+                                false,
+                                "test!",
+                                sdpMessage
+                        )
+                )
+        );
+
+        List<SDPMsgWrapper> res = crossChainMessageRepository.peekTxFinishedSDPMessageIds(
+                "eth",
+                "ethid",
+                10
+        );
+
+        Assert.assertEquals(2, res.size());
+        Assert.assertTrue(res.stream().anyMatch(x -> x.getId() == 10));
+        Assert.assertTrue(res.stream().anyMatch(x -> x.getId() == 9));
+    }
+
+    @Test
+    public void testCountSDPMessagesByState() {
+        saveSomeSDP();
+        Assert.assertTrue(
+                crossChainMessageRepository.updateSDPMessage(
+                        new SDPMsgWrapper(
+                                9L,
+                                new AuthMsgWrapper(
+                                        9 + 1,
+                                        "test",
+                                        "test",
+                                        "test",
+                                        ByteUtil.intToBytes(9),
+                                        "am",
+                                        AuthMsgProcessStateEnum.PENDING,
+                                        authMessage
+                                ),
+                                "eth",
+                                "ethid",
+                                "am",
+                                SDPMsgProcessStateEnum.TX_FAILED,
+                                DigestUtil.sha256Hex(Integer.toString(9)),
+                                false,
+                                "test!",
+                                sdpMessage
+                        )
+                )
+        );
+        Assert.assertEquals(
+                10,
+                crossChainMessageRepository.countSDPMessagesByState(
+                        "eth",
+                        "ethid",
+                        SDPMsgProcessStateEnum.PENDING
+                )
+        );
+    }
+
+    @Test
+    public void testGetAuthMessage() {
+        saveElevenAM(getAMCurrentId());
+
+        AuthMsgWrapper authMsgWrapper = crossChainMessageRepository.getAuthMessage(1, true);
+        Assert.assertNotNull(authMsgWrapper);
+        Assert.assertEquals(authMsgWrapper.getDomain(), "test");
+        Assert.assertNotNull(authMsgWrapper.getAuthMessage());
+    }
+
     private long getAMCurrentId() {
         AuthMsgPoolEntity entity = new AuthMsgPoolEntity();
         entity.setId(0L);
@@ -213,9 +376,6 @@ public class CrossChainRepositoryTest extends TestBase {
     }
 
     private void saveElevenAM(long startId) {
-        if (ifAlreadyWriteAM) {
-            return;
-        }
 
         for (int i = 0; i < 11; i++) {
             Assert.assertEquals(
@@ -233,8 +393,6 @@ public class CrossChainRepositoryTest extends TestBase {
                     )
             );
         }
-
-        ifAlreadyWriteAM = true;
     }
 
     private long getSDPCurrentId() {
@@ -247,9 +405,6 @@ public class CrossChainRepositoryTest extends TestBase {
     }
 
     private void saveSomeSDP() {
-        if (ifAlreadyWriteSDP) {
-            return;
-        }
 
         for (int i = 0; i < 11; i++) {
             crossChainMessageRepository.putSDPMessage(
@@ -258,7 +413,7 @@ public class CrossChainRepositoryTest extends TestBase {
                             "ethid",
                             "am",
                             SDPMsgProcessStateEnum.PENDING,
-                            "",
+                            DigestUtil.sha256Hex(Integer.toString(i)),
                             false,
                             "",
                             new AuthMsgWrapper(
@@ -275,7 +430,5 @@ public class CrossChainRepositoryTest extends TestBase {
                     )
             );
         }
-
-        ifAlreadyWriteSDP = true;
     }
 }
