@@ -10,7 +10,6 @@ spring:
   redis:
     host: localhost
     port: 6379
-    password: Mychain123!@#
 
 logging:
   file:

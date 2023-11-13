@@ -18,7 +18,6 @@ package com.alipay.antchain.bridge.relayer.dal.repository.impl;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,10 +37,10 @@ import com.alipay.antchain.bridge.relayer.dal.entities.AnchorProcessEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.BaseEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.BlockchainEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.DomainCertEntity;
+import com.alipay.antchain.bridge.relayer.dal.mapper.AnchorProcessMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.DomainCertMapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import com.alipay.antchain.bridge.relayer.dal.service.BlockchainService;
-import com.alipay.antchain.bridge.relayer.dal.service.IAnchorProcessService;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -50,13 +49,16 @@ import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
 public class BlockchainRepository implements IBlockchainRepository {
 
     @Resource
-    private IAnchorProcessService anchorProcessService;
+    private AnchorProcessMapper anchorProcessMapper;
 
     @Resource
     private BlockchainService blockchainService;
@@ -67,10 +69,10 @@ public class BlockchainRepository implements IBlockchainRepository {
     @Resource
     private RedissonClient redisson;
 
-    @Value("${anchor.process.cache.heights.ttl:240000}")
+    @Value("${relayer.dal.blockchain.heights_cache.ttl:240000}")
     private long ttlForHeightsCache;
 
-    @Value("${anchor.process.cache.flush.period:0}")
+    @Value("${relayer.dal.blockchain.heights_cache.flush_period:3000}")
     private long flushPeriodForHeightsCache;
 
     @Resource
@@ -82,14 +84,27 @@ public class BlockchainRepository implements IBlockchainRepository {
     @Resource(name = "blockchainIdToDomainCache")
     private Cache<String, String> blockchainIdToDomainCache;
 
+    @Resource
+    private TransactionTemplate transactionTemplate;
+
     @Override
     public Long getAnchorProcessHeight(String product, String blockchainId, String heightType) {
-        Long height = getHeightFromCache(product, blockchainId, heightType);
-        if (ObjectUtil.isNull(height) || ObjectUtil.equals(0L, height)) {
-            height = getAnchorProcessHeightFromDB(product, blockchainId, heightType);
-            setHeightToCache(product, blockchainId, heightType, height);
+        try {
+            Long height = getHeightFromCache(product, blockchainId, heightType);
+            if (ObjectUtil.isNull(height) || ObjectUtil.equals(0L, height)) {
+                height = getAnchorProcessHeightFromDB(product, blockchainId, heightType);
+                setHeightToCache(product, blockchainId, heightType, height);
+            }
+            return height;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_ANCHOR_HEIGHTS_ERROR,
+                    e,
+                    "failed to get heights for ( product: {}, blockchain id: {}, type: {} )",
+                    product, blockchainId, heightType
+            );
         }
-        return height;
+
     }
 
     @Override
@@ -97,16 +112,18 @@ public class BlockchainRepository implements IBlockchainRepository {
         try {
             AnchorProcessHeights heights = getAnchorProcessHeightsFromCache(product, blockchainId);
             if (ObjectUtil.isNull(heights)) {
-                List<AnchorProcessEntity> entities = anchorProcessService.lambdaQuery()
-                        .select(
-                                ListUtil.toList(
-                                        AnchorProcessEntity::getTask,
-                                        AnchorProcessEntity::getBlockHeight,
-                                        BaseEntity::getGmtModified
-                                )
-                        ).eq(AnchorProcessEntity::getProduct, product)
-                        .eq(AnchorProcessEntity::getBlockchainId, blockchainId)
-                        .list();
+                List<AnchorProcessEntity> entities = anchorProcessMapper
+                        .selectList(
+                                new LambdaQueryWrapper<AnchorProcessEntity>()
+                                        .select(
+                                                ListUtil.toList(
+                                                        AnchorProcessEntity::getTask,
+                                                        AnchorProcessEntity::getBlockHeight,
+                                                        BaseEntity::getGmtModified
+                                                )
+                                        ).eq(AnchorProcessEntity::getProduct, product)
+                                        .eq(AnchorProcessEntity::getBlockchainId, blockchainId)
+                        );
                 if (ObjectUtil.isEmpty(entities)) {
                     return null;
                 }
@@ -194,7 +211,7 @@ public class BlockchainRepository implements IBlockchainRepository {
                                 .properties(blockchainMeta.getProperties().encode())
                                 .build(),
                         new LambdaUpdateWrapper<BlockchainEntity>()
-                                .eq(BlockchainEntity::getBlockchainId, "test")
+                                .eq(BlockchainEntity::getBlockchainId, blockchainMeta.getBlockchainId())
                 ) == 1
         ) {
             blockchainMetaCache.put(blockchainMeta.getBlockchainId(), blockchainMeta);
@@ -462,27 +479,53 @@ public class BlockchainRepository implements IBlockchainRepository {
     }
 
     private void flushHeight(String product, String blockchainId, String heightType, Long height) {
-        if (
-                !anchorProcessService.lambdaUpdate()
-                        .set(AnchorProcessEntity::getBlockHeight, height)
-                        .set(BaseEntity::getGmtModified, new Date())
-                        .eq(AnchorProcessEntity::getProduct, product)
-                        .eq(AnchorProcessEntity::getBlockchainId, blockchainId)
-                        .eq(AnchorProcessEntity::getTask, heightType)
-                        .update()
-        ) {
-            throw new RuntimeException(String.format("update ( height type: %s, value: %d ) failed", heightType, height));
-        }
+        AnchorProcessEntity entity = new AnchorProcessEntity();
+        entity.setBlockHeight(height);
+        transactionTemplate.execute(
+                new TransactionCallbackWithoutResult() {
+                    @Override
+                    protected void doInTransactionWithoutResult(TransactionStatus status) {
+                        if (
+                                anchorProcessMapper.exists(
+                                        new LambdaQueryWrapper<AnchorProcessEntity>()
+                                                .eq(AnchorProcessEntity::getProduct, product)
+                                                .eq(AnchorProcessEntity::getBlockchainId, blockchainId)
+                                                .eq(AnchorProcessEntity::getTask, heightType)
+                                )
+                        ) {
+                            if (
+                                    anchorProcessMapper.update(
+                                            entity,
+                                            new LambdaUpdateWrapper<AnchorProcessEntity>()
+                                                    .eq(AnchorProcessEntity::getProduct, product)
+                                                    .eq(AnchorProcessEntity::getBlockchainId, blockchainId)
+                                                    .eq(AnchorProcessEntity::getTask, heightType)
+                                    ) != 1
+                            ) {
+                                throw new RuntimeException(String.format("update ( height type: %s, value: %d ) failed", heightType, height));
+                            }
+                            return;
+                        }
+
+                        entity.setBlockchainId(blockchainId);
+                        entity.setProduct(product);
+                        entity.setTask(heightType);
+                        if (anchorProcessMapper.insert(entity) != 1) {
+                            throw new RuntimeException(String.format("insert ( height type: %s, value: %d ) failed", heightType, height));
+                        }
+                    }
+                }
+        );
     }
 
     private Long getAnchorProcessHeightFromDB(String product, String blockchainId, String heightType) {
-        return anchorProcessService.lambdaQuery()
-                .select(true, ListUtil.of(AnchorProcessEntity::getBlockHeight))
-                .eq(AnchorProcessEntity::getProduct, product)
-                .eq(AnchorProcessEntity::getBlockchainId, blockchainId)
-                .eq(AnchorProcessEntity::getTask, heightType)
-                .oneOpt()
-                .map(AnchorProcessEntity::getBlockHeight).orElse(0L);
+        return anchorProcessMapper.selectOne(
+                new LambdaQueryWrapper<AnchorProcessEntity>()
+                        .select(ListUtil.toList(AnchorProcessEntity::getBlockHeight))
+                        .eq(AnchorProcessEntity::getProduct, product)
+                        .eq(AnchorProcessEntity::getBlockchainId, blockchainId)
+                        .eq(AnchorProcessEntity::getTask, heightType)
+        ).getBlockHeight();
     }
 
     private Long getHeightFromCache(String product, String blockchainId, String heightKey) {

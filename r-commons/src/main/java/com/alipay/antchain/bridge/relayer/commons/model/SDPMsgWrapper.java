@@ -34,7 +34,7 @@ public class SDPMsgWrapper {
 
     public final static String UNORDERED_SDP_MSG_SESSION = "UNORDERED";
 
-    private long id;
+    private Long id;
 
     private AuthMsgWrapper authMsgWrapper;
 
@@ -66,7 +66,7 @@ public class SDPMsgWrapper {
             AbstractSDPMessage sdpMessage
     ) {
         this(
-                0,
+                null,
                 authMsgWrapper,
                 receiverBlockchainProduct,
                 receiverBlockchainId,

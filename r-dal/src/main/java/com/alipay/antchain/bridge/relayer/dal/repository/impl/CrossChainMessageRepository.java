@@ -361,14 +361,19 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     }
 
     @Override
-    public List<SDPMsgWrapper> peekTxPendingSDPMessageIds(String receiverBlockchainProduct, String receiverBlockchainId, int limit) {
+    public List<SDPMsgWrapper> peekTxFinishedSDPMessageIds(String receiverBlockchainProduct, String receiverBlockchainId, int limit) {
         try {
             List<SDPMsgPoolEntity> entities = sdpMsgPoolMapper.selectList(
                     new LambdaQueryWrapper<SDPMsgPoolEntity>()
                             .select(ListUtil.toList(BaseEntity::getId, SDPMsgPoolEntity::getAuthMsgId))
                             .eq(SDPMsgPoolEntity::getReceiverBlockchainProduct, receiverBlockchainProduct)
                             .eq(SDPMsgPoolEntity::getReceiverBlockchainId, receiverBlockchainId)
-                            .last("limit " + limit)
+                            .and(
+                                    wrapper -> wrapper.eq(SDPMsgPoolEntity::getProcessState, SDPMsgProcessStateEnum.TX_SUCCESS)
+                                            .or(
+                                                    wrapper1 -> wrapper1.eq(SDPMsgPoolEntity::getProcessState, SDPMsgProcessStateEnum.TX_FAILED)
+                                            )
+                            ).last("limit " + limit)
             );
             if (ObjectUtil.isEmpty(entities)) {
                 return ListUtil.empty();

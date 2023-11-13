@@ -56,7 +56,7 @@ public interface ICrossChainMessageRepository {
 
     List<SDPMsgWrapper> peekSDPMessages(String receiverBlockchainProduct, String receiverBlockchainId, SDPMsgProcessStateEnum processState, int limit);
 
-    List<SDPMsgWrapper> peekTxPendingSDPMessageIds(String receiverBlockchainProduct, String receiverBlockchainId, int limit);
+    List<SDPMsgWrapper> peekTxFinishedSDPMessageIds(String receiverBlockchainProduct, String receiverBlockchainId, int limit);
 
     long countSDPMessagesByState(String receiverBlockchainProduct, String receiverBlockchainId, SDPMsgProcessStateEnum processState);
 

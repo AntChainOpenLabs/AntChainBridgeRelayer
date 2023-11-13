@@ -175,7 +175,7 @@ public class ConvertUtil {
         context.setBlockchainId(ucpPoolEntity.getBlockchainId());
         context.setUdagPath(ucpPoolEntity.getUdagPath());
         context.setProcessState(ucpPoolEntity.getProcessState());
-        context.setFromNetwork(ucpPoolEntity.isFromNetwork());
+        context.setFromNetwork(ucpPoolEntity.getFromNetwork());
         context.setRelayerId(ucpPoolEntity.getRelayerId());
 
         return context;
@@ -189,7 +189,7 @@ public class ConvertUtil {
         wrapper.setReceiverAMClientContract(sdpMsgPoolEntity.getReceiverAMClientContract());
         wrapper.setProcessState(sdpMsgPoolEntity.getProcessState());
         wrapper.setTxHash(sdpMsgPoolEntity.getTxHash());
-        wrapper.setTxSuccess(sdpMsgPoolEntity.isTxSuccess());
+        wrapper.setTxSuccess(sdpMsgPoolEntity.getTxSuccess());
         wrapper.setTxFailReason(sdpMsgPoolEntity.getTxFailReason());
 
         if (sdpMsgPoolEntity.getVersion() == SDPMessageV1.MY_VERSION) {
@@ -203,7 +203,7 @@ public class ConvertUtil {
             message.setSequence(sdpMsgPoolEntity.getMsgSequence().intValue());
             message.setTargetDomain(new CrossChainDomain(sdpMsgPoolEntity.getReceiverDomainName()));
             message.setTargetIdentity(new CrossChainIdentity(HexUtil.decodeHex(sdpMsgPoolEntity.getReceiverId())));
-            message.setAtomic(sdpMsgPoolEntity.isAtomic());
+            message.setAtomic(sdpMsgPoolEntity.getAtomic());
             wrapper.setSdpMessage(message);
         } else {
             throw new RuntimeException("Invalid version of sdp message: " + sdpMsgPoolEntity.getVersion());

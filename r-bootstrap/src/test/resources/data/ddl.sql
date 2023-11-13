@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-CREATE TABLE `blockchain`
+CREATE TABLE IF NOT EXISTS `blockchain`
 (
     `id`            int(11) NOT NULL AUTO_INCREMENT,
     `product`       varchar(64)   DEFAULT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE `blockchain`
     UNIQUE KEY `uk_instance` (`blockchain_id`)
 );
 
-CREATE TABLE `system_config`
+CREATE TABLE IF NOT EXISTS `system_config`
 (
     `id`           int(11) NOT NULL AUTO_INCREMENT,
     `conf_key`     varchar(128)   DEFAULT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE `system_config`
     UNIQUE KEY `conf_key` (`conf_key`)
 );
 
-CREATE TABLE `anchor_process`
+CREATE TABLE IF NOT EXISTS `anchor_process`
 (
     `id`                 int(11) NOT NULL AUTO_INCREMENT,
     `blockchain_product` varchar(64)  DEFAULT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE `anchor_process`
     UNIQUE KEY `blockchain_product` (`blockchain_product`, `instance`, `task`)
 );
 
-CREATE TABLE `anchor_system_config`
+CREATE TABLE IF NOT EXISTS `anchor_system_config`
 (
     `id`           int(11) NOT NULL AUTO_INCREMENT,
     `conf_key`     varchar(256) DEFAULT NULL,
@@ -63,7 +63,7 @@ CREATE TABLE `anchor_system_config`
     UNIQUE KEY `anchor_conf_key` (`conf_key`)
 );
 
-CREATE TABLE `domain_cert`
+CREATE TABLE IF NOT EXISTS `domain_cert`
 (
     `id`                 int(11) NOT NULL AUTO_INCREMENT,
     `domain`             varchar(128) DEFAULT NULL,
@@ -79,7 +79,7 @@ CREATE TABLE `domain_cert`
     UNIQUE KEY `domain` (`domain`)
 );
 
-CREATE TABLE `domain_space_cert`
+CREATE TABLE IF NOT EXISTS `domain_space_cert`
 (
     `id`                int(11) NOT NULL AUTO_INCREMENT,
     `domain_space`      varchar(128) DEFAULT NULL,
@@ -92,7 +92,7 @@ CREATE TABLE `domain_space_cert`
     UNIQUE KEY `domain_space` (`domain_space`)
 );
 
-CREATE TABLE `ucp_pool`
+CREATE TABLE IF NOT EXISTS `ucp_pool`
 (
     `id`                 int(11)              NOT NULL AUTO_INCREMENT,
     `ucp_id`             VARBINARY(32) UNIQUE NOT NULL,
@@ -120,7 +120,7 @@ CREATE TABLE `ucp_pool`
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
 
-CREATE TABLE `auth_msg_pool`
+CREATE TABLE IF NOT EXISTS `auth_msg_pool`
 (
     `id`                        int(11)              NOT NULL AUTO_INCREMENT,
     `ucp_id`                    VARBINARY(32) UNIQUE NOT NULL,
@@ -142,7 +142,7 @@ CREATE TABLE `auth_msg_pool`
     KEY `idx_domainname_processstate` (`domain_name`, `process_state`)
 );
 
-CREATE TABLE `sdp_msg_pool`
+CREATE TABLE IF NOT EXISTS `sdp_msg_pool`
 (
     `id`                          int(11) NOT NULL AUTO_INCREMENT,
     `auth_msg_id`                 int(11)      DEFAULT NULL,
@@ -172,7 +172,7 @@ CREATE TABLE `sdp_msg_pool`
     KEY `idx_receiverinstance_processstate_receiverblockchainproduct` (`receiver_instance`, `process_state`, `receiver_blockchain_product`)
 );
 
-CREATE TABLE `cross_chain_msg_acl`
+CREATE TABLE IF NOT EXISTS `cross_chain_msg_acl`
 (
     `id`                 int(11) NOT NULL AUTO_INCREMENT,
     `biz_id`             varchar(64)  DEFAULT NULL,
@@ -190,7 +190,7 @@ CREATE TABLE `cross_chain_msg_acl`
     KEY `exact_valid_rules` (`owner_domain`, `owner_identity_hex`, `grant_domain`, `grant_identity_hex`)
 );
 
-CREATE TABLE `relayer_network`
+CREATE TABLE IF NOT EXISTS `relayer_network`
 (
     `id`           int(11) NOT NULL AUTO_INCREMENT,
     `network_id`   varchar(64)  DEFAULT NULL,
@@ -203,7 +203,7 @@ CREATE TABLE `relayer_network`
     UNIQUE KEY `uk_item` (`network_id`, `domain`, `node_id`)
 );
 
-CREATE TABLE `relayer_node`
+CREATE TABLE IF NOT EXISTS `relayer_node`
 (
     `id`                   int(11) NOT NULL AUTO_INCREMENT,
     `node_id`              varchar(64)   DEFAULT NULL,
@@ -219,7 +219,7 @@ CREATE TABLE `relayer_node`
     UNIQUE KEY `uk_relayer_node` (`node_id`)
 );
 
-CREATE TABLE `auth_msg_archive`
+CREATE TABLE IF NOT EXISTS `auth_msg_archive`
 (
     `id`                        int(11)              NOT NULL AUTO_INCREMENT,
     `ucp_id`                    VARBINARY(32) UNIQUE NOT NULL,
@@ -239,7 +239,7 @@ CREATE TABLE `auth_msg_archive`
     PRIMARY KEY (`id`)
 );
 
-CREATE TABLE `sdp_msg_archive`
+CREATE TABLE IF NOT EXISTS `sdp_msg_archive`
 (
     `id`                          int(11) NOT NULL AUTO_INCREMENT,
     `auth_msg_id`                 int(11)      DEFAULT NULL,
@@ -265,7 +265,7 @@ CREATE TABLE `sdp_msg_archive`
     PRIMARY KEY (`id`)
 );
 
-CREATE TABLE `dt_task`
+CREATE TABLE IF NOT EXISTS `dt_task`
 (
     `id`                 int(11) NOT NULL AUTO_INCREMENT,
     `node_id`            varchar(64)  DEFAULT NULL,
@@ -280,7 +280,7 @@ CREATE TABLE `dt_task`
     UNIQUE KEY `uk_task` (`node_id`, `task_type`, `blockchain_id`)
 );
 
-CREATE TABLE `dt_active_node`
+CREATE TABLE IF NOT EXISTS `dt_active_node`
 (
     `id`               int(11) NOT NULL AUTO_INCREMENT,
     `node_id`          varchar(64) DEFAULT NULL,

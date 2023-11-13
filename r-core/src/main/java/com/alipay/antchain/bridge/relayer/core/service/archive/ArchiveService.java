@@ -84,7 +84,7 @@ public class ArchiveService {
             }
 
             // 分别捞出待处理流水
-            List<SDPMsgWrapper> sdpMsgWrappers = crossChainMessageRepository.peekTxPendingSDPMessageIds(
+            List<SDPMsgWrapper> sdpMsgWrappers = crossChainMessageRepository.peekTxFinishedSDPMessageIds(
                     blockchainProduct,
                     blockchainId,
                     archiveBatchSize

@@ -53,7 +53,7 @@ public class BlockchainModelsTest {
             "  \"sdp_msg_contract_address\" : \"0x098310f3921eb1f7488ee169298e92759caa4e14\",\n" +
             "  \"is_domain_registered\" : \"true\",\n" +
             "  \"heterogeneous_bbc_context\" : \"{\\\"am_contract\\\":{\\\"contractAddress\\\":\\\"0x72e82e6aa48fca141ceb5914382be199fa514f96\\\",\\\"status\\\":\\\"CONTRACT_READY\\\"},\\\"raw_conf\\\":\\\"eyJ0ZXN0IjoidGVzdCJ9\\\",\\\"sdp_contract\\\":{\\\"contractAddress\\\":\\\"0x098310f3921eb1f7488ee169298e92759caa4e14\\\",\\\"status\\\":\\\"CONTRACT_READY\\\"}}\",\n" +
-            "  \"am_service_status\" : \"FINISH_DEPLOY_AM_CONTRACT\",\n" +
+            "  \"am_service_status\" : \"DEPLOY_FINISHED\",\n" +
             "  \"am_client_contract_address\" : \"0x72e82e6aa48fca141ceb5914382be199fa514f96\",\n" +
             "  \"plugin_server_id\" : \"p-QYj86x8Zd\"\n" +
             "}";
@@ -74,7 +74,7 @@ public class BlockchainModelsTest {
             "            \"status\":\"CONTRACT_READY\"\n" +
             "        }\n" +
             "    },\n" +
-            "    \"am_service_status\":\"FINISH_DEPLOY_AM_CONTRACT\",\n" +
+            "    \"am_service_status\":\"DEPLOY_FINISHED\",\n" +
             "    \"am_client_contract_address\":\"0x72e82e6aa48fca141ceb5914382be199fa514f96\",\n" +
             "    \"plugin_server_id\":\"p-QYj86x8Zd\"\n" +
             "}";
@@ -123,7 +123,7 @@ public class BlockchainModelsTest {
             "            \"status\":\"CONTRACT_READY\"\n" +
             "        }\n" +
             "    },\n" +
-            "    \"am_service_status\":\"FINISH_DEPLOY_AM_CONTRACT\",\n" +
+            "    \"am_service_status\":\"DEPLOY_FINISHED\",\n" +
             "    \"am_client_contract_address\":\"0x72e82e6aa48fca141ceb5914382be199fa514f96\",\n" +
             "    \"plugin_server_id\":\"p-QYj86x8Zd\"\n" +
             "}";

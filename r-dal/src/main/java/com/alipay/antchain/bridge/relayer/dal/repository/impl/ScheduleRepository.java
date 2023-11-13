@@ -66,7 +66,11 @@ public class ScheduleRepository implements IScheduleRepository {
         try {
             if (
                     1 != dtActiveNodeMapper.update(
-                            DTActiveNodeEntity.builder().build(),
+                            DTActiveNodeEntity.builder()
+                                    .nodeId(nodeId)
+                                    .nodeIp(nodeIp)
+                                    .state(DTActiveNodeStateEnum.ONLINE)
+                                    .build(),
                             new LambdaUpdateWrapper<DTActiveNodeEntity>()
                                     .eq(DTActiveNodeEntity::getNodeId, nodeId)
                     )

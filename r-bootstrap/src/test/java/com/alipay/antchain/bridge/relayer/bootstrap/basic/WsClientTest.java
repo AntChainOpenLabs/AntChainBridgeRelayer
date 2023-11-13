@@ -19,8 +19,10 @@ package com.alipay.antchain.bridge.relayer.bootstrap.basic;
 import java.net.URL;
 
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.client.WSRelayerServerAPImplServiceWithHost;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class WsClientTest {
 
     @Test

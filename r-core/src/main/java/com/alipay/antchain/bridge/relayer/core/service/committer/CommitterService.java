@@ -309,7 +309,7 @@ public class CommitterService {
 
             msgSet.getUpload().forEach(
                     sdpMsgWrapper -> sdpMsgWrapper.setAuthMsgWrapper(
-                            crossChainMessageRepository.getAuthMessage(sdpMsgWrapper.getId())
+                            crossChainMessageRepository.getAuthMessage(sdpMsgWrapper.getAuthMsgWrapper().getAuthMsgId())
                     )
             );
 

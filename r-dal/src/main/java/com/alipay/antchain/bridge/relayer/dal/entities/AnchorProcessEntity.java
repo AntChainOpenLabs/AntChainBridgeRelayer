@@ -20,12 +20,14 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
 @TableName("anchor_process")
 @AllArgsConstructor
+@NoArgsConstructor
 public class AnchorProcessEntity extends BaseEntity {
 
     @TableField("blockchain_product")

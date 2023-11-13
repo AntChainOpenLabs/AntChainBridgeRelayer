@@ -27,13 +27,13 @@ import lombok.Setter;
 @TableName("sdp_msg_archive")
 public class SDPMsgArchiveEntity extends BaseEntity {
     @TableField("auth_msg_id")
-    private int authMsgId;
+    private Integer authMsgId;
 
     @TableField("version")
-    private int version;
+    private Integer version;
 
     @TableField("atomic")
-    private boolean atomic;
+    private Boolean atomic;
 
     @TableField("sender_blockchain_product")
     private String senderBlockchainProduct;
@@ -75,7 +75,7 @@ public class SDPMsgArchiveEntity extends BaseEntity {
     private String txHash;
 
     @TableField("tx_success")
-    private int txSuccess;
+    private Boolean txSuccess;
 
     @TableField("tx_fail_reason")
     private String txFailReason;
