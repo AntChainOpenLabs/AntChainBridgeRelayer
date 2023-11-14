@@ -70,6 +70,7 @@ public class PluginServerRepository implements IPluginServerRepository {
                             PluginServerObjectsEntity.builder()
                                     .products(StrUtil.join(",", info.getProducts()))
                                     .domains(StrUtil.join(",", info.getDomains()))
+                                    .state(info.getState())
                                     .build(),
                             new LambdaUpdateWrapper<PluginServerObjectsEntity>()
                                     .eq(PluginServerObjectsEntity::getPsId, psId)
@@ -222,8 +223,8 @@ public class PluginServerRepository implements IPluginServerRepository {
             }
             return new PluginServerInfo(
                     entity.getState(),
-                    StrUtil.split(",", entity.getProducts()),
-                    StrUtil.split(",", entity.getDomains())
+                    StrUtil.split(entity.getProducts(), ","),
+                    StrUtil.split(entity.getDomains(), ",")
             );
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(

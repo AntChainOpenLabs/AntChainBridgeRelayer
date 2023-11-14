@@ -297,41 +297,6 @@ public class GRpcBBCServiceClient implements IBBCServiceClient {
         return response.getBbcResp().getQueryLatestHeightResponse().getHeight();
     }
 
-    @Override
-    public boolean hasTPBTA(String s) {
-        return false;
-    }
-
-    @Override
-    public byte[] getTPBTA(String s) {
-        return new byte[0];
-    }
-
-    @Override
-    public boolean ifBlockchainProductSupported(String s) {
-        return false;
-    }
-
-    @Override
-    public void addTPBTA(String s, byte[] bytes) {
-
-    }
-
-    @Override
-    public void approveProtocol(String s) {
-
-    }
-
-    @Override
-    public void disapproveProtocol(String s) {
-
-    }
-
-    @Override
-    public void setOwner(String s) {
-
-    }
-
     private void handleErrorCode(Response response) {
         if (response.getCode() == 217) {
             response = this.blockingStub.bbcCall(
