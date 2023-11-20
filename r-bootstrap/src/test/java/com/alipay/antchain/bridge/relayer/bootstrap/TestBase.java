@@ -66,6 +66,8 @@ public abstract class TestBase {
 
     @BeforeClass
     public static void beforeTest() throws Exception {
+        // if the embedded redis can't start correctly,
+        // try to use local redis server binary to start it.
         redisServer = new MyRedisServer(
                 RedisExecProvider.defaultProvider()
                         .override(OS.MAC_OS_X, Architecture.x86_64, "/usr/local/bin/redis-server")

@@ -18,6 +18,8 @@ package com.alipay.antchain.bridge.relayer.bootstrap.utils;
 
 import java.io.IOException;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.system.SystemUtil;
 import redis.embedded.RedisExecProvider;
 import redis.embedded.RedisServer;
 
@@ -29,6 +31,9 @@ public class MyRedisServer extends RedisServer {
 
     @Override
     protected String redisReadyPattern() {
-        return ".*Ready to accept connections tcp.*";
+        if (SystemUtil.getOsInfo().isMac() && StrUtil.equalsIgnoreCase(SystemUtil.getOsInfo().getArch(), "x86_64")) {
+            return ".*Ready to accept connections tcp.*";
+        }
+        return super.redisReadyPattern();
     }
 }
