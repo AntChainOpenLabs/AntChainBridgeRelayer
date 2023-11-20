@@ -19,24 +19,25 @@ package com.alipay.antchain.bridge.relayer.core.manager.bcdns;
 import java.util.List;
 import java.util.Map;
 
+import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
-import com.alipay.antchain.bridge.commons.bcdns.BCDNSTrustRootCredentialSubject;
+import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
 
 public interface IBCDNSManager {
 
-    Map<String, AbstractCrossChainCertificate> getAllTrustRootCerts();
+    IBlockChainDomainNameService getBCDNSService(String domainSpace);
 
-    AbstractCrossChainCertificate getTrustRootCert(String domainSpace);
+    IBlockChainDomainNameService startBCDNSService(BCDNSServiceDO bcdnsServiceDO);
+
+    void saveBCDNSServiceData(BCDNSServiceDO bcdnsServiceDO);
+
+    BCDNSServiceDO getBCDNSServiceData(String domainSpace);
 
     Map<String, AbstractCrossChainCertificate> getTrustRootCertChain(String domainSpace);
 
     List<String> getDomainSpaceChain(String domainSpace);
 
     AbstractCrossChainCertificate getTrustRootCertForRootDomain();
-
-    BCDNSTrustRootCredentialSubject getTrustRootCredentialSubject(String domainSpace);
-
-    BCDNSTrustRootCredentialSubject getTrustRootCredentialSubjectForRootDomain();
 
     boolean validateCrossChainCertificate(AbstractCrossChainCertificate certificate);
 

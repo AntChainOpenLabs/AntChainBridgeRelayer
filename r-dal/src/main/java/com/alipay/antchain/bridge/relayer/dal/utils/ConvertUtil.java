@@ -27,6 +27,7 @@ import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
@@ -37,6 +38,7 @@ import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV1;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV2;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.dal.entities.*;
+import lombok.NonNull;
 
 public class ConvertUtil {
 
@@ -424,6 +426,34 @@ public class ConvertUtil {
         entity.setParentSpace(wrapper.getParentDomainSpace());
         entity.setDesc(wrapper.getDesc());
         entity.setDomainSpaceCert(wrapper.getDomainSpaceCert().encode());
+        return entity;
+    }
+
+    public static DomainSpaceCertWrapper convertFromDomainSpaceCertEntity(DomainSpaceCertEntity entity) {
+        AbstractCrossChainCertificate certificate = CrossChainCertificateFactory.createCrossChainCertificate(entity.getDomainSpaceCert());
+        DomainSpaceCertWrapper wrapper = new DomainSpaceCertWrapper(certificate);
+        wrapper.setDesc(entity.getDesc());
+        return wrapper;
+    }
+
+    public static BCDNSServiceDO convertFromBCDNSServiceEntity(@NonNull BCDNSServiceEntity entity, @NonNull DomainSpaceCertWrapper domainSpaceCertWrapper) {
+        return new BCDNSServiceDO(
+                entity.getDomainSpace(),
+                ObjectIdentity.decode(HexUtil.decodeHex(entity.getOwnerOid())),
+                domainSpaceCertWrapper,
+                BCDNSTypeEnum.parseFromValue(entity.getType()),
+                entity.getState(),
+                entity.getProperties()
+        );
+    }
+
+    public static BCDNSServiceEntity convertFromBCDNSServiceDO(BCDNSServiceDO bcdnsServiceDO) {
+        BCDNSServiceEntity entity = new BCDNSServiceEntity();
+        entity.setDomainSpace(bcdnsServiceDO.getDomainSpace());
+        entity.setOwnerOid(HexUtil.encodeHexStr(bcdnsServiceDO.getOwnerOid().encode()));
+        entity.setType(bcdnsServiceDO.getType().getCode());
+        entity.setState(bcdnsServiceDO.getState());
+        entity.setProperties(bcdnsServiceDO.getProperties());
         return entity;
     }
 }

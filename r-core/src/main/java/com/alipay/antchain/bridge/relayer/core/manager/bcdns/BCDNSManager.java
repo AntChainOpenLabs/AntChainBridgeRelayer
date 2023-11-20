@@ -18,10 +18,18 @@ package com.alipay.antchain.bridge.relayer.core.manager.bcdns;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.alipay.antchain.bridge.bcdns.impl.BlockChainDomainNameServiceFactory;
+import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
-import com.alipay.antchain.bridge.commons.bcdns.BCDNSTrustRootCredentialSubject;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
+import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
+import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
+import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainSpaceCertWrapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBCDNSRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -34,39 +42,70 @@ public class BCDNSManager implements IBCDNSManager {
     @Resource
     private IBCDNSRepository bcdnsRepository;
 
+    private final Map<String, IBlockChainDomainNameService> bcdnsClientMap = new ConcurrentHashMap<>();
+
     @Override
-    public Map<String, AbstractCrossChainCertificate> getAllTrustRootCerts() {
-        return null;
+    public IBlockChainDomainNameService getBCDNSService(String domainSpace) {
+        if (bcdnsClientMap.containsKey(domainSpace)) {
+            return bcdnsClientMap.get(domainSpace);
+        }
+
+        BCDNSServiceDO bcdnsServiceDO = getBCDNSServiceData(domainSpace);
+        if (ObjectUtil.isNull(bcdnsServiceDO)) {
+            log.warn("none bcdns data found for domain space {}", domainSpace);
+            return null;
+        }
+
+        IBlockChainDomainNameService service = startBCDNSService(bcdnsServiceDO);
+        bcdnsClientMap.put(domainSpace, service);
+        return service;
     }
 
     @Override
-    public AbstractCrossChainCertificate getTrustRootCert(String domainSpace) {
-        return null;
+    public IBlockChainDomainNameService startBCDNSService(BCDNSServiceDO bcdnsServiceDO) {
+        log.info("starting the bcdns service ( type: {}, domain_space: {} )",
+                bcdnsServiceDO.getType().getCode(), bcdnsServiceDO.getDomainSpace());
+        return BlockChainDomainNameServiceFactory.create(bcdnsServiceDO.getType(), bcdnsServiceDO.getProperties());
+    }
+
+    @Override
+    public void saveBCDNSServiceData(BCDNSServiceDO bcdnsServiceDO) {
+        if (bcdnsRepository.hasBCDNSService(bcdnsServiceDO.getDomainSpace())) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    "bcdns {} not exist or data incomplete",
+                    bcdnsServiceDO.getDomainSpace()
+            );
+        }
+        bcdnsRepository.saveBCDNSServiceDO(bcdnsServiceDO);
+    }
+
+    @Override
+    public BCDNSServiceDO getBCDNSServiceData(String domainSpace) {
+        return bcdnsRepository.getBCDNSServiceDO(domainSpace);
     }
 
     @Override
     public Map<String, AbstractCrossChainCertificate> getTrustRootCertChain(String domainSpace) {
-        return null;
+        return bcdnsRepository.getDomainSpaceCertChain(domainSpace).entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().getDomainSpaceCert()
+                ));
     }
 
     @Override
     public List<String> getDomainSpaceChain(String domainSpace) {
-        return null;
-    }
-
-    @Override
-    public BCDNSTrustRootCredentialSubject getTrustRootCredentialSubject(String domainSpace) {
-        return null;
+        return bcdnsRepository.getDomainSpaceChain(domainSpace);
     }
 
     @Override
     public AbstractCrossChainCertificate getTrustRootCertForRootDomain() {
-        return null;
-    }
-
-    @Override
-    public BCDNSTrustRootCredentialSubject getTrustRootCredentialSubjectForRootDomain() {
-        return null;
+        DomainSpaceCertWrapper wrapper = bcdnsRepository.getDomainSpaceCert(CrossChainDomain.ROOT_DOMAIN_SPACE);
+        if (ObjectUtil.isNull(wrapper)) {
+            return null;
+        }
+        return wrapper.getDomainSpaceCert();
     }
 
     @Override

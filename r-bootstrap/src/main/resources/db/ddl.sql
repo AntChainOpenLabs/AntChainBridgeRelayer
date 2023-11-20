@@ -368,3 +368,17 @@ CREATE TABLE IF NOT EXISTS `plugin_server_objects`
     `gmt_create`         datetime DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`       datetime DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS `bcdns_service`
+(
+    `id`           INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    `domain_space` VARCHAR(128)        NOT NULL,
+    `owner_oid`    BINARY              NOT NULL,
+    `type`         VARCHAR(32)         NOT NULL,
+    `state`        INT                 NOT NULL,
+    `properties`   BLOB,
+    `gmt_create`   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified` DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX bcdns_network_id_domain_space
+    ON bcdns_service (domain_space);

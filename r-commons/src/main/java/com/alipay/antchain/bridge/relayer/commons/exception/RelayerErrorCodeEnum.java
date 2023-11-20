@@ -59,6 +59,8 @@ public enum RelayerErrorCodeEnum {
 
     DAL_DOMAIN_SPACE_ERROR("010b", "domain space cert data error"),
 
+    DAL_BCDNS_ERROR("010c", "bcdns data error"),
+
     CORE_BLOCKCHAIN_ERROR("0201", "blockchain error"),
 
     CORE_BLOCKCHAIN_CLIENT_INIT_ERROR("0202", "blockchain client init error"),
@@ -68,6 +70,8 @@ public enum RelayerErrorCodeEnum {
     CORE_BBC_CALL_ERROR("0204", "call bbc error"),
 
     CORE_RELAYER_NETWORK_ERROR("0205", "relayer network error"),
+
+    CORE_BCDNS_MANAGER_ERROR("0206", "bcdns manager error"),
 
     SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED("0301", "process auth msg failed"),
 

@@ -107,6 +107,11 @@
                 <version>${acb-sdk.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.alipay.antchain.bridge</groupId>
+                <artifactId>antchain-bridge-bcdns</artifactId>
+                <version>${acb-sdk.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
