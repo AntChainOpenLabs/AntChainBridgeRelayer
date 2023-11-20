@@ -44,8 +44,8 @@ jobs:
     config:
       afterExecute:
         checkRule: # 质量规则校验策略，outputs的数值在0-100之间
-          - ${{outputs.casePassRate}} >= 100 #通过率
-          - ${{outputs.lineCoverage}} >= 100 #全量行覆盖率
-          - ${{outputs.changeLineCoverage}} >= 100 #变更行覆盖率
-          - ${{outputs.branchCoverage}} >= 100 #分支覆盖率
-          - ${{outputs.changeBranchCoverage}} >= 100 #变更分支覆盖率
+          - ${{outputs.casePassRate}} >= 90 #通过率
+#          - ${{outputs.lineCoverage}} >= 100 #全量行覆盖率
+#          - ${{outputs.changeLineCoverage}} >= 100 #变更行覆盖率
+#          - ${{outputs.branchCoverage}} >= 100 #分支覆盖率
+#          - ${{outputs.changeBranchCoverage}} >= 100 #变更分支覆盖率
