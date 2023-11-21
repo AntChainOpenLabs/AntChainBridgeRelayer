@@ -93,6 +93,10 @@ public enum RelayerErrorCodeEnum {
 
     SERVER_REQUEST_FROM_RELAYER_REJECT("0401", "relayer request rejected"),
 
+    SERVER_ADMIN_COMMAND_NOT_EXIST("0402", "command not exist"),
+
+    SERVER_ADMIN_UNEXPECTED_ERROR("0403", "unexpected error"),
+
     /**
      *
      */

@@ -26,9 +26,11 @@ import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.bcdns.impl.BlockChainDomainNameServiceFactory;
 import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
+import com.alipay.antchain.bridge.bcdns.types.resp.QueryBCDNSTrustRootCertificateResponse;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
+import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
@@ -67,7 +69,45 @@ public class BCDNSManager implements IBCDNSManager {
     public IBlockChainDomainNameService startBCDNSService(BCDNSServiceDO bcdnsServiceDO) {
         log.info("starting the bcdns service ( type: {}, domain_space: {} )",
                 bcdnsServiceDO.getType().getCode(), bcdnsServiceDO.getDomainSpace());
-        return BlockChainDomainNameServiceFactory.create(bcdnsServiceDO.getType(), bcdnsServiceDO.getProperties());
+        try {
+            IBlockChainDomainNameService service = BlockChainDomainNameServiceFactory.create(bcdnsServiceDO.getType(), bcdnsServiceDO.getProperties());
+            if (ObjectUtil.isNull(service)) {
+                throw new AntChainBridgeRelayerException(
+                        RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                        "bcdns {} start failed",
+                        bcdnsServiceDO.getDomainSpace()
+                );
+            }
+            if (
+                    ObjectUtil.isNotNull(bcdnsServiceDO.getDomainSpaceCertWrapper())
+                            && ObjectUtil.isNotNull(bcdnsServiceDO.getDomainSpaceCertWrapper().getDomainSpaceCert())
+            ) {
+                QueryBCDNSTrustRootCertificateResponse response = service.queryBCDNSTrustRootCertificate();
+                if (ObjectUtil.isNull(response) || ObjectUtil.isNull(response.getBcdnsTrustRootCertificate())) {
+                    throw new AntChainBridgeRelayerException(
+                            RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                            "query empty root cert from bcdns {}",
+                            bcdnsServiceDO.getDomainSpace()
+                    );
+                }
+                bcdnsServiceDO.setState(BCDNSStateEnum.WORKING);
+                bcdnsServiceDO.setOwnerOid(response.getBcdnsTrustRootCertificate().getCredentialSubjectInstance().getApplicant());
+                bcdnsServiceDO.setDomainSpaceCertWrapper(
+                        new DomainSpaceCertWrapper(response.getBcdnsTrustRootCertificate())
+                );
+            }
+
+            return service;
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    e,
+                    "failed to start bcdns service client for {}",
+                    bcdnsServiceDO.getDomainSpace()
+            );
+        }
     }
 
     @Override
@@ -85,6 +125,11 @@ public class BCDNSManager implements IBCDNSManager {
     @Override
     public BCDNSServiceDO getBCDNSServiceData(String domainSpace) {
         return bcdnsRepository.getBCDNSServiceDO(domainSpace);
+    }
+
+    @Override
+    public boolean hasBCDNSServiceData(String domainSpace) {
+        return bcdnsRepository.hasBCDNSService(domainSpace);
     }
 
     @Override

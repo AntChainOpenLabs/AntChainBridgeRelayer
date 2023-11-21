@@ -33,6 +33,8 @@ public interface IBCDNSManager {
 
     BCDNSServiceDO getBCDNSServiceData(String domainSpace);
 
+    boolean hasBCDNSServiceData(String domainSpace);
+
     Map<String, AbstractCrossChainCertificate> getTrustRootCertChain(String domainSpace);
 
     List<String> getDomainSpaceChain(String domainSpace);

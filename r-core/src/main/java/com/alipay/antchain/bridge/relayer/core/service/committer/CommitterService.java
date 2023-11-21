@@ -11,6 +11,7 @@ import javax.annotation.Resource;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alipay.antchain.bridge.relayer.commons.constant.Constants;
 import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
@@ -142,7 +143,7 @@ public class CommitterService {
     private boolean isBusyBlockchain(String blockchainProduct, String blockchainId) {
 
         String pendingLimit = systemConfigRepository.getSystemConfig(
-                StrUtil.format("{}-{}-{}", "PENDING_LIMIT", blockchainProduct, blockchainId)
+                StrUtil.format("{}-{}-{}", Constants.PENDING_LIMIT, blockchainProduct, blockchainId)
         );
 
         boolean busy = false;

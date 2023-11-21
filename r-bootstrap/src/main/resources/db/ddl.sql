@@ -118,6 +118,8 @@ CREATE TABLE `domain_space_cert`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+CREATE INDEX domain_space_cert_owner_oid_hex
+    ON domain_space_cert (owner_oid_hex);
 
 drop table if exists ucp_pool;
 CREATE TABLE `ucp_pool`
