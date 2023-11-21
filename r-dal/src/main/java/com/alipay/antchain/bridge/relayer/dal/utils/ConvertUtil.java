@@ -424,6 +424,7 @@ public class ConvertUtil {
         DomainSpaceCertEntity entity = new DomainSpaceCertEntity();
         entity.setDomainSpace(wrapper.getDomainSpace());
         entity.setParentSpace(wrapper.getParentDomainSpace());
+        entity.setOwnerOidHex(HexUtil.encodeHexStr(wrapper.getOwnerOid().encode()));
         entity.setDesc(wrapper.getDesc());
         entity.setDomainSpaceCert(wrapper.getDomainSpaceCert().encode());
         return entity;

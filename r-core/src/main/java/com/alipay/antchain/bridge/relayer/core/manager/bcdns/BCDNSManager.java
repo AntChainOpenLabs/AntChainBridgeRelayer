@@ -22,10 +22,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.bcdns.impl.BlockChainDomainNameServiceFactory;
 import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
@@ -110,12 +112,19 @@ public class BCDNSManager implements IBCDNSManager {
 
     @Override
     public boolean validateCrossChainCertificate(AbstractCrossChainCertificate certificate) {
-        return false;
-    }
-
-    @Override
-    public boolean validateDomainCertificate(AbstractCrossChainCertificate certificate, List<String> domainSpaceChain) {
-        return false;
+        DomainSpaceCertWrapper trustRootCert = bcdnsRepository.getDomainSpaceCert(certificate.getIssuer());
+        if (ObjectUtil.isNull(trustRootCert)) {
+            log.warn(
+                    "none trust root found for {} to verify for relayer cert: {}",
+                    HexUtil.encodeHexStr(certificate.getIssuer().encode()),
+                    CrossChainCertificateUtil.formatCrossChainCertificateToPem(certificate)
+            );
+            return false;
+        }
+        return trustRootCert.getDomainSpaceCert().getCredentialSubjectInstance().verifyIssueProof(
+                certificate.getEncodedToSign(),
+                certificate.getProof()
+        );
     }
 
     @Override

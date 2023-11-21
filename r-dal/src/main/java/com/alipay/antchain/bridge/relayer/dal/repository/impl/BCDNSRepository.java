@@ -23,9 +23,11 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
+import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
 import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
@@ -89,6 +91,27 @@ public class BCDNSRepository implements IBCDNSRepository {
                     e,
                     "failed to get domain space certificate for space {}",
                     domainSpace
+            );
+        }
+    }
+
+    @Override
+    public DomainSpaceCertWrapper getDomainSpaceCert(ObjectIdentity ownerOid) {
+        try {
+            List<DomainSpaceCertEntity> entityList = domainSpaceCertMapper.selectList(
+                    new LambdaQueryWrapper<DomainSpaceCertEntity>()
+                            .eq(DomainSpaceCertEntity::getOwnerOidHex, HexUtil.encodeHexStr(ownerOid.encode()))
+            );
+            if (ObjectUtil.isEmpty(entityList)) {
+                return null;
+            }
+            return ConvertUtil.convertFromDomainSpaceCertEntity(entityList.get(0));
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DOMAIN_SPACE_ERROR,
+                    e,
+                    "failed to get domain space certificate by owner oid {}",
+                    HexUtil.encodeHexStr(ownerOid.encode())
             );
         }
     }

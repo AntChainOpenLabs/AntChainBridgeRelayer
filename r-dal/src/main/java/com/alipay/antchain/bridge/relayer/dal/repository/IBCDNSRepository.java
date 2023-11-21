@@ -19,6 +19,7 @@ package com.alipay.antchain.bridge.relayer.dal.repository;
 import java.util.List;
 import java.util.Map;
 
+import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
 import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainSpaceCertWrapper;
@@ -30,6 +31,8 @@ public interface IBCDNSRepository {
     void saveDomainSpaceCert(DomainSpaceCertWrapper domainSpaceCertWrapper);
 
     DomainSpaceCertWrapper getDomainSpaceCert(String domainSpace);
+
+    DomainSpaceCertWrapper getDomainSpaceCert(ObjectIdentity ownerOid);
 
     Map<String, DomainSpaceCertWrapper> getDomainSpaceCertChain(String leafDomainSpace);
 

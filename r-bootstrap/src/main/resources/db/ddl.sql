@@ -108,6 +108,7 @@ CREATE TABLE `domain_space_cert`
     `id`                int(11) NOT NULL AUTO_INCREMENT,
     `domain_space`      varchar(128) DEFAULT NULL,
     `parent_space`      varchar(128) DEFAULT NULL,
+    `owner_oid_hex`     BINARY  NOT NULL,
     `description`       varchar(128) DEFAULT NULL,
     `domain_space_cert` longblob,
     `gmt_create`        datetime     DEFAULT CURRENT_TIMESTAMP,

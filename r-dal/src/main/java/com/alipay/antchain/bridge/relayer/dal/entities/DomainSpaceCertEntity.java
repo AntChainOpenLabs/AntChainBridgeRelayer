@@ -32,6 +32,9 @@ public class DomainSpaceCertEntity extends BaseEntity {
     @TableField("parent_space")
     private String parentSpace;
 
+    @TableField("owner_oid_hex")
+    private String ownerOidHex;
+
     @TableField("description")
     private String desc;
 
