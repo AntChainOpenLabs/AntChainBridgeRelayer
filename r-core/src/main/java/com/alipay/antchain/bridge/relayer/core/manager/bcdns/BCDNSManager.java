@@ -16,6 +16,8 @@
 
 package com.alipay.antchain.bridge.relayer.core.manager.bcdns;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,10 +26,13 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.bcdns.impl.BlockChainDomainNameServiceFactory;
+import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
 import com.alipay.antchain.bridge.bcdns.types.resp.QueryBCDNSTrustRootCertificateResponse;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
 import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
@@ -36,8 +41,10 @@ import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum
 import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainSpaceCertWrapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBCDNSRepository;
+import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Slf4j
@@ -59,18 +66,80 @@ public class BCDNSManager implements IBCDNSManager {
             log.warn("none bcdns data found for domain space {}", domainSpace);
             return null;
         }
+        if (bcdnsServiceDO.getState() != BCDNSStateEnum.WORKING) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    "BCDNS with domain space {} is not working now",
+                    domainSpace
+            );
+        }
 
-        IBlockChainDomainNameService service = startBCDNSService(bcdnsServiceDO);
-        bcdnsClientMap.put(domainSpace, service);
-        return service;
+        return startBCDNSService(bcdnsServiceDO);
     }
 
     @Override
+    @Synchronized
+    @Transactional
+    public void registerBCDNSService(String domainSpace, BCDNSTypeEnum bcdnsType, String propFilePath, String bcdnsCertPath) {
+        try {
+            if (hasBCDNSServiceData(domainSpace)) {
+                throw new RuntimeException("bcdns already registered");
+            }
+
+            BCDNSServiceDO bcdnsServiceDO = new BCDNSServiceDO();
+            bcdnsServiceDO.setType(bcdnsType);
+            bcdnsServiceDO.setDomainSpace(domainSpace);
+
+            try {
+                bcdnsServiceDO.setProperties(Files.readAllBytes(Paths.get(propFilePath)));
+            } catch (Exception e) {
+                throw new RuntimeException("failed to read properties from file " + propFilePath, e);
+            }
+
+            if (StrUtil.isNotEmpty(bcdnsCertPath)) {
+                try {
+                    AbstractCrossChainCertificate certificate = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+                            Files.readAllBytes(Paths.get(bcdnsCertPath))
+                    );
+                    if (CrossChainCertificateUtil.isBCDNSTrustRoot(certificate)
+                            && !StrUtil.equals(domainSpace, CrossChainDomain.ROOT_DOMAIN_SPACE)) {
+                        throw new RuntimeException("the space name of bcdns trust root certificate supposed to have the root space name bug got : " + domainSpace);
+                    } else if (!CrossChainCertificateUtil.isBCDNSTrustRoot(certificate)
+                            && !CrossChainCertificateUtil.isDomainSpaceCert(certificate)) {
+                        throw new RuntimeException("expected bcdns trust root or domain space type certificate bug got : " + certificate.getType().name());
+                    }
+                    bcdnsServiceDO.setDomainSpaceCertWrapper(
+                            new DomainSpaceCertWrapper(certificate)
+                    );
+                } catch (Exception e) {
+                    throw new RuntimeException("failed to read bcdns cert from file " + bcdnsCertPath, e);
+                }
+            }
+
+            startBCDNSService(bcdnsServiceDO);
+            saveBCDNSServiceData(bcdnsServiceDO);
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    e,
+                    "failed to register bcdns service client for {}",
+                    domainSpace
+            );
+        }
+    }
+
+    @Override
+    @Synchronized
     public IBlockChainDomainNameService startBCDNSService(BCDNSServiceDO bcdnsServiceDO) {
         log.info("starting the bcdns service ( type: {}, domain_space: {} )",
                 bcdnsServiceDO.getType().getCode(), bcdnsServiceDO.getDomainSpace());
         try {
-            IBlockChainDomainNameService service = BlockChainDomainNameServiceFactory.create(bcdnsServiceDO.getType(), bcdnsServiceDO.getProperties());
+            IBlockChainDomainNameService service = BlockChainDomainNameServiceFactory.create(
+                    bcdnsServiceDO.getType(),
+                    bcdnsServiceDO.getProperties()
+            );
             if (ObjectUtil.isNull(service)) {
                 throw new AntChainBridgeRelayerException(
                         RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
@@ -97,6 +166,8 @@ public class BCDNSManager implements IBCDNSManager {
                 );
             }
 
+            bcdnsClientMap.put(bcdnsServiceDO.getDomainSpace(), service);
+
             return service;
         } catch (AntChainBridgeRelayerException e) {
             throw e;
@@ -106,6 +177,68 @@ public class BCDNSManager implements IBCDNSManager {
                     e,
                     "failed to start bcdns service client for {}",
                     bcdnsServiceDO.getDomainSpace()
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    @Synchronized
+    public void restartBCDNSService(String domainSpace) {
+        log.info("restarting the bcdns service ( domain_space: {} )", domainSpace);
+        try {
+            BCDNSServiceDO bcdnsServiceDO = getBCDNSServiceData(domainSpace);
+            if (ObjectUtil.isNull(bcdnsServiceDO)) {
+                throw new RuntimeException(StrUtil.format("bcdns {} not exist", domainSpace));
+            }
+            if (bcdnsServiceDO.getState() != BCDNSStateEnum.FROZEN) {
+                throw new RuntimeException(StrUtil.format("bcdns {} already in state {}", domainSpace, bcdnsServiceDO.getState().getCode()));
+            }
+            IBlockChainDomainNameService service = BlockChainDomainNameServiceFactory.create(
+                    bcdnsServiceDO.getType(),
+                    bcdnsServiceDO.getProperties()
+            );
+            if (ObjectUtil.isNull(service)) {
+                throw new AntChainBridgeRelayerException(
+                        RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                        "bcdns {} start failed",
+                        bcdnsServiceDO.getDomainSpace()
+                );
+            }
+
+            bcdnsClientMap.put(bcdnsServiceDO.getDomainSpace(), service);
+
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    e,
+                    "failed to restart bcdns service client for {}",
+                    domainSpace
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    @Synchronized
+    public void stopBCDNSService(String domainSpace) {
+        log.info("stopping the bcdns service ( domain_space: {} )", domainSpace);
+        try {
+            if (!hasBCDNSServiceData(domainSpace)) {
+                throw new RuntimeException("bcdns not exist for " + domainSpace);
+            }
+            bcdnsRepository.updateBCDNSServiceState(domainSpace, BCDNSStateEnum.FROZEN);
+            bcdnsClientMap.remove(domainSpace);
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    e,
+                    "failed to stop bcdns service client for {}",
+                    domainSpace
             );
         }
     }
