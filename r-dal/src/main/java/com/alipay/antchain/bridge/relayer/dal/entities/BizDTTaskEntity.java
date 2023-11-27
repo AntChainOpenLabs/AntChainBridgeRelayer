@@ -18,30 +18,27 @@ package com.alipay.antchain.bridge.relayer.dal.entities;
 
 import java.util.Date;
 
-import com.alipay.antchain.bridge.relayer.commons.constant.DistributedTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.BizDistributedTaskTypeEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 
 @Getter
 @Setter
-@TableName("dt_task")
+@TableName("biz_dt_task")
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
-public class DTTaskEntity extends BaseEntity {
+public class BizDTTaskEntity extends BaseEntity {
 
     @TableField("node_id")
     private String nodeId;
 
     @TableField("task_type")
-    private DistributedTaskTypeEnum taskType;
+    private BizDistributedTaskTypeEnum taskType;
 
-    @TableField("blockchain_product")
-    private String product;
-
-    @TableField("blockchain_id")
-    private String blockchainId;
+    @TableField("unique_key")
+    private String uniqueKey;
 
     @TableField("ext")
     private String ext;

@@ -16,9 +16,11 @@
 
 package com.alipay.antchain.bridge.relayer.dal.repository.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.core.codec.Base64;
@@ -29,13 +31,17 @@ import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
 import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainCertApplicationStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertApplicationDO;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainSpaceCertWrapper;
 import com.alipay.antchain.bridge.relayer.dal.entities.BCDNSServiceEntity;
+import com.alipay.antchain.bridge.relayer.dal.entities.DomainCertApplicationEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.DomainSpaceCertEntity;
 import com.alipay.antchain.bridge.relayer.dal.mapper.BCDNSServiceMapper;
+import com.alipay.antchain.bridge.relayer.dal.mapper.DomainCertApplicationMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.DomainSpaceCertMapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBCDNSRepository;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
@@ -51,6 +57,9 @@ public class BCDNSRepository implements IBCDNSRepository {
 
     @Resource
     private BCDNSServiceMapper bcdnsServiceMapper;
+
+    @Resource
+    private DomainCertApplicationMapper domainCertApplicationMapper;
 
     @Override
     public boolean hasDomainSpaceCert(String domainSpace) {
@@ -267,6 +276,92 @@ public class BCDNSRepository implements IBCDNSRepository {
                     e,
                     "failed to update bcdns properties to {} for space {}",
                     Base64.encode(rawProp), domainSpace
+            );
+        }
+    }
+
+    @Override
+    public void saveDomainCertApplicationEntry(DomainCertApplicationDO domainCertApplicationDO) {
+        try {
+            domainCertApplicationMapper.insert(ConvertUtil.convertFromDomainCertApplicationDO(domainCertApplicationDO));
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BCDNS_ERROR,
+                    e,
+                    "failed to insert domain cert application for domain {} ",
+                    domainCertApplicationDO.getDomain()
+            );
+        }
+    }
+
+    @Override
+    public DomainCertApplicationDO getDomainCertApplicationEntry(String domain) {
+        try {
+            DomainCertApplicationEntity entity = domainCertApplicationMapper.selectOne(
+                    new LambdaQueryWrapper<DomainCertApplicationEntity>()
+                            .eq(DomainCertApplicationEntity::getDomain, domain)
+            );
+            if (ObjectUtil.isNull(entity)) {
+                return null;
+            }
+            return ConvertUtil.convertFromDomainCertApplicationEntity(entity);
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BCDNS_ERROR,
+                    e,
+                    "failed to get domain cert application for domain {} ",
+                    domain
+            );
+        }
+    }
+
+    @Override
+    public boolean hasDomainCertApplicationEntry(String domain) {
+        return domainCertApplicationMapper.exists(
+                new LambdaQueryWrapper<DomainCertApplicationEntity>()
+                        .eq(DomainCertApplicationEntity::getDomain, domain)
+        );
+    }
+
+    @Override
+    public void updateDomainCertApplicationState(String domain, DomainCertApplicationStateEnum state) {
+        try {
+            DomainCertApplicationEntity entity = new DomainCertApplicationEntity();
+            entity.setState(state);
+            domainCertApplicationMapper.update(
+                    entity,
+                    new LambdaQueryWrapper<DomainCertApplicationEntity>()
+                            .eq(DomainCertApplicationEntity::getDomain, domain)
+            );
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BCDNS_ERROR,
+                    e,
+                    "failed to update state of domain cert application for domain {} ",
+                    domain
+            );
+        }
+    }
+
+    @Override
+    public List<DomainCertApplicationDO> getDomainCertApplicationsByState(DomainCertApplicationStateEnum state) {
+        try {
+            List<DomainCertApplicationEntity> entityList = domainCertApplicationMapper.selectList(
+                    new LambdaQueryWrapper<DomainCertApplicationEntity>()
+                            .eq(DomainCertApplicationEntity::getState, state)
+            );
+            if (ObjectUtil.isEmpty(entityList)) {
+                return new ArrayList<>();
+            }
+            return entityList.stream()
+                    .map(ConvertUtil::convertFromDomainCertApplicationEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BCDNS_ERROR,
+                    e,
+                    "failed to get domain cert application by state {} ",
+                    state.getCode()
             );
         }
     }

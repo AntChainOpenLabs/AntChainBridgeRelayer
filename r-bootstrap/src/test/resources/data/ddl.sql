@@ -79,6 +79,17 @@ CREATE TABLE IF NOT EXISTS `domain_cert`
     UNIQUE KEY `domain` (`domain`)
 );
 
+CREATE TABLE `domain_cert_application`
+(
+    `id`            INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    `domain`        VARCHAR(128) UNIQUE NOT NULL,
+    `domain_space`  VARCHAR(128)        NOT NULL,
+    `apply_receipt` BINARY,
+    `state`         VARCHAR(20),
+    `gmt_create`    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified`  DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS `domain_space_cert`
 (
     `id`                int(11) NOT NULL AUTO_INCREMENT,
@@ -265,7 +276,7 @@ CREATE TABLE IF NOT EXISTS `sdp_msg_archive`
     PRIMARY KEY (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS `dt_task`
+CREATE TABLE IF NOT EXISTS `blockchain_dt_task`
 (
     `id`                 int(11) NOT NULL AUTO_INCREMENT,
     `node_id`            varchar(64)  DEFAULT NULL,
@@ -278,6 +289,22 @@ CREATE TABLE IF NOT EXISTS `dt_task`
     `gmt_modified`       datetime     DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_task` (`node_id`, `task_type`, `blockchain_id`)
+);
+
+drop table if exists biz_dt_task;
+CREATE TABLE `biz_dt_task`
+(
+    `id`           int(11) NOT NULL AUTO_INCREMENT,
+    `node_id`      varchar(64)  DEFAULT NULL,
+    `task_type`    varchar(64)  DEFAULT NULL,
+    `unique_key`   varchar(128) DEFAULT NULL,
+    `ext`          varchar(256) DEFAULT NULL,
+    `timeslice`    datetime     DEFAULT CURRENT_TIMESTAMP,
+    `gmt_create`   datetime     DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified` datetime     DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_task_type_unique_key` (`task_type`, `unique_key`),
+    UNIQUE KEY `uk_task` (`node_id`, `task_type`, `unique_key`)
 );
 
 CREATE TABLE IF NOT EXISTS `dt_active_node`

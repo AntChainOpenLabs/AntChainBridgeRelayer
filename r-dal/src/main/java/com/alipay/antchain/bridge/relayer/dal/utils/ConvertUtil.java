@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.HexUtil;
@@ -317,22 +318,42 @@ public class ConvertUtil {
         );
     }
 
-    public static DistributedTask convertFromDTTaskEntity(DTTaskEntity entity) {
-        DistributedTask distributedTask = new DistributedTask();
-        distributedTask.setNodeId(entity.getNodeId());
-        distributedTask.setTaskType(entity.getTaskType());
-        distributedTask.setBlockchainId(entity.getBlockchainId());
-        distributedTask.setBlockchainProduct(entity.getProduct());
-        distributedTask.setStartTime(entity.getTimeSlice().getTime());
-        distributedTask.setExt(entity.getExt());
-        return distributedTask;
+    public static BlockchainDistributedTask convertFromBlockchainDTTaskEntity(BlockchainDTTaskEntity entity) {
+        BlockchainDistributedTask blockchainDistributedTask = new BlockchainDistributedTask();
+        blockchainDistributedTask.setNodeId(entity.getNodeId());
+        blockchainDistributedTask.setTaskType(entity.getTaskType());
+        blockchainDistributedTask.setBlockchainId(entity.getBlockchainId());
+        blockchainDistributedTask.setBlockchainProduct(entity.getProduct());
+        blockchainDistributedTask.setStartTime(entity.getTimeSlice().getTime());
+        blockchainDistributedTask.setExt(entity.getExt());
+        return blockchainDistributedTask;
     }
 
-    public static DTTaskEntity convertFromDistributedTask(DistributedTask task) {
-        DTTaskEntity entity = new DTTaskEntity();
+    public static BlockchainDTTaskEntity convertFromBlockchainDistributedTask(BlockchainDistributedTask task) {
+        BlockchainDTTaskEntity entity = new BlockchainDTTaskEntity();
         entity.setTaskType(task.getTaskType());
         entity.setBlockchainId(task.getBlockchainId());
         entity.setProduct(task.getBlockchainProduct());
+        entity.setNodeId(task.getNodeId());
+        entity.setTimeSlice(new Date(task.getStartTime()));
+        entity.setExt(task.getExt());
+        return entity;
+    }
+
+    public static BizDistributedTask convertFromBizDTTaskEntity(BizDTTaskEntity entity) {
+        BizDistributedTask bizDistributedTask = new BizDistributedTask();
+        bizDistributedTask.setNodeId(entity.getNodeId());
+        bizDistributedTask.setTaskType(entity.getTaskType());
+        bizDistributedTask.setUniqueKey(entity.getUniqueKey());
+        bizDistributedTask.setStartTime(entity.getTimeSlice().getTime());
+        bizDistributedTask.setExt(entity.getExt());
+        return bizDistributedTask;
+    }
+
+    public static BizDTTaskEntity convertFromBizDistributedTask(BizDistributedTask task) {
+        BizDTTaskEntity entity = new BizDTTaskEntity();
+        entity.setTaskType(task.getTaskType());
+        entity.setUniqueKey(task.getUniqueKey());
         entity.setNodeId(task.getNodeId());
         entity.setTimeSlice(new Date(task.getStartTime()));
         entity.setExt(task.getExt());
@@ -456,5 +477,13 @@ public class ConvertUtil {
         entity.setState(bcdnsServiceDO.getState());
         entity.setProperties(bcdnsServiceDO.getProperties());
         return entity;
+    }
+
+    public static DomainCertApplicationDO convertFromDomainCertApplicationEntity(DomainCertApplicationEntity entity) {
+        return BeanUtil.copyProperties(entity, DomainCertApplicationDO.class);
+    }
+
+    public static DomainCertApplicationEntity convertFromDomainCertApplicationDO(DomainCertApplicationDO domainCertApplicationDO) {
+        return BeanUtil.copyProperties(domainCertApplicationDO, DomainCertApplicationEntity.class);
     }
 }

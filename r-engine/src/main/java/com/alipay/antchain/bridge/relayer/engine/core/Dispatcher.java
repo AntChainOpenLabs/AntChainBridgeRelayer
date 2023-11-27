@@ -1,5 +1,6 @@
 package com.alipay.antchain.bridge.relayer.engine.core;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -9,11 +10,10 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.alipay.antchain.bridge.relayer.commons.constant.DistributedTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.BizDistributedTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainDistributedTaskTypeEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.PluginServerStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.model.ActiveNode;
-import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
-import com.alipay.antchain.bridge.relayer.commons.model.DistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
@@ -40,7 +40,7 @@ public class Dispatcher {
     @Resource
     private IScheduleRepository scheduleRepository;
 
-    @Value("${relayer.engine.schedule.dispatcher.dt_task.time_slice:180000}")
+    @Value("${relayer.engine.schedule.duty.dt_task.time_slice:180000}")
     private long timeSliceLength;
 
     @Value("${relayer.engine.schedule.activate.ttl:3000}")
@@ -59,18 +59,16 @@ public class Dispatcher {
         try {
             log.info("dispatch distributed tasks now.");
 
-            // 运行的区块链
-            List<BlockchainMeta> runningBlockchains = getRunningBlockchains();
-            if (ObjectUtil.isEmpty(runningBlockchains)) {
-                log.debug("empty running blockchains to dispatch");
-                return;
-            }
-
-            // 拆分任务
-            List<DistributedTask> allTasks = splitTask(runningBlockchains);
+            List<IDistributedTask> tasks = new ArrayList<>(splitBlockchainTask(getRunningBlockchains()));
+            tasks.add(
+                    new BizDistributedTask(
+                            BizDistributedTaskTypeEnum.DOMAIN_APPLICATION_QUERY,
+                            BizDistributedTaskTypeEnum.DOMAIN_APPLICATION_QUERY.getCode()
+                    )
+            );
 
             // 剔除已分配过时间片的任务
-            List<DistributedTask> tasksToDispatch = filterTasksInTimeSlice(allTasks);
+            List<IDistributedTask> tasksToDispatch = filterTasksInTimeSlice(tasks);
             if (ObjectUtil.isEmpty(tasksToDispatch.isEmpty())) {
                 log.info("empty tasks to dispatch");
                 return;
@@ -108,37 +106,37 @@ public class Dispatcher {
         ).collect(Collectors.toList());
     }
 
-    private List<DistributedTask> splitTask(List<BlockchainMeta> runningBlockchains) {
+    private List<BlockchainDistributedTask> splitBlockchainTask(List<BlockchainMeta> runningBlockchains) {
         return runningBlockchains.stream().map(
                 blockchainMeta ->
                         ListUtil.toList(
-                                new DistributedTask(
-                                        DistributedTaskTypeEnum.ANCHOR_TASK,
+                                new BlockchainDistributedTask(
+                                        BlockchainDistributedTaskTypeEnum.ANCHOR_TASK,
                                         blockchainMeta.getProduct(),
                                         blockchainMeta.getBlockchainId()
                                 ),
-                                new DistributedTask(
-                                        DistributedTaskTypeEnum.COMMIT_TASK,
+                                new BlockchainDistributedTask(
+                                        BlockchainDistributedTaskTypeEnum.COMMIT_TASK,
                                         blockchainMeta.getProduct(),
                                         blockchainMeta.getBlockchainId()
                                 ),
-                                new DistributedTask(
-                                        DistributedTaskTypeEnum.PROCESS_TASK,
+                                new BlockchainDistributedTask(
+                                        BlockchainDistributedTaskTypeEnum.PROCESS_TASK,
                                         blockchainMeta.getProduct(),
                                         blockchainMeta.getBlockchainId()
                                 ),
-                                new DistributedTask(
-                                        DistributedTaskTypeEnum.AM_CONFIRM_TASK,
+                                new BlockchainDistributedTask(
+                                        BlockchainDistributedTaskTypeEnum.AM_CONFIRM_TASK,
                                         blockchainMeta.getProduct(),
                                         blockchainMeta.getBlockchainId()
                                 ),
-                                new DistributedTask(
-                                        DistributedTaskTypeEnum.ARCHIVE_TASK,
+                                new BlockchainDistributedTask(
+                                        BlockchainDistributedTaskTypeEnum.ARCHIVE_TASK,
                                         blockchainMeta.getProduct(),
                                         blockchainMeta.getBlockchainId()
                                 ),
-                                new DistributedTask(
-                                        DistributedTaskTypeEnum.DEPLOY_SERVICE_TASK,
+                                new BlockchainDistributedTask(
+                                        BlockchainDistributedTaskTypeEnum.DEPLOY_SERVICE_TASK,
                                         blockchainMeta.getProduct(),
                                         blockchainMeta.getBlockchainId()
                                 )
@@ -146,28 +144,56 @@ public class Dispatcher {
         ).reduce((a, b) -> {
             a.addAll(b);
             return a;
-        }).get();
+        }).orElse(new ArrayList<>());
     }
 
-    private List<DistributedTask> filterTasksInTimeSlice(List<DistributedTask> allTasks) {
+    private List<IDistributedTask> filterTasksInTimeSlice(List<IDistributedTask> allTasks) {
 
-        // to map
-        Map<String, DistributedTask> allTasksMap = Maps.newHashMap();
-        for (DistributedTask task : allTasks) {
+        Map<String, IDistributedTask> allTasksMap = Maps.newHashMap();
+        for (IDistributedTask task : allTasks) {
+            task.setTimeSliceLength(timeSliceLength);
             allTasksMap.put(task.getUniqueTaskKey(), task);
         }
 
-        List<DistributedTask> timeSliceTasks = scheduleRepository.getAllDistributedTasks();
-        // 如果是新任务，差入执行记录到DB
-        Map<String, DistributedTask> newTaskMap = Maps.newHashMap(allTasksMap);
-        for (DistributedTask existedTask : timeSliceTasks) {
+        List<BlockchainDistributedTask> timeSliceBlockchainTasks = scheduleRepository.getAllBlockchainDistributedTasks();
+        Map<String, IDistributedTask> newTaskMap = Maps.newHashMap(allTasksMap);
+        for (IDistributedTask existedTask : timeSliceBlockchainTasks) {
             newTaskMap.remove(existedTask.getUniqueTaskKey());
-            if (!existedTask.ifFinish(timeSliceLength)) {
+            if (!existedTask.ifFinish()) {
                 allTasksMap.remove(existedTask.getUniqueTaskKey());
             }
         }
-        if (!newTaskMap.isEmpty()) {
-            scheduleRepository.batchInsertDTTasks(ListUtil.toList(newTaskMap.values()));
+
+        List<BizDistributedTask> bizDistributedTasks = scheduleRepository.getAllBizDistributedTasks();
+        for (IDistributedTask existedTask : bizDistributedTasks) {
+            newTaskMap.remove(existedTask.getUniqueTaskKey());
+            if (!existedTask.ifFinish()) {
+                allTasksMap.remove(existedTask.getUniqueTaskKey());
+            }
+        }
+
+        List<BlockchainDistributedTask> newBlockchainDistributedTasks = newTaskMap.values().stream()
+                .filter(
+                        task -> task instanceof BlockchainDistributedTask
+                ).map(task -> (BlockchainDistributedTask) task)
+                .collect(Collectors.toList());
+
+        if (!newBlockchainDistributedTasks.isEmpty()) {
+            scheduleRepository.batchInsertBlockchainDTTasks(
+                    newBlockchainDistributedTasks
+            );
+        }
+
+        List<BizDistributedTask> newBizDistributedTasks = newTaskMap.values().stream()
+                .filter(
+                        task -> task instanceof BizDistributedTask
+                ).map(task -> (BizDistributedTask) task)
+                .collect(Collectors.toList());
+
+        if (!newBizDistributedTasks.isEmpty()) {
+            scheduleRepository.batchInsertBizDTTasks(
+                    newBizDistributedTasks
+            );
         }
 
         return Lists.newArrayList(allTasksMap.values());
@@ -184,14 +210,27 @@ public class Dispatcher {
         return onlineNodes;
     }
 
-    private void doDispatch(List<ActiveNode> nodes, List<DistributedTask> tasks) {
+    private void doDispatch(List<ActiveNode> nodes, List<IDistributedTask> tasks) {
         Collections.shuffle(nodes);
         roundRobin(nodes, tasks);
         // TODO: give a better algorithm for balancing tasks
-        scheduleRepository.batchUpdateDTTasks(tasks);
+        scheduleRepository.batchUpdateBlockchainDTTasks(
+                tasks.stream()
+                        .filter(
+                                task -> task instanceof BlockchainDistributedTask
+                        ).map(task -> (BlockchainDistributedTask) task)
+                        .collect(Collectors.toList())
+        );
+        scheduleRepository.batchUpdateBizDTTasks(
+                tasks.stream()
+                        .filter(
+                                task -> task instanceof BizDistributedTask
+                        ).map(task -> (BizDistributedTask) task)
+                        .collect(Collectors.toList())
+        );
     }
 
-//    private void averageDiffPerBlockchainForEachNode(List<ActiveNode> nodes, List<DistributedTask> tasks) {
+//    private void averageDiffPerBlockchainForEachNode(List<ActiveNode> nodes, List<BlockchainDistributedTask> tasks) {
 //        Map<String, Map<String, Integer>> nodeCounterMap = nodes.stream().collect(Collectors.toMap(
 //                ActiveNode::getNodeId,
 //                node -> new HashMap<>()
@@ -203,7 +242,7 @@ public class Dispatcher {
 //
 //        for (int i = 0; i < tasks.size(); ++i) {
 //
-//            DistributedTask task = tasks.get(i);
+//            BlockchainDistributedTask task = tasks.get(i);
 //            int diffNum = taskTypeDiffMap.getOrDefault(task.getTaskType().getCode(), 1);
 //
 //            getTheMinDiffSumForBlockchain(nodeCounterMap, )
@@ -236,7 +275,7 @@ public class Dispatcher {
 //                )).getOrDefault(nodeId, 0);
 //    }
 
-    private void roundRobin(List<ActiveNode> nodes, List<DistributedTask> tasks) {
+    private void roundRobin(List<ActiveNode> nodes, List<IDistributedTask> tasks) {
         Collections.shuffle(tasks);
         for (int i = 0; i < tasks.size(); ++i) {
             ActiveNode node = nodes.get(i % nodes.size());

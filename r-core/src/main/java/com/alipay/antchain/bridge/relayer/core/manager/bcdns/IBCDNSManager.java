@@ -22,7 +22,9 @@ import java.util.Map;
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
 import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertApplicationDO;
 
 public interface IBCDNSManager {
 
@@ -51,4 +53,10 @@ public interface IBCDNSManager {
     boolean validateCrossChainCertificate(AbstractCrossChainCertificate certificate);
 
     void saveDomainSpaceCerts(Map<String, AbstractCrossChainCertificate> domainSpaceCerts);
+
+    String applyDomainCertificate(String domainSpace, String domain, ObjectIdentity applicantOid, byte[] rawSubject);
+
+    List<DomainCertApplicationDO> getAllApplyingDomainCertApplications();
+
+    void saveDomainCertApplicationResult(String domain, AbstractCrossChainCertificate domainCert);
 }

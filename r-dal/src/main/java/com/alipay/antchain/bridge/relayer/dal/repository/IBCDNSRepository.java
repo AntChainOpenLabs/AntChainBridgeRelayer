@@ -21,7 +21,9 @@ import java.util.Map;
 
 import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
 import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainCertApplicationStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertApplicationDO;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainSpaceCertWrapper;
 
 public interface IBCDNSRepository {
@@ -48,4 +50,13 @@ public interface IBCDNSRepository {
 
     void updateBCDNSServiceProperties(String domainSpace, byte[] rawProp);
 
+    void saveDomainCertApplicationEntry(DomainCertApplicationDO domainCertApplicationDO);
+
+    DomainCertApplicationDO getDomainCertApplicationEntry(String domain);
+
+    boolean hasDomainCertApplicationEntry(String domain);
+
+    void updateDomainCertApplicationState(String domain, DomainCertApplicationStateEnum state);
+
+    List<DomainCertApplicationDO> getDomainCertApplicationsByState(DomainCertApplicationStateEnum state);
 }

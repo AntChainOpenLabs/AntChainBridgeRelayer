@@ -30,17 +30,25 @@ import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.bcdns.impl.BlockChainDomainNameServiceFactory;
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
+import com.alipay.antchain.bridge.bcdns.types.req.QueryDomainNameCertificateRequest;
+import com.alipay.antchain.bridge.bcdns.types.resp.ApplyDomainNameCertificateResponse;
 import com.alipay.antchain.bridge.bcdns.types.resp.QueryBCDNSTrustRootCertificateResponse;
+import com.alipay.antchain.bridge.bcdns.types.resp.QueryDomainNameCertificateResponse;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
 import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
+import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
 import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainCertApplicationStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertApplicationDO;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainSpaceCertWrapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBCDNSRepository;
+import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -52,6 +60,9 @@ public class BCDNSManager implements IBCDNSManager {
 
     @Resource
     private IBCDNSRepository bcdnsRepository;
+
+    @Resource
+    private IBlockchainRepository blockchainRepository;
 
     private final Map<String, IBlockChainDomainNameService> bcdnsClientMap = new ConcurrentHashMap<>();
 
@@ -318,6 +329,121 @@ public class BCDNSManager implements IBCDNSManager {
             } catch (Exception e) {
                 log.error("failed to save domain space certs for space {} : ", entry.getKey(), e);
             }
+        }
+    }
+
+    @Override
+    @Transactional
+    public String applyDomainCertificate(String domainSpace, String domain, ObjectIdentity applicantOid, byte[] rawSubject) {
+        log.info("try to apply the domain cert for {} from bcdns with space {}", domain, domainSpace);
+        try {
+            if (!CrossChainDomain.isDerivedFrom(domain, domainSpace)) {
+                throw new RuntimeException(StrUtil.format("domain {} is not derived from space {}", domain, domainSpace));
+            }
+            if (blockchainRepository.hasDomainCert(domain)) {
+                throw new RuntimeException(StrUtil.format("domain {} already exist locally", domain));
+            }
+            if (bcdnsRepository.hasDomainCertApplicationEntry(domain)) {
+                throw new RuntimeException(StrUtil.format("domain {} already in applying locally", domain));
+            }
+            if (!hasBCDNSServiceData(domainSpace)) {
+                throw new RuntimeException("bcdns not exist for " + domainSpace);
+            }
+
+            IBlockChainDomainNameService bcdnsService = getBCDNSService(domainSpace);
+            if (ObjectUtil.isNull(bcdnsService)) {
+                throw new RuntimeException("null bcdns client after start " + domainSpace);
+            }
+
+            QueryDomainNameCertificateResponse domainNameCertificateResponse = bcdnsService.queryDomainNameCertificate(
+                    QueryDomainNameCertificateRequest.builder()
+                            .domain(new CrossChainDomain(domain))
+                            .build()
+            );
+            if (domainNameCertificateResponse.isExist()) {
+                throw new RuntimeException(
+                        StrUtil.format("domain {} already registered on BCDNS with space {}", domain, domainSpace)
+                );
+            }
+
+            ApplyDomainNameCertificateResponse response = bcdnsService.applyDomainNameCertificate(
+                    CrossChainCertificateFactory.createDomainNameCertificateSigningRequest(
+                            CrossChainCertificateFactory.DEFAULT_VERSION,
+                            new CrossChainDomain(domainSpace),
+                            new CrossChainDomain(domain),
+                            applicantOid,
+                            rawSubject
+                    )
+            );
+
+            bcdnsRepository.saveDomainCertApplicationEntry(
+                    new DomainCertApplicationDO(
+                            domain,
+                            domainSpace,
+                            response.getApplyReceipt(),
+                            DomainCertApplicationStateEnum.APPLYING
+                    )
+            );
+
+            return response.getApplyReceipt();
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    e,
+                    "failed to stop bcdns service client for {}",
+                    domainSpace
+            );
+        }
+    }
+
+    @Override
+    public List<DomainCertApplicationDO> getAllApplyingDomainCertApplications() {
+        log.info("try to get all applying domain cert applications");
+        try {
+            return bcdnsRepository.getDomainCertApplicationsByState(DomainCertApplicationStateEnum.APPLYING);
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    e,
+                    "failed to get all applying domain cert applications"
+            );
+        }
+    }
+
+    @Override
+    public void saveDomainCertApplicationResult(String domain, AbstractCrossChainCertificate domainCert) {
+        try {
+            if (!bcdnsRepository.hasDomainCertApplicationEntry(domain)) {
+                throw new RuntimeException("application not exist");
+            }
+            if (blockchainRepository.hasDomainCert(domain)) {
+                throw new RuntimeException("domain already exist");
+            }
+            if (!CrossChainCertificateUtil.isDomainCert(domainCert)) {
+                throw new RuntimeException("cert is not domain cert");
+            }
+
+            bcdnsRepository.updateDomainCertApplicationState(
+                    domain,
+                    ObjectUtil.isNull(domainCert) ?
+                            DomainCertApplicationStateEnum.APPLY_FAILED : DomainCertApplicationStateEnum.APPLY_SUCCESS
+            );
+
+            if (ObjectUtil.isNotNull(domainCert)) {
+                blockchainRepository.saveDomainCert(new DomainCertWrapper(domainCert));
+            }
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    e,
+                    "failed to get all applying domain cert applications"
+            );
         }
     }
 }

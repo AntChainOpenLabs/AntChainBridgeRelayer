@@ -3,7 +3,8 @@ package com.alipay.antchain.bridge.relayer.engine.executor;
 import java.util.concurrent.ExecutorService;
 import javax.annotation.Resource;
 
-import com.alipay.antchain.bridge.relayer.commons.model.DistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.BlockchainDistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.IDistributedTask;
 import com.alipay.antchain.bridge.relayer.core.service.confirm.AMConfirmService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,13 +22,22 @@ public class TxConfirmScheduleTaskExecutor extends BaseScheduleTaskExecutor {
     }
 
     @Override
-    public Runnable genTask(DistributedTask task) {
+    public Runnable genTask(IDistributedTask task) {
         return () -> {
-            try {
-                amConfirmService.process(task.getBlockchainProduct(), task.getBlockchainId());
-            } catch (Exception e) {
-                log.error("failed to process am confirm task for ( product: {}, bid: {} )",
-                        task.getBlockchainProduct(), task.getBlockchainId(), e);
+            if (task instanceof BlockchainDistributedTask) {
+                try {
+                    amConfirmService.process(
+                            ((BlockchainDistributedTask) task).getBlockchainProduct(),
+                            ((BlockchainDistributedTask) task).getBlockchainId()
+                    );
+                } catch (Exception e) {
+                    log.error(
+                            "failed to process am confirm task for ( product: {}, bid: {} )",
+                            ((BlockchainDistributedTask) task).getBlockchainProduct(),
+                            ((BlockchainDistributedTask) task).getBlockchainId(),
+                            e
+                    );
+                }
             }
         };
     }

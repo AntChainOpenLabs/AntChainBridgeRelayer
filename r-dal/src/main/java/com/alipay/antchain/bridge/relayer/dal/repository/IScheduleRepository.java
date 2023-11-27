@@ -20,7 +20,8 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 
 import com.alipay.antchain.bridge.relayer.commons.model.ActiveNode;
-import com.alipay.antchain.bridge.relayer.commons.model.DistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.BizDistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.BlockchainDistributedTask;
 
 public interface IScheduleRepository {
 
@@ -28,13 +29,21 @@ public interface IScheduleRepository {
 
     void activate(String nodeId, String nodeIp);
 
-    List<DistributedTask> getAllDistributedTasks();
+    List<BlockchainDistributedTask> getAllBlockchainDistributedTasks();
 
-    List<DistributedTask> getDistributedTasksByNodeId(String nodeId);
+    List<BizDistributedTask> getAllBizDistributedTasks();
+
+    List<BlockchainDistributedTask> getBlockchainDistributedTasksByNodeId(String nodeId);
+
+    List<BizDistributedTask> getBizDistributedTasksByNodeId(String nodeId);
 
     List<ActiveNode> getAllActiveNodes();
 
-    void batchInsertDTTasks(List<DistributedTask> tasks);
+    void batchInsertBlockchainDTTasks(List<BlockchainDistributedTask> tasks);
 
-    void batchUpdateDTTasks(List<DistributedTask> tasks);
+    void batchInsertBizDTTasks(List<BizDistributedTask> tasks);
+
+    void batchUpdateBlockchainDTTasks(List<BlockchainDistributedTask> tasks);
+
+    void batchUpdateBizDTTasks(List<BizDistributedTask> tasks);
 }

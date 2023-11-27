@@ -27,11 +27,15 @@ import com.alipay.antchain.bridge.relayer.commons.constant.DTActiveNodeStateEnum
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.ActiveNode;
-import com.alipay.antchain.bridge.relayer.commons.model.DistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.BizDistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.BlockchainDistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.IDistributedTask;
+import com.alipay.antchain.bridge.relayer.dal.entities.BizDTTaskEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.DTActiveNodeEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.DTTaskEntity;
+import com.alipay.antchain.bridge.relayer.dal.entities.BlockchainDTTaskEntity;
+import com.alipay.antchain.bridge.relayer.dal.mapper.BizDTTaskMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.DTActiveNodeMapper;
-import com.alipay.antchain.bridge.relayer.dal.mapper.DTTaskMapper;
+import com.alipay.antchain.bridge.relayer.dal.mapper.BlockchainDTTaskMapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -53,7 +57,10 @@ public class ScheduleRepository implements IScheduleRepository {
     private DTActiveNodeMapper dtActiveNodeMapper;
 
     @Resource
-    private DTTaskMapper dtTaskMapper;
+    private BlockchainDTTaskMapper blockchainDtTaskMapper;
+
+    @Resource
+    private BizDTTaskMapper bizDTTaskMapper;
 
     @Override
     public Lock getDispatchLock() {
@@ -93,10 +100,10 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     @Override
-    public List<DistributedTask> getAllDistributedTasks() {
+    public List<BlockchainDistributedTask> getAllBlockchainDistributedTasks() {
         try {
-            return dtTaskMapper.selectList(null).stream()
-                    .map(ConvertUtil::convertFromDTTaskEntity)
+            return blockchainDtTaskMapper.selectList(null).stream()
+                    .map(ConvertUtil::convertFromBlockchainDTTaskEntity)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
@@ -108,13 +115,13 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     @Override
-    public List<DistributedTask> getDistributedTasksByNodeId(String nodeId) {
+    public List<BlockchainDistributedTask> getBlockchainDistributedTasksByNodeId(String nodeId) {
         try {
-            return dtTaskMapper.selectList(
-                            new LambdaQueryWrapper<DTTaskEntity>()
-                                    .eq(DTTaskEntity::getNodeId, nodeId)
+            return blockchainDtTaskMapper.selectList(
+                            new LambdaQueryWrapper<BlockchainDTTaskEntity>()
+                                    .eq(BlockchainDTTaskEntity::getNodeId, nodeId)
                     ).stream()
-                    .map(ConvertUtil::convertFromDTTaskEntity)
+                    .map(ConvertUtil::convertFromBlockchainDTTaskEntity)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
@@ -141,15 +148,15 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     @Override
-    public void batchInsertDTTasks(List<DistributedTask> tasks) {
+    public void batchInsertBlockchainDTTasks(List<BlockchainDistributedTask> tasks) {
         try {
-            dtTaskMapper.saveDTTasks(tasks);
+            blockchainDtTaskMapper.saveDTTasks(tasks);
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
                     StrUtil.format(
                             "failed to save distributed tasks {}",
-                            tasks.stream().map(DistributedTask::getUniqueTaskKey)
+                            tasks.stream().map(BlockchainDistributedTask::getUniqueTaskKey)
                     ),
                     e
             );
@@ -158,18 +165,18 @@ public class ScheduleRepository implements IScheduleRepository {
 
     @Override
     @Transactional
-    public void batchUpdateDTTasks(List<DistributedTask> tasks) {
+    public void batchUpdateBlockchainDTTasks(List<BlockchainDistributedTask> tasks) {
         try {
             tasks.forEach(
-                    task -> dtTaskMapper.update(
-                            DTTaskEntity.builder()
+                    task -> blockchainDtTaskMapper.update(
+                            BlockchainDTTaskEntity.builder()
                                     .nodeId(task.getNodeId())
                                     .timeSlice(new Date(task.getStartTime()))
                                     .build(),
-                            new LambdaUpdateWrapper<DTTaskEntity>()
-                                    .eq(DTTaskEntity::getTaskType, task.getTaskType())
-                                    .eq(DTTaskEntity::getProduct, task.getBlockchainProduct())
-                                    .eq(DTTaskEntity::getBlockchainId, task.getBlockchainId())
+                            new LambdaUpdateWrapper<BlockchainDTTaskEntity>()
+                                    .eq(BlockchainDTTaskEntity::getTaskType, task.getTaskType())
+                                    .eq(BlockchainDTTaskEntity::getProduct, task.getBlockchainProduct())
+                                    .eq(BlockchainDTTaskEntity::getBlockchainId, task.getBlockchainId())
                     )
             );
         } catch (Exception e) {
@@ -177,7 +184,90 @@ public class ScheduleRepository implements IScheduleRepository {
                     RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
                     StrUtil.format(
                             "failed to save distributed tasks {}",
-                            tasks.stream().map(DistributedTask::getUniqueTaskKey)
+                            tasks.stream().map(BlockchainDistributedTask::getUniqueTaskKey)
+                    ),
+                    e
+            );
+        }
+    }
+
+    @Override
+    public List<BizDistributedTask> getAllBizDistributedTasks() {
+        try {
+            return bizDTTaskMapper.selectList(null).stream()
+                    .map(ConvertUtil::convertFromBizDTTaskEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_TASK_ERROR,
+                    "failed to get all biz distributed tasks",
+                    e
+            );
+        }
+    }
+
+    @Override
+    public List<BizDistributedTask> getBizDistributedTasksByNodeId(String nodeId) {
+        try {
+            return bizDTTaskMapper.selectList(
+                            new LambdaQueryWrapper<BizDTTaskEntity>()
+                                    .eq(BizDTTaskEntity::getNodeId, nodeId)
+                    ).stream()
+                    .map(ConvertUtil::convertFromBizDTTaskEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_TASK_ERROR,
+                    "failed to get biz distributed tasks for node " + nodeId,
+                    e
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public void batchInsertBizDTTasks(List<BizDistributedTask> tasks) {
+        try {
+            tasks.forEach(
+                    bizDistributedTask -> bizDTTaskMapper.insert(
+                            ConvertUtil.convertFromBizDistributedTask(
+                                    bizDistributedTask
+                            )
+                    )
+            );
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    StrUtil.format(
+                            "failed to save distributed tasks {}",
+                            tasks.stream().map(IDistributedTask::getUniqueTaskKey)
+                    ),
+                    e
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public void batchUpdateBizDTTasks(List<BizDistributedTask> tasks) {
+        try {
+            tasks.forEach(
+                    task -> bizDTTaskMapper.update(
+                            BizDTTaskEntity.builder()
+                                    .nodeId(task.getNodeId())
+                                    .timeSlice(new Date(task.getStartTime()))
+                                    .build(),
+                            new LambdaUpdateWrapper<BizDTTaskEntity>()
+                                    .eq(BizDTTaskEntity::getTaskType, task.getTaskType())
+                                    .eq(BizDTTaskEntity::getUniqueKey, task.getUniqueKey())
+                    )
+            );
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    StrUtil.format(
+                            "failed to save distributed tasks {}",
+                            tasks.stream().map(IDistributedTask::getUniqueTaskKey)
                     ),
                     e
             );

@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
 
-import com.alipay.antchain.bridge.relayer.commons.constant.DistributedTaskTypeEnum;
-import com.alipay.antchain.bridge.relayer.commons.model.DistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainDistributedTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.model.BlockchainDistributedTask;
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import com.alipay.antchain.bridge.relayer.engine.executor.BaseScheduleTaskExecutor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,12 +29,12 @@ public class Duty {
     private long timeSliceLength;
 
     @Resource
-    private Map<DistributedTaskTypeEnum, BaseScheduleTaskExecutor> scheduleTaskExecutorMap;
+    private Map<BlockchainDistributedTaskTypeEnum, BaseScheduleTaskExecutor> scheduleTaskExecutorMap;
 
     public void duty() {
 
         // 查询本节点的时间片任务
-        List<DistributedTask> tasks = scheduleRepository.getDistributedTasksByNodeId(this.scheduleContext.getNodeId());
+        List<BlockchainDistributedTask> tasks = scheduleRepository.getBlockchainDistributedTasksByNodeId(this.scheduleContext.getNodeId());
         if (tasks.isEmpty()) {
             log.debug("empty duty tasks");
         } else {
@@ -42,7 +42,7 @@ public class Duty {
         }
 
         // 分配给各个职能线程池处理
-        for (DistributedTask task : tasks) {
+        for (BlockchainDistributedTask task : tasks) {
             task.setTimeSliceLength(timeSliceLength);
             scheduleTaskExecutorMap.get(task.getTaskType()).execute(task);
         }

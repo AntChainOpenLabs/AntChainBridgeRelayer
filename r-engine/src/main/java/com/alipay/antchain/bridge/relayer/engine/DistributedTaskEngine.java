@@ -29,6 +29,9 @@ public class DistributedTaskEngine implements ApplicationRunner {
     private Duty duty;
 
     @Resource
+    private BizDuty bizDuty;
+
+    @Resource
     private Cleaner cleaner;
 
     @Resource
@@ -45,6 +48,9 @@ public class DistributedTaskEngine implements ApplicationRunner {
 
     @Value("${relayer.engine.schedule.duty.period:100}")
     private long dutyPeriod;
+
+    @Value("${relayer.engine.schedule.duty.period:3000}")
+    private long bizDutyPeriod;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -104,6 +110,20 @@ public class DistributedTaskEngine implements ApplicationRunner {
                 },
                 0,
                 cleanPeriod,
+                TimeUnit.MILLISECONDS
+        );
+
+        // schedule biz duty
+        distributedTaskEngineScheduleThreadsPool.scheduleWithFixedDelay(
+                () -> {
+                    try {
+                        bizDuty.duty();
+                    } catch (Throwable e) {
+                        log.error("schedule biz duty failed.", e);
+                    }
+                },
+                0,
+                bizDutyPeriod,
                 TimeUnit.MILLISECONDS
         );
     }

@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.mapper;
+package com.alipay.antchain.bridge.relayer.commons.constant;
 
-import java.util.List;
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-import com.alipay.antchain.bridge.relayer.commons.model.DistributedTask;
-import com.alipay.antchain.bridge.relayer.dal.entities.DTTaskEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+@Getter
+@AllArgsConstructor
+public enum DomainCertApplicationStateEnum {
 
-public interface DTTaskMapper extends BaseMapper<DTTaskEntity> {
+    APPLYING("applying"),
 
-    void saveDTTasks(List<DistributedTask> tasks);
+    APPLY_FAILED("apply_failed"),
+
+    APPLY_SUCCESS("apply_success"),;
+
+    @EnumValue
+    private final String code;
 }

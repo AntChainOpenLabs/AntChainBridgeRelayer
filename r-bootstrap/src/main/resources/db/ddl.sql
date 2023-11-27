@@ -102,6 +102,18 @@ CREATE TABLE `domain_cert`
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
 
+drop table if exists `domain_cert_application`;
+CREATE TABLE `domain_cert_application`
+(
+    `id`            INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    `domain`        VARCHAR(128) UNIQUE NOT NULL,
+    `domain_space`  VARCHAR(128)        NOT NULL,
+    `apply_receipt` BINARY,
+    `state`         VARCHAR(20),
+    `gmt_create`    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified`  DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 drop table if exists `domain_space_cert`;
 CREATE TABLE `domain_space_cert`
 (
@@ -323,8 +335,8 @@ CREATE TABLE `sdp_msg_archive`
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
 
-drop table if exists dt_task;
-CREATE TABLE `dt_task`
+drop table if exists blockchain_dt_task;
+CREATE TABLE `blockchain_dt_task`
 (
     `id`                 int(11) NOT NULL AUTO_INCREMENT,
     `node_id`            varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
@@ -337,6 +349,25 @@ CREATE TABLE `dt_task`
     `gmt_modified`       datetime                                                      DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_task` (`node_id`, `task_type`, `blockchain_id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci
+  ROW_FORMAT = DYNAMIC;
+
+drop table if exists biz_dt_task;
+CREATE TABLE `biz_dt_task`
+(
+    `id`           int(11) NOT NULL AUTO_INCREMENT,
+    `node_id`      varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `task_type`    varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `unique_key`   varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `ext`          varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+    `timeslice`    datetime                                                      DEFAULT CURRENT_TIMESTAMP,
+    `gmt_create`   datetime                                                      DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified` datetime                                                      DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_task_type_unique_key` (`task_type`, `unique_key`),
+    UNIQUE KEY `uk_task` (`node_id`, `task_type`, `unique_key`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci

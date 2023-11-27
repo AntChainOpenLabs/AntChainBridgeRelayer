@@ -472,6 +472,19 @@ public class BlockchainRepository implements IBlockchainRepository {
         }
     }
 
+    @Override
+    public boolean hasDomainCert(String domain) {
+        if (domainCertWrapperCache.containsKey(domain)) {
+            return true;
+        }
+        return domainCertMapper.exists(new LambdaQueryWrapper<DomainCertEntity>().eq(DomainCertEntity::getDomain, domain));
+    }
+
+    @Override
+    public void saveDomainCert(DomainCertWrapper domainCertWrapper) {
+
+    }
+
     private void flushAnchorProcessHeights(AnchorProcessHeights heights) {
         for (Map.Entry<String, Long> entry : heights.getProcessHeights().entrySet()) {
             flushHeight(heights.getProduct(), heights.getBlockchainId(), entry.getKey(), entry.getValue());
