@@ -105,6 +105,8 @@ public interface IBlockchainManager {
      */
     void deployAMClientContract(String product, String blockchainId);
 
+    void deployBBCContractAsync(String product, String blockchainId);
+
     /**
      * 启动指定的区块链anchor（区块链监听程序）
      * <p>
