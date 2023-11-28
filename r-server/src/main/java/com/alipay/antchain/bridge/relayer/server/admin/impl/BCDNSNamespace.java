@@ -22,10 +22,14 @@ import javax.annotation.Resource;
 
 import cn.ac.caict.bid.model.BIDDocumentOperation;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.KeyUtil;
 import cn.hutool.crypto.PemUtil;
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
+import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.utils.BIDHelper;
+import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.commons.core.base.BIDInfoObjectIdentity;
 import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
 import com.alipay.antchain.bridge.commons.core.base.ObjectIdentityType;
@@ -50,6 +54,8 @@ public class BCDNSNamespace extends AbstractNamespace {
         addCommand("stopBCDNSService", this::stopBCDNSService);
         addCommand("restartBCDNSService", this::restartBCDNSService);
         addCommand("applyDomainNameCert", this::applyDomainNameCert);
+        addCommand("applyDomainNameCert", this::applyDomainNameCert);
+        addCommand("fetchDomainNameCertFromBCDNS", this::fetchDomainNameCertFromBCDNS);
     }
 
     Object registerBCDNSService(String... args) {
@@ -112,7 +118,6 @@ public class BCDNSNamespace extends AbstractNamespace {
         String oidFilePath = args[3];
 
         try {
-
             byte[] rawSubject = null;
             ObjectIdentity oid = null;
             if (ObjectIdentityType.parseFromValue(applicantOidType) == ObjectIdentityType.BID) {
@@ -140,6 +145,26 @@ public class BCDNSNamespace extends AbstractNamespace {
         } catch (Throwable e) {
             log.error("failed to restart BCDNS for domain space {}", args[0], e);
             return "failed to restart BCDNS: " + e.getMessage();
+        }
+    }
+
+    Object fetchDomainNameCertFromBCDNS(String... args) {
+        if (args.length != 2) {
+            return "wrong number of arguments";
+        }
+
+        String domain = args[0];
+        String domainSpace = args[1];
+
+        try {
+            AbstractCrossChainCertificate certificate = bcdnsManager.queryAndSaveDomainCertificateFromBCDNS(domain, domainSpace);
+            if (ObjectUtil.isNull(certificate)) {
+                return StrUtil.format("none cert found for domain {} on BCDNS {}", domain, domainSpace);
+            }
+            return "the cert is : \n" + CrossChainCertificateUtil.formatCrossChainCertificateToPem(certificate);
+        } catch (Throwable e) {
+            log.error("failed to query from BCDNS:", e);
+            return "failed to query from BCDNS: " + e.getMessage();
         }
     }
 

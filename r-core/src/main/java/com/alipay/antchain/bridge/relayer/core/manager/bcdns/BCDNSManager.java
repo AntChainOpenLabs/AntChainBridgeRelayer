@@ -399,6 +399,53 @@ public class BCDNSManager implements IBCDNSManager {
     }
 
     @Override
+    public AbstractCrossChainCertificate queryAndSaveDomainCertificateFromBCDNS(String domain, String domainSpace) {
+        log.info("try to get domain cert of {} from BCDNS {}", domain, domainSpace);
+        try {
+            IBlockChainDomainNameService bcdnsService = getBCDNSService(domainSpace);
+            if (ObjectUtil.isNull(bcdnsService)) {
+                throw new RuntimeException("none bcdns service created");
+            }
+
+            QueryDomainNameCertificateResponse response = bcdnsService.queryDomainNameCertificate(
+                    QueryDomainNameCertificateRequest.builder()
+                            .domain(new CrossChainDomain(domain))
+                            .build()
+            );
+            if (ObjectUtil.isNull(response)) {
+                throw new RuntimeException("none response from BCDNS");
+            }
+            if (response.isExist()) {
+                if (!CrossChainCertificateUtil.isDomainCert(response.getCertificate())) {
+                    throw new RuntimeException(
+                            "the type of cert from bcdns is not domain cert: \n"
+                                    + CrossChainCertificateUtil.formatCrossChainCertificateToPem(response.getCertificate())
+                    );
+                }
+                if (StrUtil.equals(domain, CrossChainCertificateUtil.getCrossChainDomain(response.getCertificate()).getDomain())) {
+                    throw new RuntimeException(
+                            StrUtil.format(
+                                    "unexpected domain {} in cert from BCDNS",
+                                    CrossChainCertificateUtil.getCrossChainDomain(response.getCertificate()).getDomain()
+                            )
+                    );
+                }
+                blockchainRepository.saveDomainCert(new DomainCertWrapper(response.getCertificate()));
+                return response.getCertificate();
+            }
+            return null;
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    e,
+                    "failed to get all applying domain cert applications"
+            );
+        }
+    }
+
+    @Override
     public List<DomainCertApplicationDO> getAllApplyingDomainCertApplications() {
         log.info("try to get all applying domain cert applications");
         try {
