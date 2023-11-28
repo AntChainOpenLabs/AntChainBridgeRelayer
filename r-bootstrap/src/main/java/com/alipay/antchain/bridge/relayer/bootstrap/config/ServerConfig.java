@@ -40,7 +40,7 @@ public class ServerConfig {
     private Integer adminServerPort;
 
     @Bean
-    public Server pluginMgrServer(@Autowired AdminRpcServerImpl adminRpcServer) throws IOException {
+    public Server adminMgrServer(@Autowired AdminRpcServerImpl adminRpcServer) throws IOException {
         log.info("Starting admin managing server on {}:{}", adminServerHost, adminServerPort);
         return NettyServerBuilder.forAddress(
                         new InetSocketAddress(

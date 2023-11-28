@@ -17,7 +17,9 @@
 package com.alipay.antchain.bridge.relayer.bootstrap.config;
 
 import java.io.ByteArrayInputStream;
+import java.security.KeyFactory;
 import java.security.PrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.concurrent.*;
 
 import cn.hutool.core.io.FileUtil;
@@ -37,6 +39,8 @@ import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
 import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository;
 import com.alipay.antchain.bridge.relayer.server.network.WSRelayerServer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import lombok.SneakyThrows;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -99,8 +103,23 @@ public class RelayerCoreConfig {
         return RelayerCredentialSubject.decode(getLocalRelayerCrossChainCertificate().getCredentialSubject());
     }
 
+    @SneakyThrows
     public PrivateKey getLocalPrivateKey() {
-        return PemUtil.readPemPrivateKey(new ByteArrayInputStream(FileUtil.readBytes(relayerPrivateKeyPath)));
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(FileUtil.readBytes(relayerPrivateKeyPath));
+        try {
+            return PemUtil.readPemPrivateKey(inputStream);
+        } catch (Exception e) {
+            inputStream.reset();
+            byte[] rawPemOb = PemUtil.readPem(inputStream);
+            KeyFactory keyFactory = KeyFactory.getInstance(
+                    PrivateKeyInfo.getInstance(rawPemOb).getPrivateKeyAlgorithm().getAlgorithm().getId()
+            );
+            return keyFactory.generatePrivate(
+                    new PKCS8EncodedKeySpec(
+                            rawPemOb
+                    )
+            );
+        }
     }
 
     public String getLocalRelayerNodeId() {

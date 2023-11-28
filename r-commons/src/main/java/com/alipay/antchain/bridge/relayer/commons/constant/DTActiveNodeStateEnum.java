@@ -18,8 +18,10 @@ package com.alipay.antchain.bridge.relayer.commons.constant;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
+@Getter
 public enum DTActiveNodeStateEnum {
     ONLINE("online");
 

@@ -39,4 +39,6 @@ build/
 
 src/main/resources/cc_certs/**
 
+src/main/resources/bcdns
+
 src/main/resources/node_keys/**

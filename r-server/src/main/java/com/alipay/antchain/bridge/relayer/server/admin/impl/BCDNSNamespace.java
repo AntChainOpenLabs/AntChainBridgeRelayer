@@ -54,7 +54,6 @@ public class BCDNSNamespace extends AbstractNamespace {
         addCommand("stopBCDNSService", this::stopBCDNSService);
         addCommand("restartBCDNSService", this::restartBCDNSService);
         addCommand("applyDomainNameCert", this::applyDomainNameCert);
-        addCommand("applyDomainNameCert", this::applyDomainNameCert);
         addCommand("fetchDomainNameCertFromBCDNS", this::fetchDomainNameCertFromBCDNS);
     }
 

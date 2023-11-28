@@ -76,6 +76,10 @@ public class Dispatcher {
 
             // 获取在线节点
             List<ActiveNode> onlineNodes = getOnlineNode();
+            if (ObjectUtil.isEmpty(onlineNodes)) {
+                log.warn("none online nodes!");
+                return;
+            }
             log.info("size of online node : {}", onlineNodes.size());
 
             // 给剩余任务分配时间片
