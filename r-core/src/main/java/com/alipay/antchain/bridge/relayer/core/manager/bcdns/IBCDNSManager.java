@@ -60,5 +60,11 @@ public interface IBCDNSManager {
 
     List<DomainCertApplicationDO> getAllApplyingDomainCertApplications();
 
+    DomainCertApplicationDO getDomainCertApplication(String domain);
+
     void saveDomainCertApplicationResult(String domain, AbstractCrossChainCertificate domainCert);
+
+    void bindDomainCertWithBlockchain(String domain, String product, String blockchainId);
+
+    void registerDomainRouter(String domain);
 }

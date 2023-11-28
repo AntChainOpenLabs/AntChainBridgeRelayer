@@ -34,6 +34,8 @@ import com.alipay.antchain.bridge.commons.core.base.BIDInfoObjectIdentity;
 import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
 import com.alipay.antchain.bridge.commons.core.base.ObjectIdentityType;
 import com.alipay.antchain.bridge.commons.core.base.X509PubkeyInfoObjectIdentity;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainCertApplicationStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertApplicationDO;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.server.admin.AbstractNamespace;
 import lombok.SneakyThrows;
@@ -54,7 +56,10 @@ public class BCDNSNamespace extends AbstractNamespace {
         addCommand("stopBCDNSService", this::stopBCDNSService);
         addCommand("restartBCDNSService", this::restartBCDNSService);
         addCommand("applyDomainNameCert", this::applyDomainNameCert);
+        addCommand("queryDomainCertApplicationState", this::queryDomainCertApplicationState);
         addCommand("fetchDomainNameCertFromBCDNS", this::fetchDomainNameCertFromBCDNS);
+        addCommand("registerDomainRouter", this::registerDomainRouter);
+        addCommand("addBlockchainTrustAnchor", this::addBlockchainTrustAnchor);
     }
 
     Object registerBCDNSService(String... args) {
@@ -147,6 +152,27 @@ public class BCDNSNamespace extends AbstractNamespace {
         }
     }
 
+    Object queryDomainCertApplicationState(String... args) {
+        if (args.length != 1) {
+            return "wrong number of arguments";
+        }
+
+        String domain = args[0];
+        try {
+            DomainCertApplicationDO domainCertApplicationDO = this.bcdnsManager.getDomainCertApplication(domain);
+            if (ObjectUtil.isNull(domainCertApplicationDO)) {
+                return "no application record found";
+            }
+            if (domainCertApplicationDO.getState() != DomainCertApplicationStateEnum.APPLYING) {
+                return "your application finished: " + domainCertApplicationDO.getState().getCode();
+            }
+            return "your application not finished: " + domainCertApplicationDO.getState().getCode();
+        } catch (Throwable e) {
+            log.error("failed to restart BCDNS for domain space {}", args[0], e);
+            return "failed to restart BCDNS: " + e.getMessage();
+        }
+    }
+
     Object fetchDomainNameCertFromBCDNS(String... args) {
         if (args.length != 2) {
             return "wrong number of arguments";
@@ -165,6 +191,25 @@ public class BCDNSNamespace extends AbstractNamespace {
             log.error("failed to query from BCDNS:", e);
             return "failed to query from BCDNS: " + e.getMessage();
         }
+    }
+
+    Object registerDomainRouter(String... args) {
+        if (args.length != 1) {
+            return "wrong number of arguments";
+        }
+
+        String domain = args[0];
+        try {
+            bcdnsManager.registerDomainRouter(domain);
+            return "success";
+        } catch (Throwable e) {
+            log.error("failed to register router for domain {} to BCDNS:", domain, e);
+            return "failed to register router: " + e.getMessage();
+        }
+    }
+
+    Object addBlockchainTrustAnchor(String... args) {
+        return "success";
     }
 
     @SneakyThrows

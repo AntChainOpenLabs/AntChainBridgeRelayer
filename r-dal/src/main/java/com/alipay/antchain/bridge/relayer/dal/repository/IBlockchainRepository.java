@@ -58,4 +58,6 @@ public interface IBlockchainRepository {
     boolean hasDomainCert(String domain);
 
     void saveDomainCert(DomainCertWrapper domainCertWrapper);
+
+    void updateBlockchainInfoOfDomainCert(String domain, String product, String blockchainId);
 }

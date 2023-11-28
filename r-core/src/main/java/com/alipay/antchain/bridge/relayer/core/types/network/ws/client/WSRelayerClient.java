@@ -63,7 +63,7 @@ public class WSRelayerClient extends BaseRelayerClient {
         HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
         HttpsURLConnection.setDefaultSSLSocketFactory(sslSocketFactory);
 
-        if (getRemoteNodeInfo().getEndpoints().size() == 0) {
+        if (ObjectUtil.isEmpty(getRemoteNodeInfo().getEndpoints())) {
             throw new RuntimeException(
                     String.format(
                             "failed to start WSRelayerServerAPImplService: zero size endpoints for relayer (node_id: %s)",

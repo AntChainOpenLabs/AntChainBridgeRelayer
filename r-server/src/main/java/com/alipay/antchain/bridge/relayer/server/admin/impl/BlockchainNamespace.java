@@ -20,12 +20,16 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.alipay.antchain.bridge.commons.bbc.DefaultBBCContext;
 import com.alipay.antchain.bridge.relayer.commons.constant.Constants;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
+import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.dal.repository.ISystemConfigRepository;
 import com.alipay.antchain.bridge.relayer.server.admin.AbstractNamespace;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
 @Slf4j
@@ -33,6 +37,12 @@ public class BlockchainNamespace extends AbstractNamespace {
 
     @Resource
     private IBlockchainManager blockchainManager;
+
+    @Resource
+    private IBCDNSManager bcdnsManager;
+
+    @Resource
+    private TransactionTemplate transactionTemplate;
 
     @Resource
     private ISystemConfigRepository systemConfigRepository;
@@ -85,16 +95,17 @@ public class BlockchainNamespace extends AbstractNamespace {
     }
 
     Object addHeteroBlockchainAnchor(String... args) {
-        if (args.length != 6) {
+        if (args.length != 7) {
             return "wrong number of arguments";
         }
 
         String product = args[0];
         String blockchainId = args[1];
-        String pluginServerId = args[2];
-        String alias = args[3];
-        String desc = args[4];
-        String heteroConfFilePath = args[5];
+        String domain = args[2];
+        String pluginServerId = args[3];
+        String alias = args[4];
+        String desc = args[5];
+        String heteroConfFilePath = args[6];
 
         try {
             byte[] rawConf = Files.readAllBytes(Paths.get(heteroConfFilePath));
@@ -105,16 +116,26 @@ public class BlockchainNamespace extends AbstractNamespace {
             Map<String, String> clientConfig = new HashMap<>();
             clientConfig.put(Constants.HETEROGENEOUS_BBC_CONTEXT, JSON.toJSONString(bbcContext));
 
-            this.blockchainManager.addBlockchain(
-                    product,
-                    blockchainId,
-                    pluginServerId,
-                    alias,
-                    desc,
-                    clientConfig
+            transactionTemplate.execute(
+                    new TransactionCallbackWithoutResult() {
+                        @Override
+                        protected void doInTransactionWithoutResult(TransactionStatus status) {
+                            blockchainManager.addBlockchain(
+                                    product,
+                                    blockchainId,
+                                    pluginServerId,
+                                    alias,
+                                    desc,
+                                    clientConfig
+                            );
+                            bcdnsManager.bindDomainCertWithBlockchain(domain, product, blockchainId);
+                        }
+                    }
             );
+
             return "success";
         } catch (Exception e) {
+            log.error("failed to add blockchain: ", e);
             return "exception happened: " + e.getMessage();
         }
     }

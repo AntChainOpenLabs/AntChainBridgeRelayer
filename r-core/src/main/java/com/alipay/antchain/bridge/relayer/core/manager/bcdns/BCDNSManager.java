@@ -30,7 +30,10 @@ import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.bcdns.impl.BlockChainDomainNameServiceFactory;
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
+import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
+import com.alipay.antchain.bridge.bcdns.types.base.Relayer;
 import com.alipay.antchain.bridge.bcdns.types.req.QueryDomainNameCertificateRequest;
+import com.alipay.antchain.bridge.bcdns.types.req.RegisterDomainRouterRequest;
 import com.alipay.antchain.bridge.bcdns.types.resp.ApplyDomainNameCertificateResponse;
 import com.alipay.antchain.bridge.bcdns.types.resp.QueryBCDNSTrustRootCertificateResponse;
 import com.alipay.antchain.bridge.bcdns.types.resp.QueryDomainNameCertificateResponse;
@@ -51,6 +54,7 @@ import com.alipay.antchain.bridge.relayer.dal.repository.IBCDNSRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,6 +67,12 @@ public class BCDNSManager implements IBCDNSManager {
 
     @Resource
     private IBlockchainRepository blockchainRepository;
+
+    @Value("#{relayerCoreConfig.localRelayerCrossChainCertificate}")
+    private AbstractCrossChainCertificate localRelayerCertificate;
+
+    @Value("#{systemConfigRepository.getLocalEndpoints()}")
+    private List<String> localEndpoints;
 
     private final Map<String, IBlockChainDomainNameService> bcdnsClientMap = new ConcurrentHashMap<>();
 
@@ -462,6 +472,22 @@ public class BCDNSManager implements IBCDNSManager {
     }
 
     @Override
+    public DomainCertApplicationDO getDomainCertApplication(String domain) {
+        try {
+            return bcdnsRepository.getDomainCertApplicationEntry(domain);
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    e,
+                    "failed to get domain cert application for {}",
+                    domain
+            );
+        }
+    }
+
+    @Override
     public void saveDomainCertApplicationResult(String domain, AbstractCrossChainCertificate domainCert) {
         try {
             if (!bcdnsRepository.hasDomainCertApplicationEntry(domain)) {
@@ -483,6 +509,60 @@ public class BCDNSManager implements IBCDNSManager {
             if (ObjectUtil.isNotNull(domainCert)) {
                 blockchainRepository.saveDomainCert(new DomainCertWrapper(domainCert));
             }
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    e,
+                    "failed to get all applying domain cert applications"
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public void bindDomainCertWithBlockchain(String domain, String product, String blockchainId) {
+        try {
+            if (!blockchainRepository.hasDomainCert(domain)) {
+                throw new RuntimeException("domain not exist");
+            }
+            blockchainRepository.updateBlockchainInfoOfDomainCert(domain, product, blockchainId);
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
+                    e,
+                    "failed to get all applying domain cert applications"
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public void registerDomainRouter(String domain) {
+        try {
+            if (!blockchainRepository.hasDomainCert(domain)) {
+                throw new RuntimeException("dest domain not exist in local");
+            }
+
+            DomainCertWrapper domainCertWrapper = blockchainRepository.getDomainCert(domain);
+            getBCDNSService(domainCertWrapper.getDomainSpace())
+                    .registerDomainRouter(
+                            RegisterDomainRouterRequest.builder()
+                                    .domainCert(domainCertWrapper.getCrossChainCertificate())
+                                    .router(
+                                            new DomainRouter(
+                                                    new CrossChainDomain(domain),
+                                                    new Relayer(
+                                                            localRelayerCertificate.getId(),
+                                                            localEndpoints
+                                                    )
+                                            )
+                                    ).build()
+                    );
+
         } catch (AntChainBridgeRelayerException e) {
             throw e;
         } catch (Exception e) {

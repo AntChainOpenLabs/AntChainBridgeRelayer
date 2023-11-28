@@ -482,7 +482,47 @@ public class BlockchainRepository implements IBlockchainRepository {
 
     @Override
     public void saveDomainCert(DomainCertWrapper domainCertWrapper) {
+        try {
+            if (hasDomainCert(domainCertWrapper.getDomain())) {
+                throw new RuntimeException(StrUtil.format("domain cert for {} already exist", domainCertWrapper.getDomain()));
+            }
+            domainCertMapper.insert(ConvertUtil.convertFromDomainCertWrapper(domainCertWrapper));
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to save domain cert to DB for domain {}",
+                    domainCertWrapper.getDomain()
+            );
+        }
+    }
 
+    @Override
+    public void updateBlockchainInfoOfDomainCert(String domain, String product, String blockchainId) {
+        try {
+            if (!hasDomainCert(domain)) {
+                throw new RuntimeException(StrUtil.format("domain cert for {} not found", domain));
+            }
+            if (
+                    domainCertMapper.update(
+                            DomainCertEntity.builder()
+                                    .product(product)
+                                    .blockchainId(blockchainId)
+                                    .build(),
+                            new LambdaUpdateWrapper<DomainCertEntity>()
+                                    .eq(DomainCertEntity::getDomain, domain)
+                    ) != 1
+            ) {
+                throw new RuntimeException("failed to update the domain cert in DB");
+            }
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to update domain cert to DB for domain {}",
+                    domain
+            );
+        }
     }
 
     private void flushAnchorProcessHeights(AnchorProcessHeights heights) {

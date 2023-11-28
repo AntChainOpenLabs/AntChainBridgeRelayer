@@ -27,8 +27,8 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.crypto.PemUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
-import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
+import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.GRpcBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
@@ -92,10 +92,7 @@ public class RelayerCoreConfig {
         AbstractCrossChainCertificate relayerCertificate = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
                 FileUtil.readBytes(relayerCrossChainCertPath)
         );
-        Assert.equals(
-                CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
-                relayerCertificate.getType()
-        );
+        Assert.isTrue(CrossChainCertificateUtil.isRelayerCert(relayerCertificate));
         return relayerCertificate;
     }
 
