@@ -74,11 +74,17 @@ public class ThreadsConfig {
     @Value("${relayer.engine.duty.committer.threads.total_size:32}")
     private int committerScheduleTaskExecutorTotalSize;
 
-    @Value("${relayer.engine.duty.process.threads.core_size:16}")
+    @Value("${relayer.engine.duty.process.threads.core_size:8}")
     private int processScheduleTaskExecutorCoreSize;
 
     @Value("${relayer.engine.duty.process.threads.total_size:32}")
     private int processScheduleTaskExecutorTotalSize;
+
+    @Value("${relayer.engine.duty.validation.threads.core_size:8}")
+    private int validationScheduleTaskExecutorCoreSize;
+
+    @Value("${relayer.engine.duty.validation.threads.total_size:32}")
+    private int validationScheduleTaskExecutorTotalSize;
 
     @Value("${relayer.engine.duty.confirm.threads.core_size:8}")
     private int confirmScheduleTaskExecutorCoreSize;
@@ -219,10 +225,22 @@ public class ThreadsConfig {
         return new ThreadPoolExecutor(
                 processScheduleTaskExecutorCoreSize,
                 processScheduleTaskExecutorTotalSize,
-                0, TimeUnit.MILLISECONDS,
+                5000, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(100),
                 new ThreadFactoryBuilder().setNameFormat("process_executor-worker-%d").build(),
                 new ThreadPoolExecutor.DiscardPolicy()
+        );
+    }
+
+    @Bean(name = "validationScheduleTaskExecutorThreadsPool")
+    public ExecutorService validationScheduleTaskExecutorThreadsPool() {
+        return new ThreadPoolExecutor(
+                validationScheduleTaskExecutorCoreSize,
+                validationScheduleTaskExecutorTotalSize,
+                5000, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(100),
+                new ThreadFactoryBuilder().setNameFormat("validation_executor-worker-%d").build(),
+                new ThreadPoolExecutor.CallerRunsPolicy()
         );
     }
 
@@ -269,7 +287,7 @@ public class ThreadsConfig {
                 baseScheduleBizTaskExecutorTotalSize,
                 0, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(10),
-                new ThreadFactoryBuilder().setNameFormat("deploy_executor-worker-%d").build(),
+                new ThreadFactoryBuilder().setNameFormat("base_executor-worker-%d").build(),
                 new ThreadPoolExecutor.CallerRunsPolicy()
         );
     }

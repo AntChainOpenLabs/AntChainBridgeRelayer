@@ -7,13 +7,11 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.core.sdp.AbstractSDPMessage;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageFactory;
-import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.*;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
+import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.manager.gov.IGovernManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
@@ -53,9 +51,13 @@ public class AuthenticMessageProcess {
     @Resource
     private IRelayerClientPool relayerClientPool;
 
+    @Resource
+    private IBCDNSManager bcdnsManager;
+
     @Value("${relayer.service.process.sdp.acl_on:true}")
     private boolean sdpACLOn;
 
+    // TODO: 当支持TP-PROOF之后，应该从网络中获得到UCP，其携带着TP-PROOF
     public boolean doProcess(AuthMsgWrapper amMsgWrapper) {
 
         log.info(
@@ -66,13 +68,16 @@ public class AuthenticMessageProcess {
         );
 
         if (
-                amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROVED
+                amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROCESSED
                         || amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.REJECTED
         ) {
             log.error("auth msg repeat process : {}", amMsgWrapper.getAuthMsgId());
             return true;
-        } else if (amMsgWrapper.getProcessState() != AuthMsgProcessStateEnum.PENDING) {
-            log.error("auth msg process state error : {}-{}", amMsgWrapper.getAuthMsgId(), amMsgWrapper.getProcessState());
+        } else if (
+                amMsgWrapper.getTrustLevel() == AuthMsgTrustLevelEnum.NEGATIVE_TRUST
+                        && amMsgWrapper.getProcessState() != AuthMsgProcessStateEnum.PROVED
+        ) {
+            log.error("auth msg with NEGATIVE_TRUST its state error : {}-{}", amMsgWrapper.getAuthMsgId(), amMsgWrapper.getProcessState());
             return false;
         }
 
@@ -80,11 +85,13 @@ public class AuthenticMessageProcess {
             if (!amMsgWrapper.isNetworkAM()) {
                 processLocalAM(amMsgWrapper);
             } else {
-                processRemoteAM(amMsgWrapper);
+                processRemoteAM(amMsgWrapper, null);
             }
 
-            // 只有am_proof状态，需要解析协议栈处理
-            if (amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROVED) {
+            if (
+                    amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROCESSED
+                            || amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROCESSED_NO_PROOF
+            ) {
                 log.info(
                         "process high layer protocol {} of am message : (src_domain: {}, id: {}, if_remote: {})",
                         UpperProtocolTypeBeyondAMEnum.parseFromValue(amMsgWrapper.getAuthMessage().getUpperProtocol()).name(),
@@ -107,7 +114,7 @@ public class AuthenticMessageProcess {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED,
                     e,
-                    "process auth msg : (src_domain: {}, id: {}, if_remote: {})",
+                    "process auth msg failed: (src_domain: {}, id: {}, if_remote: {})",
                     amMsgWrapper.getDomain(),
                     amMsgWrapper.getAuthMsgId(),
                     amMsgWrapper.isNetworkAM()
@@ -140,12 +147,31 @@ public class AuthenticMessageProcess {
             );
         }
 
-        authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROVED);
+        if (
+                authMsgWrapper.getTrustLevel() == AuthMsgTrustLevelEnum.POSITIVE_TRUST
+                        && authMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PENDING
+        ) {
+            // TODO : 这里意味着POSITIVE_TRUST的AM还没有TP-PROOF，所以标记为PROCESSED_NO_PROOF，
+            //  在后续将这些消息的证明再发送给中继或者提交给链上
+            authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROCESSED_NO_PROOF);
+        }
+
+        authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROCESSED);
     }
 
-    private void processRemoteAM(AuthMsgWrapper authMsgWrapper) {
-
-        authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROVED);
+    // TODO: 当支持TP-PROOF之后，应该从网络中获得到UCP，其携带着TP-PROOF
+    private void processRemoteAM(AuthMsgWrapper authMsgWrapper, UniformCrosschainPacketContext ucpContext) {
+        // TODO : 如果没有TP-PROOF应该标记为PROCESSED_NO_PROOF，
+        //  这在PTC Ready之后版本增加
+        if (
+                authMsgWrapper.getTrustLevel() == AuthMsgTrustLevelEnum.POSITIVE_TRUST
+                        && ObjectUtil.isNull(ucpContext)
+        ) {
+            // TODO : 这里意味着POSITIVE_TRUST的AM还没有TP-PROOF，所以标记为PROCESSED_NO_PROOF，
+            //  发送中继应该后续对这种消息再传过来TP-PROOF
+            authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROCESSED_NO_PROOF);
+        }
+        authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROCESSED);
     }
 
     private void processSDPMsg(AuthMsgWrapper authMsgWrapper) {
@@ -158,11 +184,11 @@ public class AuthenticMessageProcess {
                     sdpMsgWrapper.getReceiverBlockchainProduct(),
                     sdpMsgWrapper.getReceiverBlockchainId()
             );
-            processLocalP2PMsg(sdpMsgWrapper);
+            processLocalSDPMsg(sdpMsgWrapper);
             return;
         }
 
-        processRemoteP2PMsg(sdpMsgWrapper);
+        processRemoteSDPMsg(sdpMsgWrapper);
     }
 
     public SDPMsgWrapper parseSDPMsgFrom(AuthMsgWrapper authMsgWrapper) {
@@ -241,11 +267,12 @@ public class AuthenticMessageProcess {
         return relayerNetworkItem.getNodeId();
     }
 
-    private void processRemoteP2PMsg(SDPMsgWrapper sdpMsgWrapper) {
+    private void processRemoteSDPMsg(SDPMsgWrapper sdpMsgWrapper) {
         String relayerNodeId = findRemoteRelayer(sdpMsgWrapper);
         try {
             if (ObjectUtil.isNull(relayerNodeId)) {
                 // TODO: call BCDNS for domain router
+                // TODO: 当中继之间初次建立链接的时候，应当使用锁，阻止其他的消息处理时，也去做同样的事情；
             }
 
             if (ObjectUtil.isNull(relayerNodeId)) {
@@ -256,6 +283,7 @@ public class AuthenticMessageProcess {
                 crossChainMessageRepository.putSDPMessage(sdpMsgWrapper);
             }
 
+            // TODO: 未来需要更新接口，以支持不同信任等级的流程
             relayerClientPool.getRelayerClient(relayerNetworkManager.getRelayerNode(relayerNodeId))
                     .amRequest(
                             sdpMsgWrapper.getSenderBlockchainDomain(),
@@ -296,7 +324,7 @@ public class AuthenticMessageProcess {
         );
     }
 
-    private void processLocalP2PMsg(SDPMsgWrapper sdpMsgWrapper) {
+    private void processLocalSDPMsg(SDPMsgWrapper sdpMsgWrapper) {
         switch (sdpMsgWrapper.getProcessState()) {
             case PENDING:
                 // 检查ACL规则，若规则不满足，则状态置为am_msg_rejected

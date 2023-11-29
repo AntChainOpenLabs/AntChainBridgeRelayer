@@ -23,5 +23,5 @@ import com.alipay.antchain.bridge.relayer.dal.entities.UCPPoolEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 public interface UCPPoolMapper extends BaseMapper<UCPPoolEntity> {
-    void saveUCPMessages(List<UniformCrosschainPacketContext> contextList);
+    int saveUCPMessages(List<UniformCrosschainPacketContext> contextList);
 }

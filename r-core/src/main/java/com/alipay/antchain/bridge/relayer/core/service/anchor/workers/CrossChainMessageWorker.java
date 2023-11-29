@@ -15,11 +15,11 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Getter
-public class AuthMessageWorker extends BlockWorker {
+public class CrossChainMessageWorker extends BlockWorker {
 
     private final ReceiverService receiver;
 
-    public AuthMessageWorker(AnchorProcessContext processContext) {
+    public CrossChainMessageWorker(AnchorProcessContext processContext) {
         super(processContext);
         this.receiver = processContext.getReceiverService();
     }
@@ -32,15 +32,15 @@ public class AuthMessageWorker extends BlockWorker {
     public boolean dealHeteroBlockchain(AbstractBlock block) {
         try {
             HeterogeneousBlock heteroBlock = (HeterogeneousBlock) block;
-            if (heteroBlock.getCrossChainMessages().isEmpty()) {
+            if (heteroBlock.getUniformCrosschainPacketContexts().isEmpty()) {
                 return true;
             }
+            receiver.receiveUCP(heteroBlock.getUniformCrosschainPacketContexts());
 
             List<AuthMsgWrapper> authMessages = heteroBlock.toAuthMsgWrappers();
             if (authMessages.isEmpty()) {
                 return true;
             }
-
             receiver.receiveAM(authMessages);
         } catch (Exception e) {
             log.error(

@@ -108,7 +108,7 @@ public class CrossChainRepositoryTest extends TestBase {
     public void testPeekAuthMessages() {
         saveElevenAM(getAMCurrentId());
 
-        List<AuthMsgWrapper> authMsgWrappers = crossChainMessageRepository.peekAuthMessages("test", AuthMsgProcessStateEnum.PENDING, 10);
+        List<AuthMsgWrapper> authMsgWrappers = crossChainMessageRepository.peekAuthMessages("test", 10);
         Assert.assertEquals(10, authMsgWrappers.size());
     }
 
@@ -141,9 +141,9 @@ public class CrossChainRepositoryTest extends TestBase {
                             "test",
                             "test",
                             "test",
-                            ByteUtil.intToBytes(i),
+                            HexUtil.encodeHexStr(ByteUtil.intToBytes(i)),
                             "am",
-                            AuthMsgProcessStateEnum.PROVED,
+                            AuthMsgProcessStateEnum.PROCESSED_NO_PROOF,
                             authMessage
                     )
             );
@@ -194,7 +194,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "test",
                                         "test",
                                         "test",
-                                        ByteUtil.intToBytes(9),
+                                        HexUtil.encodeHexStr(ByteUtil.intToBytes(9)),
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         authMessage
@@ -264,7 +264,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "test",
                                         "test",
                                         "test",
-                                        ByteUtil.intToBytes(10),
+                                        HexUtil.encodeHexStr(ByteUtil.intToBytes(10)),
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         authMessage
@@ -290,7 +290,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "test",
                                         "test",
                                         "test",
-                                        ByteUtil.intToBytes(9),
+                                        HexUtil.encodeHexStr(ByteUtil.intToBytes(9)),
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         authMessage
@@ -330,7 +330,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "test",
                                         "test",
                                         "test",
-                                        ByteUtil.intToBytes(9),
+                                        HexUtil.encodeHexStr(ByteUtil.intToBytes(9)),
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         authMessage
@@ -385,7 +385,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                     "test",
                                     "test",
                                     "test",
-                                    ByteUtil.intToBytes(i),
+                                    HexUtil.encodeHexStr(ByteUtil.intToBytes(i)),
                                     "am",
                                     AuthMsgProcessStateEnum.PENDING,
                                     authMessage
@@ -421,7 +421,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                     "test",
                                     "test",
                                     "test",
-                                    ByteUtil.intToBytes(i),
+                                    HexUtil.encodeHexStr(ByteUtil.intToBytes(i)),
                                     "am",
                                     AuthMsgProcessStateEnum.PENDING,
                                     authMessage

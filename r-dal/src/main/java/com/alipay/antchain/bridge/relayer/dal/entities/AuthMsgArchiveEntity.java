@@ -30,7 +30,7 @@ import lombok.Setter;
 public class AuthMsgArchiveEntity extends BaseEntity {
 
     @TableField("ucp_id")
-    private byte[] ucpId;
+    private String ucpId;
 
     @TableField("blockchain_product")
     private String product;

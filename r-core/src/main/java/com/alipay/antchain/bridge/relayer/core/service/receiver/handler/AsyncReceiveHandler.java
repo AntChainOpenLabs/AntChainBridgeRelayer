@@ -5,9 +5,9 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
+import com.alipay.antchain.bridge.relayer.commons.model.UniformCrosschainPacketContext;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,12 +23,21 @@ public class AsyncReceiveHandler {
     @Resource
     private TransactionTemplate transactionTemplate;
 
-    public void receiveAuthMessages(List<AuthMsgWrapper> authMsgWrappers) {
+    public void receiveUniformCrosschainPackets(List<UniformCrosschainPacketContext> ucpContexts) {
 
-        for (AuthMsgWrapper am : authMsgWrappers) {
-            log.info("receive a AuthenticMessage from {} with upper protocol {}", am.getDomain(), am.getProtocolType());
-            am.setProcessState(AuthMsgProcessStateEnum.PENDING);
+        int rowsNum = crossChainMessageRepository.putUniformCrosschainPackets(ucpContexts);
+        if (ucpContexts.size() != rowsNum) {
+            throw new RuntimeException(
+                    StrUtil.format(
+                            "failed to save ucp messages: rows number {} inserted not equal to list size {}",
+                            rowsNum, ucpContexts.size()
+                    )
+            );
         }
+        log.info("[asyncReceiver] put PENDING UCP to pool success");
+    }
+
+    public void receiveAuthMessages(List<AuthMsgWrapper> authMsgWrappers) {
 
         int rowsNum = crossChainMessageRepository.putAuthMessages(authMsgWrappers);
         if (authMsgWrappers.size() != rowsNum) {

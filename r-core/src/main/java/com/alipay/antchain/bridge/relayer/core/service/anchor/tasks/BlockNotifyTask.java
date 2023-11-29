@@ -7,7 +7,7 @@ import java.util.Map;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.relayer.core.service.anchor.context.AnchorProcessContext;
-import com.alipay.antchain.bridge.relayer.core.service.anchor.workers.AuthMessageWorker;
+import com.alipay.antchain.bridge.relayer.core.service.anchor.workers.CrossChainMessageWorker;
 import com.alipay.antchain.bridge.relayer.core.service.anchor.workers.BlockWorker;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.AbstractBlock;
 import lombok.Getter;
@@ -55,7 +55,7 @@ public class BlockNotifyTask extends BlockBaseTask {
         workersByTask.put(
                 NotifyTaskTypeEnum.CROSSCHAIN_MSG_WORKER,
                 ListUtil.toList(
-                        new AuthMessageWorker(processContext)
+                        new CrossChainMessageWorker(processContext)
                 )
         );
     }

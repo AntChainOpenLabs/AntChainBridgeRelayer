@@ -40,14 +40,28 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class BlockchainIdleDCache {
 
+    private static final String LAST_UCP_RECEIVE_TIME = "last_ucp_receive_time";
+
+    private static final String LAST_UCP_PROCESS_TIME = "last_ucp_process_time";
+
+    private static final String LAST_EMPTY_UCP_POOL_TIME = "last_empty_ucp_pool_time";
+
     private static final String LAST_AM_RECEIVE_TIME = "last_am_receive_time";
+
     private static final String LAST_AM_RESPONSE_TIME = "last_am_response_time";
+
     private static final String LAST_AM_PROCESS_TIME = "last_am_process_time";
+
     private static final String LAST_ORACLE_RECEIVE_TIME = "last_oracle_receive_time";
+
     private static final String LAST_EMPTY_AM_POOL_TIME = "last_empty_am_pool_time";
+
     private static final String LAST_EMPTY_AM_SEND_QUEUE_TIME = "last_empty_am_send_queue_time";
+
     private static final String LAST_EMPTY_AM_ARCHIVE_TIME = "last_empty_am_archive_time";
+
     private static final String LAST_EMPTY_ORACLE_POOL_TIME = "last_empty_oracle_pool_time";
+
     private static final String LAST_EMPTY_ORACLE_COMMITTER_TIME = "last_empty_oracle_committer_time";
 
     private static final int COUNT_LIMIT = 1 << 8;
@@ -61,10 +75,22 @@ public class BlockchainIdleDCache {
 
     @Value("${relayer.blockchain.idle.time_limit:10000}")
     private long idleTime;
-    
+
     @Resource
     private RedissonClient redisson;
-    
+
+    public void setLastUCPReceiveTime(String product, String blockchainId) {
+        setIdleState(product, blockchainId, LAST_UCP_RECEIVE_TIME, System.currentTimeMillis());
+    }
+
+    public void setLastUCPProcessTime(String product, String blockchainId) {
+        setIdleState(product, blockchainId, LAST_UCP_PROCESS_TIME, System.currentTimeMillis());
+    }
+
+    public void setLastEmptyUCPPoolTime(String product, String blockchainId) {
+        setIdleState(product, blockchainId, LAST_EMPTY_UCP_POOL_TIME, System.currentTimeMillis());
+    }
+
     public void setLastAMReceiveTime(String product, String blockchainId) {
         setIdleState(product, blockchainId, LAST_AM_RECEIVE_TIME, System.currentTimeMillis());
     }
@@ -105,8 +131,8 @@ public class BlockchainIdleDCache {
      * 从counterMap获取对应的数值，检查是否整除COUNT_LIMIT，
      * 若整除，则返回false，代表本次不检查是否空闲，直接执行任务即可。
      *
-     * @param funcName 函数名字
-     * @param product 链的框架
+     * @param funcName     函数名字
+     * @param product      链的框架
      * @param blockchainId 链ID
      * @return 是否空闲
      */
@@ -115,6 +141,15 @@ public class BlockchainIdleDCache {
         int cnt = counterMap.getOrDefault(key, 1) % COUNT_LIMIT;
         counterMap.put(key, cnt + 1);
         return cnt != 0;
+    }
+
+    public boolean ifUCPProcessIdle(String product, String blockchainId) {
+        long lastUCPReceiveTime = getIdleState(product, blockchainId, LAST_UCP_RECEIVE_TIME);
+        long lastEmptyUCPPoolTime = getIdleState(product, blockchainId, LAST_EMPTY_UCP_POOL_TIME);
+        if (lastEmptyUCPPoolTime - lastUCPReceiveTime > idleTime) {
+            return checkCounter("ifUCPProcessIdle", product, blockchainId);
+        }
+        return false;
     }
 
     public boolean ifAMProcessIdle(String product, String blockchainId) {
@@ -132,7 +167,7 @@ public class BlockchainIdleDCache {
         long lastAMProcessTime = getIdleState(product, blockchainId, LAST_AM_PROCESS_TIME);
         long lastEmptyAMSendQueueTime = getIdleState(product, blockchainId, LAST_EMPTY_AM_SEND_QUEUE_TIME);
 
-        if(lastEmptyAMSendQueueTime - lastAMProcessTime > idleTime) {
+        if (lastEmptyAMSendQueueTime - lastAMProcessTime > idleTime) {
             return checkCounter("ifAMCommitterIdle", product, blockchainId);
         }
         return false;
@@ -143,7 +178,7 @@ public class BlockchainIdleDCache {
         long lastAMResponseTime = getIdleState(product, blockchainId, LAST_AM_RESPONSE_TIME);
         long lastEmptyAMArchiveTime = getIdleState(product, blockchainId, LAST_EMPTY_AM_ARCHIVE_TIME);
 
-        if(lastEmptyAMArchiveTime - lastAMResponseTime > idleTime) {
+        if (lastEmptyAMArchiveTime - lastAMResponseTime > idleTime) {
             return checkCounter("ifAMArchiveIdle", product, blockchainId);
         }
         return false;
@@ -154,7 +189,7 @@ public class BlockchainIdleDCache {
         long lastOracleReceiveTime = getIdleState(product, blockchainId, LAST_ORACLE_RECEIVE_TIME);
         long lastEmptyOraclePoolTime = getIdleState(product, blockchainId, LAST_EMPTY_ORACLE_POOL_TIME);
 
-        if(lastEmptyOraclePoolTime - lastOracleReceiveTime > idleTime) {
+        if (lastEmptyOraclePoolTime - lastOracleReceiveTime > idleTime) {
             return checkCounter("ifOracleProcessIdle", product, blockchainId);
         }
         return false;
@@ -165,7 +200,7 @@ public class BlockchainIdleDCache {
         long lastOracleReceiveTime = getIdleState(product, blockchainId, LAST_ORACLE_RECEIVE_TIME);
         long lastEmptyOracleCommitterTime = getIdleState(product, blockchainId, LAST_EMPTY_ORACLE_COMMITTER_TIME);
 
-        if(lastEmptyOracleCommitterTime - lastOracleReceiveTime > idleTime) {
+        if (lastEmptyOracleCommitterTime - lastOracleReceiveTime > idleTime) {
             return checkCounter("ifOracleCommitterIdle", product, blockchainId);
         }
         return false;

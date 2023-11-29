@@ -19,16 +19,18 @@ package com.alipay.antchain.bridge.relayer.dal.entities;
 import com.alipay.antchain.bridge.relayer.commons.constant.UniformCrosschainPacketStateEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @TableName("ucp_pool")
 public class UCPPoolEntity extends BaseEntity {
 
     @TableField("ucp_id")
-    private byte[] ucpId;
+    private String ucpId;
 
     @TableField("blockchain_product")
     private String product;

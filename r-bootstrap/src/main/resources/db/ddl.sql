@@ -137,7 +137,7 @@ drop table if exists ucp_pool;
 CREATE TABLE `ucp_pool`
 (
     `id`                 int(11)              NOT NULL AUTO_INCREMENT,
-    `ucp_id`             VARBINARY(32) UNIQUE NOT NULL,
+    `ucp_id`             VARBINARY(64) UNIQUE NOT NULL,
     `blockchain_product` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
     `blockchain_id`      varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
     `version`            int(11)                                                        DEFAULT NULL,
@@ -156,7 +156,8 @@ CREATE TABLE `ucp_pool`
     `gmt_create`         datetime                                                       DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`       datetime                                                       DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    KEY `ucp_state` (`process_state`)
+    KEY `ucp_state` (`process_state`),
+    KEY `idx_srcdomain_processstate` (`src_domain`, `process_state`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci
@@ -166,7 +167,7 @@ drop table if exists auth_msg_pool;
 CREATE TABLE `auth_msg_pool`
 (
     `id`                        int(11)              NOT NULL AUTO_INCREMENT,
-    `ucp_id`                    VARBINARY(32) UNIQUE NOT NULL,
+    `ucp_id`                    VARBINARY(64) UNIQUE NOT NULL,
     `blockchain_product`        varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
     `blockchain_id`             varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
     `domain_name`               varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -182,7 +183,7 @@ CREATE TABLE `auth_msg_pool`
     `gmt_modified`              datetime                                                      DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `state` (`process_state`),
-    KEY `idx_domainname_processstate` (`domain_name`, `process_state`)
+    KEY `idx_domainname_trustlevel_processstate` (`domain_name`, `trust_level`, `process_state`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci
@@ -285,7 +286,7 @@ drop table if exists auth_msg_archive;
 CREATE TABLE `auth_msg_archive`
 (
     `id`                        int(11)              NOT NULL AUTO_INCREMENT,
-    `ucp_id`                    VARBINARY(32) UNIQUE NOT NULL,
+    `ucp_id`                    VARBINARY(64) UNIQUE NOT NULL,
     `blockchain_product`        varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
     `blockchain_id`             varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
     `domain_name`               varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,

@@ -21,6 +21,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.annotation.JSONField;
 import com.alipay.antchain.bridge.commons.core.base.UniformCrosschainPacket;
 import com.alipay.antchain.bridge.relayer.commons.constant.UniformCrosschainPacketStateEnum;
 import lombok.Getter;
@@ -30,9 +31,10 @@ import lombok.Setter;
 @Setter
 public class UniformCrosschainPacketContext {
 
+    @JSONField(serialize = false, deserialize = false)
     private long id;
 
-    private byte[] ucpId;
+    private String ucpId;
 
     private String product;
 
@@ -48,14 +50,17 @@ public class UniformCrosschainPacketContext {
 
     private String relayerId;
 
+    @JSONField(serialize = false, deserialize = false)
     private RelayerNodeInfo remoteRelayerNodeInfo;
 
     public UniformCrosschainPacketContext() {
-
+        generateUcpId();
     }
 
     private void generateUcpId() {
-        this.ucpId = StrUtil.isEmpty(this.udagPath) ? RandomUtil.randomBytes(32) : DigestUtil.sha256(this.udagPath);
+        this.ucpId = StrUtil.isEmpty(this.udagPath) ?
+                HexUtil.encodeHexStr(RandomUtil.randomBytes(32))
+                : DigestUtil.sha256Hex(this.udagPath);
     }
 
     public int getVersion() {

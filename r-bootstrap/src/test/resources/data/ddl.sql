@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `domain_space_cert`
 CREATE TABLE IF NOT EXISTS `ucp_pool`
 (
     `id`                 int(11)              NOT NULL AUTO_INCREMENT,
-    `ucp_id`             VARBINARY(32) UNIQUE NOT NULL,
+    `ucp_id`             VARBINARY(64) UNIQUE NOT NULL,
     `blockchain_product` varchar(64)   DEFAULT NULL,
     `blockchain_id`      varchar(128)  DEFAULT NULL,
     `version`            int(11)       DEFAULT NULL,
@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS `ucp_pool`
 CREATE TABLE IF NOT EXISTS `auth_msg_pool`
 (
     `id`                        int(11)              NOT NULL AUTO_INCREMENT,
-    `ucp_id`                    VARBINARY(32) UNIQUE NOT NULL,
+    `ucp_id`                    VARBINARY(64) UNIQUE NOT NULL,
     `blockchain_product`        varchar(64)  DEFAULT NULL,
     `blockchain_id`             varchar(128) DEFAULT NULL,
     `domain_name`               varchar(128) DEFAULT NULL,
@@ -233,7 +233,7 @@ CREATE TABLE IF NOT EXISTS `relayer_node`
 CREATE TABLE IF NOT EXISTS `auth_msg_archive`
 (
     `id`                        int(11)              NOT NULL AUTO_INCREMENT,
-    `ucp_id`                    VARBINARY(32) UNIQUE NOT NULL,
+    `ucp_id`                    VARBINARY(64) UNIQUE NOT NULL,
     `blockchain_product`        varchar(64)  DEFAULT NULL,
     `blockchain_id`             varchar(128) DEFAULT NULL,
     `domain_name`               varchar(128) DEFAULT NULL,

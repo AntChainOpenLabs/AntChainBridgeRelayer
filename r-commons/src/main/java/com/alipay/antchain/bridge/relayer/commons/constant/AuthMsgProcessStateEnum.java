@@ -18,13 +18,19 @@ package com.alipay.antchain.bridge.relayer.commons.constant;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
+@Getter
 public enum AuthMsgProcessStateEnum {
 
     PENDING("am_pending"),
 
     PROVED("am_proof"),
+
+    PROCESSED("am_processed"),
+
+    PROCESSED_NO_PROOF("am_processed_no_proof"),
 
     REJECTED("am_reject"),
 

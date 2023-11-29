@@ -1,18 +1,18 @@
 package com.alipay.antchain.bridge.relayer.core.service.process;
 
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
+import com.alipay.antchain.bridge.relayer.core.utils.ProcessUtils;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.impl.BlockchainIdleDCache;
 import lombok.Getter;
@@ -68,12 +68,11 @@ public class ProcessService {
         } else if (StrUtil.isNotEmpty(domainName)) {
             authMsgWrapperList = crossChainMessageRepository.peekAuthMessages(
                     domainName,
-                    AuthMsgProcessStateEnum.PENDING,
                     ccmsgBatchSize
             );
         }
 
-        if (authMsgWrapperList.size() > 0) {
+        if (!authMsgWrapperList.isEmpty()) {
             log.info("peek {} auth msg from pool: {}-{}", authMsgWrapperList.size(), blockchainProduct, blockchainId);
         } else {
             this.blockchainIdleDCache.setLastEmptyAMPoolTime(blockchainProduct, blockchainId);
@@ -81,30 +80,16 @@ public class ProcessService {
         }
 
         // 使用线程池并发执行
-        List<Future> futures = authMsgWrapperList.stream().map(
-                authMsgWrapper -> processServiceThreadsPool.submit(
-                        wrapAMTask(authMsgWrapper.getAuthMsgId())
-                )
-        ).collect(Collectors.toList());
-
-        // 等待执行完成
-        do {
-            for (Future future : ListUtil.reverse(ListUtil.toList(futures))) {
-                try {
-                    future.get(30 * 1000L, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    log.error("worker interrupted exception for blockchain {}-{}.", blockchainProduct, blockchainId, e);
-                } catch (ExecutionException e) {
-                    log.error("worker execution fail for blockchain {}-{}.", blockchainProduct, blockchainId, e);
-                } catch (TimeoutException e) {
-                    log.warn("worker query timeout exception for blockchain {}-{}.", blockchainProduct, blockchainId, e);
-                } finally {
-                    if (future.isDone()) {
-                        futures.remove(future);
-                    }
-                }
-            }
-        } while (!futures.isEmpty());
+        ProcessUtils.waitAllFuturesDone(
+                blockchainProduct,
+                blockchainId,
+                authMsgWrapperList.stream().map(
+                        authMsgWrapper -> processServiceThreadsPool.submit(
+                                wrapAMTask(authMsgWrapper.getAuthMsgId())
+                        )
+                ).collect(Collectors.toList()),
+                log
+        );
     }
 
     private Runnable wrapAMTask(long amId) {

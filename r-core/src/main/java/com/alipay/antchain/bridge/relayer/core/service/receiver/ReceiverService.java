@@ -9,16 +9,12 @@ import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelaye
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
+import com.alipay.antchain.bridge.relayer.commons.model.UniformCrosschainPacketContext;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.handler.AsyncReceiveHandler;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.handler.SyncReceiveHandler;
 import com.alipay.antchain.bridge.relayer.dal.repository.impl.BlockchainIdleDCache;
 import org.springframework.stereotype.Service;
 
-/**
- * OracleService核心引擎的接收者，用于接收来自链上、链外的服务请求。
- * <p>
- * 该引擎设置有同步处理器、异步处理器，根据需求选择。
- */
 @Service
 public class ReceiverService {
 
@@ -85,8 +81,18 @@ public class ReceiverService {
         }
     }
 
+    public void receiveUCP(List<UniformCrosschainPacketContext> ucpContexts) {
+        asyncReceiveHandler.receiveUniformCrosschainPackets(ucpContexts);
+        if (!ucpContexts.isEmpty()) {
+            blockchainIdleDCache.setLastAMReceiveTime(
+                    ucpContexts.get(0).getProduct(),
+                    ucpContexts.get(0).getBlockchainId()
+            );
+        }
+    }
+
     /**
-     * receive am client eceipt接口
+     * receive am client receipt接口
      *
      * @param commitResults
      * @return
