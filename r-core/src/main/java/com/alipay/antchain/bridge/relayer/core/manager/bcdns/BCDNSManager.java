@@ -102,7 +102,7 @@ public class BCDNSManager implements IBCDNSManager {
 
     @Override
     @Synchronized
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public void registerBCDNSService(String domainSpace, BCDNSTypeEnum bcdnsType, String propFilePath, String bcdnsCertPath) {
         try {
             if (hasBCDNSServiceData(domainSpace)) {
@@ -205,7 +205,7 @@ public class BCDNSManager implements IBCDNSManager {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     @Synchronized
     public void restartBCDNSService(String domainSpace) {
         log.info("restarting the bcdns service ( domain_space: {} )", domainSpace);
@@ -244,7 +244,7 @@ public class BCDNSManager implements IBCDNSManager {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     @Synchronized
     public void stopBCDNSService(String domainSpace) {
         log.info("stopping the bcdns service ( domain_space: {} )", domainSpace);
@@ -350,7 +350,7 @@ public class BCDNSManager implements IBCDNSManager {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public String applyDomainCertificate(String domainSpace, String domain, ObjectIdentity applicantOid, byte[] rawSubject) {
         log.info("try to apply the domain cert for {} from bcdns with space {}", domain, domainSpace);
         try {
@@ -528,7 +528,7 @@ public class BCDNSManager implements IBCDNSManager {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public void bindDomainCertWithBlockchain(String domain, String product, String blockchainId) {
         try {
             if (!blockchainRepository.hasDomainCert(domain)) {
@@ -547,7 +547,7 @@ public class BCDNSManager implements IBCDNSManager {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public void registerDomainRouter(String domain) {
         try {
             if (!blockchainRepository.hasDomainCert(domain)) {

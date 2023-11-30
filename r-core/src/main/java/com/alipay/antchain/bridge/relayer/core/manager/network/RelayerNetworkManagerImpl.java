@@ -109,7 +109,7 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public RelayerNodeInfo getRelayerNodeInfoWithContent() {
         RelayerNodeInfo nodeInfo = getRelayerNodeInfo();
 
@@ -282,7 +282,7 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public void syncRelayerNode(String networkId, String nodeId) {
         log.info("begin sync relayer node {} in network {}", nodeId, networkId);
 
@@ -421,7 +421,6 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     }
 
     @Override
-    @Transactional
     public RelayerNodeInfo getRelayerNodeInfoForDomain(String domain) {
         String remoteNodeId = relayerNetworkRepository.getRelayerNodeIdForDomain(domain);
         if (StrUtil.isEmpty(remoteNodeId)) {

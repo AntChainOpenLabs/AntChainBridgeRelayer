@@ -171,7 +171,6 @@ public class BCDNSRepository implements IBCDNSRepository {
     }
 
     @Override
-    @Transactional
     public boolean hasBCDNSService(String domainSpace) {
         if (!hasDomainSpaceCert(domainSpace)) {
             return false;

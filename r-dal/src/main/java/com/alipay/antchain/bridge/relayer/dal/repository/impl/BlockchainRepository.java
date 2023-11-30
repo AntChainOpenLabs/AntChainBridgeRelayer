@@ -405,7 +405,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public List<String> getBlockchainDomainsByState(BlockchainStateEnum state) {
         try {
             List<BlockchainEntity> blockchainEntities = blockchainService.lambdaQuery()

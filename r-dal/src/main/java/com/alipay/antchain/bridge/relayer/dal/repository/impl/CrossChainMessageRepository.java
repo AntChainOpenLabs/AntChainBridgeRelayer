@@ -72,7 +72,7 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     @Resource
     private RedissonClient redisson;
 
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     @Override
     public long putAuthMessageWithIdReturned(AuthMsgWrapper authMsgWrapper) {
         try {

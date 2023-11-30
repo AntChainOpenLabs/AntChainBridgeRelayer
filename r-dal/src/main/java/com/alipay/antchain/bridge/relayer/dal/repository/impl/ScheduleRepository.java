@@ -176,7 +176,7 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public void batchUpdateBlockchainDTTasks(List<BlockchainDistributedTask> tasks) {
         try {
             tasks.forEach(
@@ -237,7 +237,7 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public void batchInsertBizDTTasks(List<BizDistributedTask> tasks) {
         try {
             tasks.forEach(
@@ -260,7 +260,7 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public void batchUpdateBizDTTasks(List<BizDistributedTask> tasks) {
         try {
             tasks.forEach(

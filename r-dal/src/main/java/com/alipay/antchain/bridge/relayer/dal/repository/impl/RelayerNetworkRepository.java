@@ -289,7 +289,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public RelayerNetwork getRelayerNetworkByDomain(String domain) {
         try {
             RelayerNetworkEntity entity = relayerNetworkMapper.selectOne(
@@ -385,7 +385,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public void updateRelayerNodeProperty(String nodeId, String key, String value) {
         try {
             RelayerNodeInfo nodeInfo = getRelayerNode(nodeId, true);

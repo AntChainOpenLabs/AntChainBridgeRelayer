@@ -241,7 +241,7 @@ public class BlockchainManager implements IBlockchainManager {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public void deployBBCContractAsync(String product, String blockchainId) {
         try {
             BlockchainMeta blockchainMeta = getBlockchainMeta(product, blockchainId);

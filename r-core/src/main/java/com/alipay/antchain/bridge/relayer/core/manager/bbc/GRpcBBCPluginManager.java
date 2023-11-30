@@ -162,7 +162,7 @@ public class GRpcBBCPluginManager implements IBBCPluginManager {
      * @param properties
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void registerPluginServer(String psId, String address, String properties) {
         PluginServerDO pluginServerDO = pluginServerRepository.getPluginServer(psId);
         if (ObjectUtil.isNotEmpty(pluginServerDO)) {
