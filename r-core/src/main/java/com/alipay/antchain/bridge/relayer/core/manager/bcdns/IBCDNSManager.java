@@ -21,6 +21,7 @@ import java.util.Map;
 
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
+import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
 import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
@@ -41,6 +42,8 @@ public interface IBCDNSManager {
     void saveBCDNSServiceData(BCDNSServiceDO bcdnsServiceDO);
 
     BCDNSServiceDO getBCDNSServiceData(String domainSpace);
+
+    List<String> getAllBCDNSDomainSpace();
 
     boolean hasBCDNSServiceData(String domainSpace);
 
@@ -67,4 +70,6 @@ public interface IBCDNSManager {
     void bindDomainCertWithBlockchain(String domain, String product, String blockchainId);
 
     void registerDomainRouter(String domain);
+
+    DomainRouter getDomainRouter(String destDomain);
 }

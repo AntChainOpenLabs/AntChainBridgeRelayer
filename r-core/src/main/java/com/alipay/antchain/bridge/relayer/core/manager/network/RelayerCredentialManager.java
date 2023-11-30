@@ -18,9 +18,11 @@ package com.alipay.antchain.bridge.relayer.core.manager.network;
 
 import java.security.PrivateKey;
 import java.security.Signature;
+import java.util.Set;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.collection.ConcurrentHashSet;
 import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
@@ -57,6 +59,8 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
 
     @Resource
     private IBCDNSManager bcdnsManager;
+
+    private final Set<String> validatedCertIdCache = new ConcurrentHashSet<>();
 
     @Override
     public void signRelayerRequest(RelayerRequest relayerRequest) {
@@ -99,6 +103,11 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
 
     @Override
     public boolean validateRelayerRequest(RelayerRequest relayerRequest) {
+
+        if (validatedCertIdCache.contains(relayerRequest.calcRelayerNodeId())) {
+            return true;
+        }
+
         if (!bcdnsManager.validateCrossChainCertificate(relayerRequest.getSenderRelayerCertificate())) {
             return false;
         }
@@ -111,11 +120,18 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
             return false;
         }
 
-        return relayerRequest.verify();
+        if (relayerRequest.verify()) {
+            validatedCertIdCache.add(relayerRequest.calcRelayerNodeId());
+            return true;
+        }
+        return false;
     }
 
     @Override
     public boolean validateRelayerResponse(RelayerResponse relayerResponse) {
+        if (validatedCertIdCache.contains(relayerResponse.calcRelayerNodeId())) {
+            return true;
+        }
         if (!bcdnsManager.validateCrossChainCertificate(relayerResponse.getRemoteRelayerCertificate())) {
             return false;
         }
@@ -128,6 +144,10 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
             return false;
         }
 
-        return relayerResponse.verify();
+        if (relayerResponse.verify()) {
+            validatedCertIdCache.add(relayerResponse.calcRelayerNodeId());
+            return true;
+        }
+        return false;
     }
 }

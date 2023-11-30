@@ -55,7 +55,7 @@ public class RelayerNodeInfo {
         return DigestUtil.sha256Hex(
                 RelayerCredentialSubject.decode(
                         crossChainCertificate.getCredentialSubject()
-                ).getApplicant().getRawId()
+                ).getSubjectPublicKey().getEncoded()
         );
     }
 
@@ -123,6 +123,7 @@ public class RelayerNodeInfo {
                             Base64.decode(stream.readUTF())
                     )
             );
+            info.setRelayerCertId(info.getRelayerCrossChainCertificate().getId());
             Assert.equals(
                     CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
                     info.getRelayerCrossChainCertificate().getType()
@@ -176,6 +177,8 @@ public class RelayerNodeInfo {
      */
     private String nodeId;
 
+    private String relayerCertId;
+
     private AbstractCrossChainCertificate relayerCrossChainCertificate;
 
     private RelayerCredentialSubject relayerCredentialSubject;
@@ -215,6 +218,7 @@ public class RelayerNodeInfo {
     ) {
         Assert.equals(CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE, relayerCrossChainCertificate.getType());
         this.nodeId = RelayerNodeInfo.calculateNodeId(relayerCrossChainCertificate);
+        this.relayerCertId = relayerCrossChainCertificate.getId();
         this.relayerCrossChainCertificate = relayerCrossChainCertificate;
         this.relayerCredentialSubject = RelayerCredentialSubject.decode(relayerCrossChainCertificate.getCredentialSubject());
         this.sigAlgo = sigAlgo;
@@ -231,6 +235,7 @@ public class RelayerNodeInfo {
     ) {
         Assert.equals(CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE, relayerCrossChainCertificate.getType());
         this.nodeId = nodeId;
+        this.relayerCertId = relayerCrossChainCertificate.getId();
         this.relayerCrossChainCertificate = relayerCrossChainCertificate;
         this.relayerCredentialSubject = RelayerCredentialSubject.decode(relayerCrossChainCertificate.getCredentialSubject());
         this.sigAlgo = sigAlgo;
@@ -247,6 +252,7 @@ public class RelayerNodeInfo {
             List<String> domains
     ) {
         this.nodeId = nodeId;
+        this.relayerCertId = relayerCrossChainCertificate.getId();
         this.relayerCrossChainCertificate = relayerCrossChainCertificate;
         this.relayerCredentialSubject = relayerCredentialSubject;
         this.sigAlgo = sigAlgo;

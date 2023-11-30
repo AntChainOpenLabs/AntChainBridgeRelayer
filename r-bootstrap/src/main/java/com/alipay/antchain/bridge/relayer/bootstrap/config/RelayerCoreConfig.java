@@ -24,14 +24,17 @@ import java.util.concurrent.*;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.PemUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
 import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
 import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.GRpcBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
+import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
@@ -76,6 +79,9 @@ public class RelayerCoreConfig {
     @Value("${relayer.network.node.private_key_path}")
     private String relayerPrivateKeyPath;
 
+    @Value("${relayer.network.node.issue_domain_space:}")
+    private String relayerIssuerDomainSpace;
+
     @Value("${relayer.network.node.server.mode:https}")
     private String localNodeServerMode;
 
@@ -98,6 +104,10 @@ public class RelayerCoreConfig {
 
     public RelayerCredentialSubject getLocalRelayerCredentialSubject() {
         return RelayerCredentialSubject.decode(getLocalRelayerCrossChainCertificate().getCredentialSubject());
+    }
+
+    public String getLocalRelayerIssuerDomainSpace() {
+        return ObjectUtil.isNull(relayerIssuerDomainSpace) ? CrossChainDomain.ROOT_DOMAIN_SPACE : relayerIssuerDomainSpace;
     }
 
     @SneakyThrows
@@ -158,6 +168,7 @@ public class RelayerCoreConfig {
             @Qualifier("wsRelayerServerExecutorService") ExecutorService wsRelayerServerExecutorService,
             WsSslFactory wsSslFactory,
             IRelayerNetworkManager relayerNetworkManager,
+            IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
             ReceiverService receiverService
     ) {
@@ -169,6 +180,7 @@ public class RelayerCoreConfig {
                     wsRelayerServerExecutorService,
                     wsSslFactory,
                     relayerNetworkManager,
+                    bcdnsManager,
                     relayerCredentialManager,
                     receiverService,
                     isDiscoveryService

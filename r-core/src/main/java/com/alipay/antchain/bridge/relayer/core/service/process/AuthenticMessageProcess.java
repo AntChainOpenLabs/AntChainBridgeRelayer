@@ -15,6 +15,7 @@ import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.manager.gov.IGovernManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.types.exception.UnknownRelayerForDestDomainException;
 import com.alipay.antchain.bridge.relayer.core.types.network.IRelayerClientPool;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.impl.BlockchainIdleDCache;
@@ -88,10 +89,7 @@ public class AuthenticMessageProcess {
                 processRemoteAM(amMsgWrapper, null);
             }
 
-            if (
-                    amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROCESSED
-                            || amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROCESSED_NO_PROOF
-            ) {
+            if (amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROCESSED) {
                 log.info(
                         "process high layer protocol {} of am message : (src_domain: {}, id: {}, if_remote: {})",
                         UpperProtocolTypeBeyondAMEnum.parseFromValue(amMsgWrapper.getAuthMessage().getUpperProtocol()).name(),
@@ -147,30 +145,13 @@ public class AuthenticMessageProcess {
             );
         }
 
-        if (
-                authMsgWrapper.getTrustLevel() == AuthMsgTrustLevelEnum.POSITIVE_TRUST
-                        && authMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PENDING
-        ) {
-            // TODO : 这里意味着POSITIVE_TRUST的AM还没有TP-PROOF，所以标记为PROCESSED_NO_PROOF，
-            //  在后续将这些消息的证明再发送给中继或者提交给链上
-            authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROCESSED_NO_PROOF);
-        }
-
         authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROCESSED);
     }
 
     // TODO: 当支持TP-PROOF之后，应该从网络中获得到UCP，其携带着TP-PROOF
     private void processRemoteAM(AuthMsgWrapper authMsgWrapper, UniformCrosschainPacketContext ucpContext) {
-        // TODO : 如果没有TP-PROOF应该标记为PROCESSED_NO_PROOF，
-        //  这在PTC Ready之后版本增加
-        if (
-                authMsgWrapper.getTrustLevel() == AuthMsgTrustLevelEnum.POSITIVE_TRUST
-                        && ObjectUtil.isNull(ucpContext)
-        ) {
-            // TODO : 这里意味着POSITIVE_TRUST的AM还没有TP-PROOF，所以标记为PROCESSED_NO_PROOF，
-            //  发送中继应该后续对这种消息再传过来TP-PROOF
-            authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROCESSED_NO_PROOF);
-        }
+        // TODO : 无论是哪种信任等级，都应该被标记为PROCESSED，之后增加duty任务内容，
+        //  将信任等级是POSITIVE_TRUST且PROCESSED的消息，传递其TP-PROOF
         authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROCESSED);
     }
 
@@ -250,41 +231,29 @@ public class AuthenticMessageProcess {
         );
 
         return sdpMsgWrapper;
-
-    }
-
-    private String findRemoteRelayer(SDPMsgWrapper sdpMsgWrapper) {
-        RelayerNetwork.Item relayerNetworkItem = relayerNetworkManager.findNetworkItemByDomainName(sdpMsgWrapper.getReceiverBlockchainDomain());
-        // Network也没有该domain，就拒绝请求
-        if (ObjectUtil.isNull(relayerNetworkItem)) {
-            log.info("can't find receiver domain {} in all network from local data", sdpMsgWrapper.getReceiverBlockchainDomain());
-            return null;
-        }
-        if (relayerNetworkItem.getSyncState() != RelayerNodeSyncStateEnum.SYNC) {
-            log.warn("receiver domain {} router existed but not on state SYNC.", sdpMsgWrapper.getReceiverBlockchainDomain());
-            return null;
-        }
-        return relayerNetworkItem.getNodeId();
     }
 
     private void processRemoteSDPMsg(SDPMsgWrapper sdpMsgWrapper) {
-        String relayerNodeId = findRemoteRelayer(sdpMsgWrapper);
+        String relayerNodeId = relayerNetworkManager.findRemoteRelayer(sdpMsgWrapper.getReceiverBlockchainDomain());
         try {
             if (ObjectUtil.isNull(relayerNodeId)) {
-                // TODO: call BCDNS for domain router
+                throw new UnknownRelayerForDestDomainException(
+                        StrUtil.format("relayer not exist for dest domain {}", sdpMsgWrapper.getReceiverBlockchainDomain())
+                );
+                // TODO: 必须把这个中继路由信息获取的事情拿出来做，不然并发这么多消息，无论是锁住还是，都不是好的处理方案；
                 // TODO: 当中继之间初次建立链接的时候，应当使用锁，阻止其他的消息处理时，也去做同样的事情；
             }
 
-            if (ObjectUtil.isNull(relayerNodeId)) {
-                // Even try BCDNS but not found
-                sdpMsgWrapper.setProcessState(SDPMsgProcessStateEnum.MSG_REJECTED);
-                sdpMsgWrapper.setTxFailReason("Unknown receiver domain");
-
-                crossChainMessageRepository.putSDPMessage(sdpMsgWrapper);
-            }
+//            if (ObjectUtil.isNull(relayerNodeId)) {
+//                // Even try BCDNS but not found
+//                sdpMsgWrapper.setProcessState(SDPMsgProcessStateEnum.MSG_REJECTED);
+//                sdpMsgWrapper.setTxFailReason("Unknown receiver domain");
+//
+//                crossChainMessageRepository.putSDPMessage(sdpMsgWrapper);
+//            }
 
             // TODO: 未来需要更新接口，以支持不同信任等级的流程
-            relayerClientPool.getRelayerClient(relayerNetworkManager.getRelayerNode(relayerNodeId))
+            relayerClientPool.getRelayerClient(relayerNetworkManager.getRelayerNode(relayerNodeId, false))
                     .amRequest(
                             sdpMsgWrapper.getSenderBlockchainDomain(),
                             Base64.getEncoder().encodeToString(sdpMsgWrapper.getAuthMsgWrapper().getAuthMessage().encode()),
@@ -309,6 +278,7 @@ public class AuthenticMessageProcess {
             return;
         }
 
+        // TODO: 应当对发出的SDP消息，也进行存储putSDPMessage
         log.info(
                 "successful to send message " +
                         "( version: {}, from_blockchain: {}, sender: {}, receiver_blockchain: {}, receiver: {}, seq: {}, am_id: {} ) " +

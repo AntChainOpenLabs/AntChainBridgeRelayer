@@ -14,22 +14,29 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.commons.constant;
+package com.alipay.antchain.bridge.relayer.commons.model;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
-import lombok.AllArgsConstructor;
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
-@AllArgsConstructor
-public enum BizDistributedTaskTypeEnum {
+@Setter
+public class MarkDTTask {
 
-    DOMAIN_APPLICATION_QUERY("domain_application_query"),
+    public MarkDTTask(MarkDTTaskTypeEnum taskType, String uniqueKey) {
+        this.taskType = taskType;
+        this.uniqueKey = uniqueKey;
+    }
 
-    PLUGIN_SERVER_HEARTBEAT("plugin_server_heartbeat"),
+    private MarkDTTaskTypeEnum taskType;
 
-    ;
+    private String uniqueKey;
 
-    @EnumValue
-    private final String code;
+    private String nodeId;
+
+    private MarkDTTaskStateEnum state;
+
+    private Long endTime;
 }

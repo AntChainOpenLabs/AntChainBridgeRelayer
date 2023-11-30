@@ -16,36 +16,34 @@
 
 package com.alipay.antchain.bridge.relayer.dal.entities;
 
+import java.util.Date;
+
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.FieldNameConstants;
 
 @Getter
 @Setter
-@TableName("relayer_node")
-public class RelayerNodeEntity extends BaseEntity {
+@TableName("mark_dt_task")
+@FieldNameConstants
+public class MarkDTTaskEntity extends BaseEntity {
+
+    @TableField("task_type")
+    private MarkDTTaskTypeEnum taskType;
+
+    @TableField("unique_key")
+    private String uniqueKey;
+
     @TableField("node_id")
     private String nodeId;
 
-    @TableField("relayer_cert_id")
-    private String relayerCertId;
+    @TableField("state")
+    private MarkDTTaskStateEnum state;
 
-    @TableField("node_crosschain_cert")
-    private String nodeCrossChainCert;
-
-    @TableField("node_sig_algo")
-    private String nodeSigAlgo;
-
-    @TableField("domains")
-    private String domains;
-
-    @TableField("endpoints")
-    private String endpoints;
-
-    @TableField("blockchain_content")
-    private String blockchainContent;
-
-    @TableField("properties")
-    private byte[] properties;
+    @TableField("end_time")
+    private Date endTime;
 }

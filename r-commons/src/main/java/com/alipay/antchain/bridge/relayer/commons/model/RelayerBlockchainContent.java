@@ -262,4 +262,9 @@ public class RelayerBlockchainContent {
             return false;
         }
     }
+
+    public void addRelayerBlockchainContent(RelayerBlockchainContent relayerBlockchainContent) {
+        relayerBlockchainInfoTrie.putAll(relayerBlockchainContent.getRelayerBlockchainInfoTrie());
+        trustRootCertTrie.putAll(relayerBlockchainContent.getTrustRootCertTrie());
+    }
 }

@@ -22,10 +22,12 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
+import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
@@ -44,12 +46,13 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
     public WSRelayerServerAPImpl(
             IRelayerNetworkManager relayerNetworkManager,
+            IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
             ReceiverService receiverService,
             String defaultNetworkId,
             boolean isDiscoveryServer
     ) {
-        super(relayerNetworkManager, relayerCredentialManager, receiverService, defaultNetworkId, isDiscoveryServer);
+        super(relayerNetworkManager, bcdnsManager, relayerCredentialManager, receiverService, defaultNetworkId, isDiscoveryServer);
     }
 
     @Override
@@ -163,7 +166,10 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
         }
 
         return RelayerResponse.createSuccessResponse(
-                blockchainInfo::encode,
+                () -> new RelayerBlockchainContent(
+                        MapUtil.builder(blockchainInfo.getDomainCert().getDomain(), blockchainInfo).build(),
+                        getBcdnsManager().getTrustRootCertChain(blockchainInfo.getDomainCert().getDomainSpace())
+                ).encodeToJson(),
                 getRelayerCredentialManager()
         );
     }
@@ -239,7 +245,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
             );
         }
 
-        log.info( "handle am request from relayer {} success: ", request.calcRelayerNodeId());
+        log.info("handle am request from relayer {} success: ", request.calcRelayerNodeId());
 
         return RelayerResponse.createSuccessResponse(
                 () -> null,
@@ -273,7 +279,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
             );
         }
 
-        log.info( "handle handshake request from relayer {} success: ", request.calcRelayerNodeId());
+        log.info("handle handshake request from relayer {} success: ", request.calcRelayerNodeId());
 
         return RelayerResponse.createSuccessResponse(
                 new HandshakeRespPayload(

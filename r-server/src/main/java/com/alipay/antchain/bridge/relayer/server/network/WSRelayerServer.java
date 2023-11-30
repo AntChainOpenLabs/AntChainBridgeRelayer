@@ -22,6 +22,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.xml.ws.Endpoint;
 
+import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
@@ -64,6 +65,7 @@ public class WSRelayerServer implements ApplicationRunner {
             ExecutorService wsRelayerServerExecutorService,
             WsSslFactory wsSslFactory,
             IRelayerNetworkManager relayerNetworkManager,
+            IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
             ReceiverService receiverService,
             boolean isDiscoveryService
@@ -72,6 +74,7 @@ public class WSRelayerServer implements ApplicationRunner {
         this.port = port;
         this.wsRelayerServerAPI = new WSRelayerServerAPImpl(
                 relayerNetworkManager,
+                bcdnsManager,
                 relayerCredentialManager,
                 receiverService,
                 defaultNetworkId,

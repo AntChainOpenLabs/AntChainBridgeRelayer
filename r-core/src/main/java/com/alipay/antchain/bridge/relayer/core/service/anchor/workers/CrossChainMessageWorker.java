@@ -1,8 +1,11 @@
 package com.alipay.antchain.bridge.relayer.core.service.anchor.workers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
+import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
 import com.alipay.antchain.bridge.relayer.core.service.anchor.context.AnchorProcessContext;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.AbstractBlock;
@@ -42,6 +45,16 @@ public class CrossChainMessageWorker extends BlockWorker {
                 return true;
             }
             receiver.receiveAM(authMessages);
+
+            List<SDPMsgWrapper> sdpMsgWrappers = authMessages.stream()
+                    .filter(
+                            am -> am.getProtocolType() == UpperProtocolTypeBeyondAMEnum.SDP
+                    ).map(SDPMsgWrapper::buildFrom)
+                    .collect(Collectors.toList());
+            if (sdpMsgWrappers.isEmpty()) {
+                return true;
+            }
+            receiver.receiveSDP(sdpMsgWrappers);
         } catch (Exception e) {
             log.error(
                     "failed to process block {} from blockchain {}-{}",

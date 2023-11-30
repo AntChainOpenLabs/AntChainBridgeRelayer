@@ -110,6 +110,11 @@ public class ThreadsConfig {
     @Value("${relayer.engine.duty.biz_base.threads.total_size:4}")
     private int baseScheduleBizTaskExecutorTotalSize;
 
+    @Value("${relayer.service.domain_router.threads.core_size:4}")
+    private int domainRouterQueryCoreSize;
+
+    @Value("${relayer.service.domain_router.threads.total_size:4}")
+    private int domainRouterQueryTotalSize;
 
     @Bean(name = "wsRelayerServerExecutorService")
     public ExecutorService wsRelayerServerExecutorService() {
@@ -191,7 +196,15 @@ public class ThreadsConfig {
     @Bean(name = "distributedTaskEngineScheduleThreadsPool")
     public ScheduledExecutorService distributedTaskEngineScheduleThreadsPool() {
         return new ScheduledThreadPoolExecutor(
-                5,
+                6,
+                new ThreadFactoryBuilder().setNameFormat("ScheduleEngine-Executor-%d").build()
+        );
+    }
+
+    @Bean(name = "markTaskProcessEngineScheduleThreadsPool")
+    public ScheduledExecutorService markTaskProcessEngineScheduleThreadsPool() {
+        return new ScheduledThreadPoolExecutor(
+                1,
                 new ThreadFactoryBuilder().setNameFormat("ScheduleEngine-Executor-%d").build()
         );
     }
@@ -288,6 +301,18 @@ public class ThreadsConfig {
                 0, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(10),
                 new ThreadFactoryBuilder().setNameFormat("base_executor-worker-%d").build(),
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+    }
+
+    @Bean(name = "domainRouterScheduleTaskExecutorThreadsPool")
+    public ExecutorService domainRouterScheduleTaskExecutorThreadsPool() {
+        return new ThreadPoolExecutor(
+                domainRouterQueryCoreSize,
+                domainRouterQueryTotalSize,
+                0, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(10),
+                new ThreadFactoryBuilder().setNameFormat("domain_router_executor-worker-%d").build(),
                 new ThreadPoolExecutor.CallerRunsPolicy()
         );
     }

@@ -14,22 +14,10 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.commons.constant;
+package com.alipay.antchain.bridge.relayer.dal.mapper;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import com.alipay.antchain.bridge.relayer.dal.entities.MarkDTTaskEntity;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-@Getter
-@AllArgsConstructor
-public enum BizDistributedTaskTypeEnum {
-
-    DOMAIN_APPLICATION_QUERY("domain_application_query"),
-
-    PLUGIN_SERVER_HEARTBEAT("plugin_server_heartbeat"),
-
-    ;
-
-    @EnumValue
-    private final String code;
+public interface MarkDTTaskMapper extends BaseMapper<MarkDTTaskEntity> {
 }

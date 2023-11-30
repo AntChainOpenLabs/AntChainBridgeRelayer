@@ -214,6 +214,29 @@ public class BCDNSRepository implements IBCDNSRepository {
     }
 
     @Override
+    public List<String> getAllBCDNSDomainSpace() {
+        try {
+           List<DomainSpaceCertEntity> domainSpaceCertEntities = domainSpaceCertMapper.selectList(
+                   new LambdaQueryWrapper<DomainSpaceCertEntity>()
+                           .select(ListUtil.toList(DomainSpaceCertEntity::getDomainSpace))
+           );
+           if (ObjectUtil.isEmpty(domainSpaceCertEntities)) {
+               return new ArrayList<>();
+           }
+
+           return domainSpaceCertEntities.stream().map(
+                   DomainSpaceCertEntity::getParentSpace
+           ).collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BCDNS_ERROR,
+                    e,
+                    "failed to get all domain space for bcdns"
+            );
+        }
+    }
+
+    @Override
     public void saveBCDNSServiceDO(BCDNSServiceDO bcdnsServiceDO) {
         if (!hasDomainSpaceCert(bcdnsServiceDO.getDomainSpace())) {
             saveDomainSpaceCert(bcdnsServiceDO.getDomainSpaceCertWrapper());

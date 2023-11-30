@@ -143,7 +143,7 @@ public class CrossChainRepositoryTest extends TestBase {
                             "test",
                             HexUtil.encodeHexStr(ByteUtil.intToBytes(i)),
                             "am",
-                            AuthMsgProcessStateEnum.PROCESSED_NO_PROOF,
+                            AuthMsgProcessStateEnum.PROCESSED,
                             authMessage
                     )
             );

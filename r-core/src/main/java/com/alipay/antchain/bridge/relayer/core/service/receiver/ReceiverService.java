@@ -9,6 +9,7 @@ import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelaye
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
+import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.UniformCrosschainPacketContext;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.handler.AsyncReceiveHandler;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.handler.SyncReceiveHandler;
@@ -89,6 +90,11 @@ public class ReceiverService {
                     ucpContexts.get(0).getBlockchainId()
             );
         }
+    }
+
+    public void receiveSDP(List<SDPMsgWrapper> sdpMsgWrappers) {
+        // TODO: 启动一个异步的东西，去获取本地没有的domain router
+        asyncReceiveHandler.receiveSDPMessages(sdpMsgWrappers);
     }
 
     /**

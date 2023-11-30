@@ -52,11 +52,15 @@ public interface IRelayerNetworkRepository {
 
     void addRelayerNode(RelayerNodeInfo nodeInfo);
 
-    boolean updateRelayerNode(RelayerNodeInfo nodeInfo);
+    void updateRelayerNode(RelayerNodeInfo nodeInfo);
 
     void updateRelayerNodeProperty(String nodeId, String key, String value);
 
-    RelayerNodeInfo getRelayerNode(String nodeId);
+    RelayerNodeInfo getRelayerNode(String nodeId, boolean lock);
+
+    RelayerNodeInfo getRelayerNodeByCertId(String relayerCertId, boolean lock);
+
+    boolean hasRelayerNodeByCertId(String relayerCertId);
 
     boolean hasRelayerNode(String nodeId);
 

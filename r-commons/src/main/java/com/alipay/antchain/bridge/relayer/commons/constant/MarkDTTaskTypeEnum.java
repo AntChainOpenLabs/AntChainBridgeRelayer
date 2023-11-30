@@ -22,14 +22,10 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum BizDistributedTaskTypeEnum {
+public enum MarkDTTaskTypeEnum {
 
-    DOMAIN_APPLICATION_QUERY("domain_application_query"),
-
-    PLUGIN_SERVER_HEARTBEAT("plugin_server_heartbeat"),
-
-    ;
+    DOMAIN_ROUTER_QUERY(0);
 
     @EnumValue
-    private final String code;
+    private final int code;
 }

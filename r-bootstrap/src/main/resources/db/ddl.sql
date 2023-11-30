@@ -267,6 +267,7 @@ CREATE TABLE `relayer_node`
 (
     `id`                   int(11) NOT NULL AUTO_INCREMENT,
     `node_id`              varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci   DEFAULT NULL,
+    `relayer_cert_id`      varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
     `node_crosschain_cert` binary                                                         DEFAULT NULL,
     `node_sig_algo`        varchar(255)                                                   DEFAULT NULL,
     `domains`              varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -374,6 +375,18 @@ CREATE TABLE `biz_dt_task`
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
 
+CREATE TABLE IF NOT EXISTS `mark_dt_task`
+(
+    `id`           INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    `task_type`    INT(11)             NOT NULL,
+    `unique_key`   varchar(128) DEFAULT NULL,
+    `node_id`      varchar(64)  DEFAULT NULL,
+    `state`        INT(11)             NOT NULL,
+    `end_time`     DATETIME,
+    `gmt_create`   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified` DATETIME     DEFAULT CURRENT_TIMESTAMP
+);
+
 drop table if exists dt_active_node;
 CREATE TABLE `dt_active_node`
 (
@@ -391,6 +404,7 @@ CREATE TABLE `dt_active_node`
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
 
+DROP TABLE IF EXISTS `plugin_server_objects`;
 CREATE TABLE IF NOT EXISTS `plugin_server_objects`
 (
     `id`                 int(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
@@ -404,6 +418,7 @@ CREATE TABLE IF NOT EXISTS `plugin_server_objects`
     `gmt_modified`       datetime DEFAULT CURRENT_TIMESTAMP
 );
 
+DROP TABLE IF EXISTS `bcdns_service`;
 CREATE TABLE IF NOT EXISTS `bcdns_service`
 (
     `id`           INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,

@@ -5,10 +5,13 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
-import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
-import com.alipay.antchain.bridge.relayer.commons.model.UniformCrosschainPacketContext;
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.model.*;
+import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
+import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
+import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -21,7 +24,16 @@ public class AsyncReceiveHandler {
     private ICrossChainMessageRepository crossChainMessageRepository;
 
     @Resource
+    private IScheduleRepository scheduleRepository;
+
+    @Resource
     private TransactionTemplate transactionTemplate;
+
+    @Resource
+    private IBlockchainManager blockchainManager;
+
+    @Resource
+    private IRelayerNetworkManager relayerNetworkManager;
 
     public void receiveUniformCrosschainPackets(List<UniformCrosschainPacketContext> ucpContexts) {
 
@@ -49,6 +61,30 @@ public class AsyncReceiveHandler {
             );
         }
         log.info("[asyncReceiver] put am_pending AuthenticMessage to pool success");
+    }
+
+    public void receiveSDPMessages(List<SDPMsgWrapper> sdpMsgWrappers) {
+        sdpMsgWrappers.forEach(
+                sdpMsgWrapper -> {
+                    if (blockchainManager.hasBlockchain(sdpMsgWrapper.getReceiverBlockchainDomain())) {
+                        return;
+                    }
+
+                    String nodeId = relayerNetworkManager.findRemoteRelayer(sdpMsgWrapper.getReceiverBlockchainDomain());
+                    if (ObjectUtil.isNotNull(nodeId)) {
+                        return;
+                    }
+
+                    MarkDTTask task = new MarkDTTask(
+                            MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY,
+                            sdpMsgWrapper.getReceiverBlockchainDomain()
+                    );
+                    task.setState(MarkDTTaskStateEnum.INIT);
+                    scheduleRepository.insertMarkDTTask(task);
+
+                    log.info("sdp message from domain {} shows that it's a unknown blockchain", sdpMsgWrapper.getReceiverBlockchainDomain());
+                }
+        );
     }
 
     public boolean receiveAMClientReceipt(List<SDPMsgCommitResult> commitResults) {

@@ -20,7 +20,6 @@ import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
-import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.*;
@@ -85,7 +84,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
     }
 
     @Override
-    public RelayerBlockchainInfo getRelayerBlockchainInfo(String domainToQuery) {
+    public RelayerBlockchainContent getRelayerBlockchainInfo(String domainToQuery) {
         RelayerRequest request = new GetRelayerBlockchainInfoRelayerRequest(domainToQuery);
         relayerCredentialManager.signRelayerRequest(request);
 
@@ -101,7 +100,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
             );
         }
 
-        return RelayerBlockchainInfo.decode(response.getResponsePayload());
+        return RelayerBlockchainContent.decodeFromJson(response.getResponsePayload());
     }
 
     @Override

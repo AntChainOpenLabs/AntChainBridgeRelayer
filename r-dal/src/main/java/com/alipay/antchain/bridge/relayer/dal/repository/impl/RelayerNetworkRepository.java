@@ -364,13 +364,17 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    public boolean updateRelayerNode(RelayerNodeInfo nodeInfo) {
+    public void updateRelayerNode(RelayerNodeInfo nodeInfo) {
         try {
-            return 1 == relayerNodeMapper.update(
-                    ConvertUtil.convertFromRelayerNodeInfo(nodeInfo),
-                    new LambdaUpdateWrapper<RelayerNodeEntity>()
-                            .eq(RelayerNodeEntity::getNodeId, nodeInfo.getNodeId())
-            );
+            if (
+                    1 != relayerNodeMapper.update(
+                            ConvertUtil.convertFromRelayerNodeInfo(nodeInfo),
+                            new LambdaUpdateWrapper<RelayerNodeEntity>()
+                                    .eq(RelayerNodeEntity::getNodeId, nodeInfo.getNodeId())
+                    )
+            ) {
+                throw new RuntimeException("failed to update db");
+            }
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_RELAYER_NODE_ERROR,
@@ -384,7 +388,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     @Transactional
     public void updateRelayerNodeProperty(String nodeId, String key, String value) {
         try {
-            RelayerNodeInfo nodeInfo = getRelayerNode(nodeId);
+            RelayerNodeInfo nodeInfo = getRelayerNode(nodeId, true);
             if (ObjectUtil.isNull(nodeInfo)) {
                 throw new RuntimeException("node info not exist");
             }
@@ -416,11 +420,14 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    public RelayerNodeInfo getRelayerNode(String nodeId) {
+    public RelayerNodeInfo getRelayerNode(String nodeId, boolean lock) {
         try {
             RelayerNodeEntity entity = relayerNodeMapper.selectOne(
-                    new LambdaQueryWrapper<RelayerNodeEntity>()
-                            .eq(RelayerNodeEntity::getNodeId, nodeId)
+                    lock ? new LambdaQueryWrapper<RelayerNodeEntity>()
+                                    .eq(RelayerNodeEntity::getNodeId, nodeId)
+                                    .last("for update")
+                         : new LambdaQueryWrapper<RelayerNodeEntity>()
+                                    .eq(RelayerNodeEntity::getNodeId, nodeId)
             );
             if (ObjectUtil.isNull(entity)) {
                 return null;
@@ -434,6 +441,38 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
                     e
             );
         }
+    }
+
+    @Override
+    public RelayerNodeInfo getRelayerNodeByCertId(String relayerCertId, boolean lock) {
+        try {
+            RelayerNodeEntity entity = relayerNodeMapper.selectOne(
+                    lock ? new LambdaQueryWrapper<RelayerNodeEntity>()
+                                    .eq(RelayerNodeEntity::getRelayerCertId, relayerCertId)
+                                    .last("for update")
+                         : new LambdaQueryWrapper<RelayerNodeEntity>()
+                                    .eq(RelayerNodeEntity::getRelayerCertId, relayerCertId)
+            );
+            if (ObjectUtil.isNull(entity)) {
+                return null;
+            }
+
+            return ConvertUtil.convertFromRelayerNodeEntity(entity);
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_RELAYER_NODE_ERROR,
+                    "failed to get relayer node by cer id " + relayerCertId,
+                    e
+            );
+        }
+    }
+
+    @Override
+    public boolean hasRelayerNodeByCertId(String relayerCertId) {
+        return relayerNodeMapper.exists(
+                new LambdaQueryWrapper<RelayerNodeEntity>()
+                        .eq(RelayerNodeEntity::getRelayerCertId, relayerCertId)
+        );
     }
 
     @Override

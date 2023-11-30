@@ -22,20 +22,22 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.constant.DTActiveNodeStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
-import com.alipay.antchain.bridge.relayer.commons.model.ActiveNode;
-import com.alipay.antchain.bridge.relayer.commons.model.BizDistributedTask;
-import com.alipay.antchain.bridge.relayer.commons.model.BlockchainDistributedTask;
-import com.alipay.antchain.bridge.relayer.commons.model.IDistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.dal.entities.BizDTTaskEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.DTActiveNodeEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.BlockchainDTTaskEntity;
+import com.alipay.antchain.bridge.relayer.dal.entities.MarkDTTaskEntity;
 import com.alipay.antchain.bridge.relayer.dal.mapper.BizDTTaskMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.DTActiveNodeMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.BlockchainDTTaskMapper;
+import com.alipay.antchain.bridge.relayer.dal.mapper.MarkDTTaskMapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -50,6 +52,8 @@ public class ScheduleRepository implements IScheduleRepository {
 
     private static final String SCHEDULE_LOCK_KEY = "RELAYER_SCHEDULE_LOCK";
 
+    private static final String MARK_LOCK = "MARK_LOCK";
+
     @Resource
     private RedissonClient redisson;
 
@@ -62,9 +66,17 @@ public class ScheduleRepository implements IScheduleRepository {
     @Resource
     private BizDTTaskMapper bizDTTaskMapper;
 
+    @Resource
+    private MarkDTTaskMapper markDTTaskMapper;
+
     @Override
     public Lock getDispatchLock() {
         return redisson.getLock(SCHEDULE_LOCK_KEY);
+    }
+
+    @Override
+    public Lock getMarkLock() {
+        return redisson.getLock(MARK_LOCK);
     }
 
     @Override
@@ -272,5 +284,59 @@ public class ScheduleRepository implements IScheduleRepository {
                     e
             );
         }
+    }
+
+    @Override
+    public void insertMarkDTTask(MarkDTTask markDTTask) {
+        try {
+            markDTTaskMapper.insert(ConvertUtil.convertFromMarkDTTask(markDTTask));
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    StrUtil.format(
+                            "failed to save mark task {}-{}",
+                            markDTTask.getTaskType().name(), markDTTask.getUniqueKey()
+                    ),
+                    e
+            );
+        }
+    }
+
+    @Override
+    public List<MarkDTTask> peekInitOrTimeoutMarkDTTask(int limit) {
+        try {
+            List<MarkDTTaskEntity> entities = markDTTaskMapper.selectList(
+                    new LambdaQueryWrapper<MarkDTTaskEntity>()
+                            .eq(MarkDTTaskEntity::getState, MarkDTTaskStateEnum.INIT)
+                            .or(
+                                    wrapper -> wrapper.lt(MarkDTTaskEntity::getEndTime, new Date())
+                            )
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return null;
+            }
+            return entities.stream().map(ConvertUtil::convertFromMarkDTTaskEntity).collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    "failed to peek init or timeout mark tasks",
+                    e
+            );
+        }
+    }
+
+    @Override
+    public void batchUpdateMarkDTTasks(List<MarkDTTask> tasks) {
+
+    }
+
+    @Override
+    public List<MarkDTTask> peekReadyMarkDTTask(MarkDTTaskTypeEnum type, String nodeId, int limit) {
+        return null;
+    }
+
+    @Override
+    public void updateMarkDTTaskState(MarkDTTaskTypeEnum type, String nodeId, String uniqueKey, MarkDTTaskStateEnum state) {
+
     }
 }

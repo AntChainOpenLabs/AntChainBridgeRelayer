@@ -39,7 +39,6 @@ public class UniformCrosschainPacketValidator {
 
     public boolean doProcess(UniformCrosschainPacketContext ucpContext) {
         // TODO : get the tp-proof from the PTC
-        // TODO: 直接在中继补充TP-PROOF的时候，标记POSITIVE_TRUST的状态从PROCESSED_NO_PROOF到PROCESSED
         log.debug("for now we skip tp-proof part");
 
         crossChainMessageRepository.updateUniformCrosschainPacketState(

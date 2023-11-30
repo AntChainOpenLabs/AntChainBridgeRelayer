@@ -16,9 +16,12 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network;
 
+import com.alipay.antchain.bridge.bcdns.types.base.Relayer;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 
 public interface IRelayerClientPool {
 
     RelayerClient getRelayerClient(RelayerNodeInfo remoteRelayerNodeInfo);
+
+    RelayerClient createRelayerClient(Relayer destRelayer);
 }

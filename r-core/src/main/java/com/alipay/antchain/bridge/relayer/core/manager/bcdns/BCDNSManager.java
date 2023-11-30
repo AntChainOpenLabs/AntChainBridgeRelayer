@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -33,6 +34,7 @@ import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
 import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
 import com.alipay.antchain.bridge.bcdns.types.base.Relayer;
 import com.alipay.antchain.bridge.bcdns.types.req.QueryDomainNameCertificateRequest;
+import com.alipay.antchain.bridge.bcdns.types.req.QueryDomainRouterRequest;
 import com.alipay.antchain.bridge.bcdns.types.req.RegisterDomainRouterRequest;
 import com.alipay.antchain.bridge.bcdns.types.resp.ApplyDomainNameCertificateResponse;
 import com.alipay.antchain.bridge.bcdns.types.resp.QueryBCDNSTrustRootCertificateResponse;
@@ -279,6 +281,11 @@ public class BCDNSManager implements IBCDNSManager {
     @Override
     public BCDNSServiceDO getBCDNSServiceData(String domainSpace) {
         return bcdnsRepository.getBCDNSServiceDO(domainSpace);
+    }
+
+    @Override
+    public List<String> getAllBCDNSDomainSpace() {
+        return bcdnsRepository.getAllBCDNSDomainSpace();
     }
 
     @Override
@@ -572,5 +579,29 @@ public class BCDNSManager implements IBCDNSManager {
                     "failed to get all applying domain cert applications"
             );
         }
+    }
+
+    @Override
+    public DomainRouter getDomainRouter(String destDomain) {
+        for (String domainSpace : ListUtil.sort(getAllBCDNSDomainSpace(), String::compareTo)) {
+            log.info("look up the domain router for {} from BCDNS with space [{}]", destDomain, domainSpace);
+            DomainRouter currDomainRouter = getBCDNSService(domainSpace).queryDomainRouter(
+                    QueryDomainRouterRequest.builder()
+                            .destDomain(new CrossChainDomain(destDomain))
+                            .build()
+            );
+            if (ObjectUtil.isNull(currDomainRouter)) {
+                log.info("the domain router for {} not found on BCDNS with space [{}]", destDomain, domainSpace);
+                continue;
+            }
+            if (ObjectUtil.isNull(currDomainRouter.getDestRelayer())) {
+                log.info("the domain router for {} found on BCDNS with space [{}] has no relayer info", destDomain, domainSpace);
+                continue;
+            }
+
+            log.info("get domain router for {} from the BCDNS {}", destDomain, domainSpace);
+            return currDomainRouter;
+        }
+        return null;
     }
 }

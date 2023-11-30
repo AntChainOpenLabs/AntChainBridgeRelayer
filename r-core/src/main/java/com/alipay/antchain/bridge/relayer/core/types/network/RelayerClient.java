@@ -1,7 +1,6 @@
 package com.alipay.antchain.bridge.relayer.core.types.network;
 
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
-import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 
 /**
@@ -24,7 +23,7 @@ public interface RelayerClient {
      * @param supportedDomain
      * @return
      */
-    RelayerBlockchainInfo getRelayerBlockchainInfo(String supportedDomain);
+    RelayerBlockchainContent getRelayerBlockchainInfo(String supportedDomain);
 
     /**
      *

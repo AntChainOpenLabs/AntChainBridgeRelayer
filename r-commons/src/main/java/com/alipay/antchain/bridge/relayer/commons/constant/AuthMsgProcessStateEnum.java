@@ -30,8 +30,6 @@ public enum AuthMsgProcessStateEnum {
 
     PROCESSED("am_processed"),
 
-    PROCESSED_NO_PROOF("am_processed_no_proof"),
-
     REJECTED("am_reject"),
 
     FAILED("am_fail");

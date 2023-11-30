@@ -73,6 +73,10 @@ public enum RelayerErrorCodeEnum {
 
     CORE_BCDNS_MANAGER_ERROR("0206", "bcdns manager error"),
 
+    CORE_UNKNOWN_RELAYER_FOR_DEST_DOMAIN("0207", "unknown relayer for dest domain error"),
+
+    CORE_RELAYER_HANDSHAKE_FAILED("0208", "relayer handshake failed"),
+
     SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED("0301", "process auth msg failed"),
 
     SERVICE_CORE_PROCESS_PROCESS_CCMSG_FAILED("0302", "process ccmsg failed"),

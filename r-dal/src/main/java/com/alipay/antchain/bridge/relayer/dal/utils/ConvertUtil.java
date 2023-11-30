@@ -273,8 +273,8 @@ public class ConvertUtil {
                         Base64.decode(entity.getNodeCrossChainCert())
                 ),
                 entity.getNodeSigAlgo(),
-                StrUtil.split(entity.getEndpoints(), "^"),
-                StrUtil.split(entity.getDomains(), "^")
+                stringToList(entity.getEndpoints()),
+                stringToList(entity.getDomains())
         );
         if (ObjectUtil.isNotEmpty(entity.getBlockchainContent())) {
             nodeInfo.setRelayerBlockchainContent(
@@ -292,12 +292,13 @@ public class ConvertUtil {
     public static RelayerNodeEntity convertFromRelayerNodeInfo(RelayerNodeInfo nodeInfo) throws IOException {
         RelayerNodeEntity entity = new RelayerNodeEntity();
         entity.setNodeId(nodeInfo.getNodeId());
+        entity.setRelayerCertId(nodeInfo.getRelayerCertId());
         entity.setDomains(
-                nodeInfo.getDomains().stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("")
+                listToString(nodeInfo.getDomains())
         );
         entity.setNodeCrossChainCert(Base64.encode(nodeInfo.getRelayerCrossChainCertificate().encode()));
         entity.setEndpoints(
-                nodeInfo.getEndpoints().stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("")
+                listToString(nodeInfo.getEndpoints())
         );
 
         entity.setBlockchainContent(
@@ -307,6 +308,14 @@ public class ConvertUtil {
         entity.setProperties(nodeInfo.marshalProperties().getBytes());
 
         return entity;
+    }
+
+    public static String listToString(List<String> list) {
+        return list.stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("");
+    }
+
+    public static List<String> stringToList(String str) {
+        return StrUtil.split(str, "^");
     }
 
     public static RelayerHealthInfo convertFromDTActiveNodeEntity(int port, long activateLength, DTActiveNodeEntity entity) {
@@ -485,5 +494,21 @@ public class ConvertUtil {
 
     public static DomainCertApplicationEntity convertFromDomainCertApplicationDO(DomainCertApplicationDO domainCertApplicationDO) {
         return BeanUtil.copyProperties(domainCertApplicationDO, DomainCertApplicationEntity.class);
+    }
+
+    public static MarkDTTaskEntity convertFromMarkDTTask(MarkDTTask markDTTask) {
+        MarkDTTaskEntity entity = new MarkDTTaskEntity();
+        entity.setNodeId(StrUtil.emptyToDefault(markDTTask.getNodeId(), null));
+        entity.setUniqueKey(StrUtil.emptyToDefault(markDTTask.getUniqueKey(), null));
+        entity.setTaskType(markDTTask.getTaskType());
+        entity.setEndTime(ObjectUtil.isNotNull(markDTTask.getEndTime()) ? new Date(markDTTask.getEndTime()) : null);
+        entity.setState(markDTTask.getState());
+        return entity;
+    }
+
+    public static MarkDTTask convertFromMarkDTTaskEntity(MarkDTTaskEntity entity) {
+        MarkDTTask task = BeanUtil.copyProperties(entity, MarkDTTask.class, MarkDTTaskEntity.Fields.endTime);
+        task.setEndTime(entity.getEndTime().getTime());
+        return task;
     }
 }

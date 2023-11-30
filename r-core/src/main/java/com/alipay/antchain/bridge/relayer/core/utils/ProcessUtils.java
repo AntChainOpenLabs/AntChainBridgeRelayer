@@ -47,4 +47,25 @@ public class ProcessUtils {
             }
         } while (!futures.isEmpty());
     }
+
+    public static void waitAllFuturesDone(List<Future> futures, Logger log) {
+        // 等待执行完成
+        do {
+            for (Future future : ListUtil.reverse(ListUtil.toList(futures))) {
+                try {
+                    future.get(30 * 1000L, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    log.error("worker interrupted exception.", e);
+                } catch (ExecutionException e) {
+                    log.error("worker execution failed.", e);
+                } catch (TimeoutException e) {
+                    log.warn("worker query timeout exception", e);
+                } finally {
+                    if (future.isDone()) {
+                        futures.remove(future);
+                    }
+                }
+            }
+        } while (!futures.isEmpty());
+    }
 }
