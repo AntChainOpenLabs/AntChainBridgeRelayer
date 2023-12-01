@@ -24,6 +24,8 @@ import lombok.Getter;
 @Getter
 public enum AuthMsgProcessStateEnum {
 
+    NOT_READY("not_ready"),
+
     PENDING("am_pending"),
 
     PROVED("am_proof"),

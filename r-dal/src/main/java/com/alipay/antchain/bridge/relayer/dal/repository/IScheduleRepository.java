@@ -54,6 +54,8 @@ public interface IScheduleRepository {
 
     void insertMarkDTTask(MarkDTTask markDTTask);
 
+    boolean hasMarkDTTask(MarkDTTaskTypeEnum taskType, String uniqueKey);
+
     List<MarkDTTask> peekInitOrTimeoutMarkDTTask(int limit);
 
     void batchUpdateMarkDTTasks(List<MarkDTTask> tasks);

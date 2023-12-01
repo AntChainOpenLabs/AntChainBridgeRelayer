@@ -22,6 +22,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.cache.Cache;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.constant.DTActiveNodeStateEnum;
@@ -31,12 +32,12 @@ import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelaye
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.dal.entities.BizDTTaskEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.DTActiveNodeEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.BlockchainDTTaskEntity;
+import com.alipay.antchain.bridge.relayer.dal.entities.DTActiveNodeEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.MarkDTTaskEntity;
 import com.alipay.antchain.bridge.relayer.dal.mapper.BizDTTaskMapper;
-import com.alipay.antchain.bridge.relayer.dal.mapper.DTActiveNodeMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.BlockchainDTTaskMapper;
+import com.alipay.antchain.bridge.relayer.dal.mapper.DTActiveNodeMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.MarkDTTaskMapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
@@ -68,6 +69,9 @@ public class ScheduleRepository implements IScheduleRepository {
 
     @Resource
     private MarkDTTaskMapper markDTTaskMapper;
+
+    @Resource
+    private Cache<String, Boolean> markTaskCache;
 
     @Override
     public Lock getDispatchLock() {
@@ -290,6 +294,7 @@ public class ScheduleRepository implements IScheduleRepository {
     public void insertMarkDTTask(MarkDTTask markDTTask) {
         try {
             markDTTaskMapper.insert(ConvertUtil.convertFromMarkDTTask(markDTTask));
+            markTaskCache.put(generateMarkTaskCacheKey(markDTTask.getTaskType(), markDTTask.getUniqueKey()), true);
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
@@ -300,6 +305,22 @@ public class ScheduleRepository implements IScheduleRepository {
                     e
             );
         }
+    }
+
+    @Override
+    public boolean hasMarkDTTask(MarkDTTaskTypeEnum taskType, String uniqueKey) {
+        if (markTaskCache.containsKey(generateMarkTaskCacheKey(taskType, uniqueKey))) {
+            return true;
+        }
+        boolean res = markDTTaskMapper.exists(
+                new LambdaQueryWrapper<MarkDTTaskEntity>()
+                        .eq(MarkDTTaskEntity::getTaskType, taskType)
+                        .eq(MarkDTTaskEntity::getUniqueKey, uniqueKey)
+        );
+        if (res) {
+            markTaskCache.put(generateMarkTaskCacheKey(taskType, uniqueKey), true);
+        }
+        return res;
     }
 
     @Override
@@ -327,16 +348,79 @@ public class ScheduleRepository implements IScheduleRepository {
 
     @Override
     public void batchUpdateMarkDTTasks(List<MarkDTTask> tasks) {
-
+        try {
+            if (
+                    tasks.stream().map(
+                            task -> markDTTaskMapper.update(
+                                    ConvertUtil.convertFromMarkDTTask(task),
+                                    new LambdaUpdateWrapper<MarkDTTaskEntity>()
+                                            .eq(MarkDTTaskEntity::getTaskType, task.getTaskType())
+                                            .eq(MarkDTTaskEntity::getUniqueKey, task.getUniqueKey())
+                            )
+                    ).reduce(Integer::sum).orElse(0) != tasks.size()
+            ) {
+                throw new RuntimeException("failed to update multi mark tasks to DB");
+            }
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    "failed to batch update mark tasks",
+                    e
+            );
+        }
     }
 
     @Override
     public List<MarkDTTask> peekReadyMarkDTTask(MarkDTTaskTypeEnum type, String nodeId, int limit) {
-        return null;
+        try {
+            List<MarkDTTaskEntity> entities = markDTTaskMapper.selectList(
+                    new LambdaQueryWrapper<MarkDTTaskEntity>()
+                            .eq(MarkDTTaskEntity::getState, MarkDTTaskStateEnum.READY)
+                            .eq(MarkDTTaskEntity::getTaskType, type)
+                            .eq(MarkDTTaskEntity::getNodeId, nodeId)
+                            .last("limit " + limit)
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return null;
+            }
+            return entities.stream().map(ConvertUtil::convertFromMarkDTTaskEntity).collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    e,
+                    "failed to peek ready mark tasks for (type: {}, node_id: {}, limit: {})",
+                    type.name(), nodeId, limit
+            );
+        }
     }
 
     @Override
     public void updateMarkDTTaskState(MarkDTTaskTypeEnum type, String nodeId, String uniqueKey, MarkDTTaskStateEnum state) {
+        try {
+            MarkDTTaskEntity entity = new MarkDTTaskEntity();
+            entity.setState(state);
+            if (
+                    markDTTaskMapper.update(
+                            entity,
+                            new LambdaUpdateWrapper<MarkDTTaskEntity>()
+                                    .eq(MarkDTTaskEntity::getTaskType, type)
+                                    .eq(MarkDTTaskEntity::getUniqueKey, uniqueKey)
+                                    .eq(MarkDTTaskEntity::getNodeId, nodeId)
+                    ) != 1
+            ) {
+                throw new RuntimeException("update to DB failed");
+            }
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    e,
+                    "failed to batch update mark task state to {} for (type: {}, node_id: {}, unique_key: {})",
+                    state.name(), type, nodeId, uniqueKey
+            );
+        }
+    }
 
+    private String generateMarkTaskCacheKey(MarkDTTaskTypeEnum taskType, String uniqueKey) {
+        return StrUtil.format("{}-{}", taskType.name(), uniqueKey);
     }
 }

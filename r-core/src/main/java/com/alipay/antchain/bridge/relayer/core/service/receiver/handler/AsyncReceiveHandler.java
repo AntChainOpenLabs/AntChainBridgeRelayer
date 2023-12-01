@@ -1,12 +1,17 @@
 package com.alipay.antchain.bridge.relayer.core.service.receiver.handler;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alipay.antchain.bridge.commons.core.sdp.ISDPMessage;
+import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageFactory;
+import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
@@ -46,12 +51,16 @@ public class AsyncReceiveHandler {
                     )
             );
         }
-        log.info("[asyncReceiver] put PENDING UCP to pool success");
+        log.info("put PENDING UCP to pool success");
     }
 
     public void receiveAuthMessages(List<AuthMsgWrapper> authMsgWrappers) {
 
-        int rowsNum = crossChainMessageRepository.putAuthMessages(authMsgWrappers);
+        int rowsNum = crossChainMessageRepository.putAuthMessages(
+                authMsgWrappers.stream()
+                        .map(this::resetAuthMessageState)
+                        .collect(Collectors.toList())
+        );
         if (authMsgWrappers.size() != rowsNum) {
             throw new RuntimeException(
                     StrUtil.format(
@@ -60,31 +69,30 @@ public class AsyncReceiveHandler {
                     )
             );
         }
-        log.info("[asyncReceiver] put am_pending AuthenticMessage to pool success");
+        log.info("receive AuthenticMessages to pool success");
     }
 
-    public void receiveSDPMessages(List<SDPMsgWrapper> sdpMsgWrappers) {
-        sdpMsgWrappers.forEach(
-                sdpMsgWrapper -> {
-                    if (blockchainManager.hasBlockchain(sdpMsgWrapper.getReceiverBlockchainDomain())) {
-                        return;
-                    }
+    private AuthMsgWrapper resetAuthMessageState(AuthMsgWrapper authMsgWrapper) {
+        if (authMsgWrapper.getProtocolType() == UpperProtocolTypeBeyondAMEnum.SDP) {
+            ISDPMessage sdpMessage = SDPMessageFactory.createSDPMessage(authMsgWrapper.getAuthMessage().getPayload());
+            if (
+                    !blockchainManager.hasBlockchain(sdpMessage.getTargetDomain().getDomain())
+                            && StrUtil.isEmpty(relayerNetworkManager.findRemoteRelayer(sdpMessage.getTargetDomain().getDomain()))
+            ) {
+                authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.NOT_READY);
+                markForDomainRouterQuery(sdpMessage.getTargetDomain().getDomain());
+            }
+        }
+        return authMsgWrapper;
+    }
 
-                    String nodeId = relayerNetworkManager.findRemoteRelayer(sdpMsgWrapper.getReceiverBlockchainDomain());
-                    if (ObjectUtil.isNotNull(nodeId)) {
-                        return;
-                    }
-
-                    MarkDTTask task = new MarkDTTask(
-                            MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY,
-                            sdpMsgWrapper.getReceiverBlockchainDomain()
-                    );
-                    task.setState(MarkDTTaskStateEnum.INIT);
-                    scheduleRepository.insertMarkDTTask(task);
-
-                    log.info("sdp message from domain {} shows that it's a unknown blockchain", sdpMsgWrapper.getReceiverBlockchainDomain());
-                }
-        );
+    private void markForDomainRouterQuery(String receiverDomain) {
+        if (scheduleRepository.hasMarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, receiverDomain)) {
+            return;
+        }
+        MarkDTTask task = new MarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, receiverDomain);
+        task.setState(MarkDTTaskStateEnum.INIT);
+        scheduleRepository.insertMarkDTTask(task);
     }
 
     public boolean receiveAMClientReceipt(List<SDPMsgCommitResult> commitResults) {

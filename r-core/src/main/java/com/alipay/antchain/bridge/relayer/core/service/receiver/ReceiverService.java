@@ -9,12 +9,15 @@ import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelaye
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
-import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.UniformCrosschainPacketContext;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.handler.AsyncReceiveHandler;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.handler.SyncReceiveHandler;
+import com.alipay.antchain.bridge.relayer.core.types.blockchain.HeterogeneousBlock;
 import com.alipay.antchain.bridge.relayer.dal.repository.impl.BlockchainIdleDCache;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class ReceiverService {
@@ -33,6 +36,9 @@ public class ReceiverService {
 
     @Resource
     private BlockchainIdleDCache blockchainIdleDCache;
+
+    @Resource
+    private TransactionTemplate transactionTemplate;
 
     /**
      * 链外请求receive接口
@@ -66,13 +72,33 @@ public class ReceiverService {
         }
     }
 
+    public void receiveBlock(HeterogeneousBlock block) {
+        transactionTemplate.execute(
+                new TransactionCallbackWithoutResult() {
+                    @Override
+                    protected void doInTransactionWithoutResult(TransactionStatus status) {
+                        if (block.getUniformCrosschainPacketContexts().isEmpty()) {
+                            return;
+                        }
+                        receiveUCP(block.getUniformCrosschainPacketContexts());
+
+                        List<AuthMsgWrapper> authMessages = block.toAuthMsgWrappers();
+                        if (authMessages.isEmpty()) {
+                            return;
+                        }
+                        receiveAM(authMessages);
+                    }
+                }
+        );
+    }
+
     /**
      * 接收am消息的接口
      *
      * @param authMsgWrappers
      * @return
      */
-    public void receiveAM(List<AuthMsgWrapper> authMsgWrappers) {
+    private void receiveAM(List<AuthMsgWrapper> authMsgWrappers) {
         asyncReceiveHandler.receiveAuthMessages(authMsgWrappers);
         if (!authMsgWrappers.isEmpty()) {
             blockchainIdleDCache.setLastAMReceiveTime(
@@ -82,7 +108,7 @@ public class ReceiverService {
         }
     }
 
-    public void receiveUCP(List<UniformCrosschainPacketContext> ucpContexts) {
+    private void receiveUCP(List<UniformCrosschainPacketContext> ucpContexts) {
         asyncReceiveHandler.receiveUniformCrosschainPackets(ucpContexts);
         if (!ucpContexts.isEmpty()) {
             blockchainIdleDCache.setLastAMReceiveTime(
@@ -90,11 +116,6 @@ public class ReceiverService {
                     ucpContexts.get(0).getBlockchainId()
             );
         }
-    }
-
-    public void receiveSDP(List<SDPMsgWrapper> sdpMsgWrappers) {
-        // TODO: 启动一个异步的东西，去获取本地没有的domain router
-        asyncReceiveHandler.receiveSDPMessages(sdpMsgWrappers);
     }
 
     /**

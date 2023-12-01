@@ -41,22 +41,30 @@ public class UniformCrosschainPacketValidator {
         // TODO : get the tp-proof from the PTC
         log.debug("for now we skip tp-proof part");
 
-        crossChainMessageRepository.updateUniformCrosschainPacketState(
-                ucpContext.getUcpId(),
-                UniformCrosschainPacketStateEnum.PROVED
-        );
         if (ucpContext.getUcp().getSrcMessage().getType() == CrossChainMessage.CrossChainMessageType.AUTH_MSG) {
             IAuthMessage authMessage = AuthMessageFactory.createAuthMessage(ucpContext.getUcp().getSrcMessage().getMessage());
+            crossChainMessageRepository.updateUniformCrosschainPacketState(
+                    ucpContext.getUcpId(),
+                    UniformCrosschainPacketStateEnum.PROVED
+            );
+            if (crossChainMessageRepository.getAuthMessageState(ucpContext.getUcpId()) == AuthMsgProcessStateEnum.NOT_READY) {
+                return true;
+            }
             if (AuthMessageV2.MY_VERSION == authMessage.getVersion()) {
                 if (((AuthMessageV2) authMessage).getTrustLevel() != AuthMessageTrustLevelEnum.NEGATIVE_TRUST) {
                     return true;
                 }
             }
+            crossChainMessageRepository.updateAuthMessageState(
+                    ucpContext.getUcpId(),
+                    AuthMsgProcessStateEnum.PROVED
+            );
+        } else {
+            crossChainMessageRepository.updateUniformCrosschainPacketState(
+                    ucpContext.getUcpId(),
+                    UniformCrosschainPacketStateEnum.PROVED
+            );
         }
-        crossChainMessageRepository.updateAuthMessageState(
-                ucpContext.getUcpId(),
-                AuthMsgProcessStateEnum.PROVED
-        );
 
         return true;
     }

@@ -52,17 +52,6 @@ CREATE TABLE IF NOT EXISTS `anchor_process`
     UNIQUE KEY `blockchain_product` (`blockchain_product`, `instance`, `task`)
 );
 
-CREATE TABLE IF NOT EXISTS `anchor_system_config`
-(
-    `id`           int(11) NOT NULL AUTO_INCREMENT,
-    `conf_key`     varchar(256) DEFAULT NULL,
-    `conf_value`   varchar(256) DEFAULT NULL,
-    `gmt_create`   datetime     DEFAULT CURRENT_TIMESTAMP,
-    `gmt_modified` datetime     DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `anchor_conf_key` (`conf_key`)
-);
-
 CREATE TABLE IF NOT EXISTS `domain_cert`
 (
     `id`                 int(11) NOT NULL AUTO_INCREMENT,
@@ -150,6 +139,7 @@ CREATE TABLE IF NOT EXISTS `auth_msg_pool`
     `gmt_modified`              datetime     DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `state` (`process_state`),
+    KEY `idx_domainname_trustlevel_processstate` (`domain_name`, `trust_level`, `process_state`),
     KEY `idx_domainname_processstate` (`domain_name`, `process_state`)
 );
 
@@ -218,6 +208,7 @@ CREATE TABLE IF NOT EXISTS `relayer_node`
 (
     `id`                   int(11) NOT NULL AUTO_INCREMENT,
     `node_id`              varchar(64)   DEFAULT NULL,
+    `relayer_cert_id`      varchar(128) DEFAULT NULL,
     `node_crosschain_cert` binary        DEFAULT NULL,
     `node_sig_algo`        varchar(255)  DEFAULT NULL,
     `domains`              varchar(2048) DEFAULT NULL,
@@ -305,6 +296,18 @@ CREATE TABLE `biz_dt_task`
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_task_type_unique_key` (`task_type`, `unique_key`),
     UNIQUE KEY `uk_task` (`node_id`, `task_type`, `unique_key`)
+);
+
+CREATE TABLE IF NOT EXISTS `mark_dt_task`
+(
+    `id`           INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    `task_type`    INT(11)             NOT NULL,
+    `unique_key`   varchar(128) DEFAULT NULL,
+    `node_id`      varchar(64)  DEFAULT NULL,
+    `state`        INT(11)             NOT NULL,
+    `end_time`     DATETIME,
+    `gmt_create`   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified` DATETIME     DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS `dt_active_node`

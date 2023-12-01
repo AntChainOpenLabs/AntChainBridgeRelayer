@@ -172,6 +172,39 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     }
 
     @Override
+    public List<AuthMsgWrapper> peekNotReadyAuthMessages(String domain, int limit) {
+        try {
+            List<AuthMsgPoolEntity> entities = authMsgPoolMapper.selectList(
+                    new LambdaQueryWrapper<AuthMsgPoolEntity>()
+                            .eq(AuthMsgPoolEntity::getDomain, domain)
+                            .eq(AuthMsgPoolEntity::getProcessState, AuthMsgProcessStateEnum.NOT_READY)
+                            .last("limit " + limit)
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return ListUtil.empty();
+            }
+            return entities.stream()
+                    .map(ConvertUtil::convertFromAuthMsgPoolEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    String.format("failed to peek auth messages for chain %s", domain),
+                    e
+            );
+        }
+    }
+
+    @Override
+    public boolean hasNotReadyAuthMessages(String domain) {
+        return authMsgPoolMapper.exists(
+                new LambdaQueryWrapper<AuthMsgPoolEntity>()
+                        .eq(AuthMsgPoolEntity::getDomain, domain)
+                        .eq(AuthMsgPoolEntity::getProcessState, AuthMsgProcessStateEnum.NOT_READY)
+        );
+    }
+
+    @Override
     public void putUniformCrosschainPacket(UniformCrosschainPacketContext context) {
         try {
             ucpPoolMapper.saveUCPMessages(ListUtil.toList(context));

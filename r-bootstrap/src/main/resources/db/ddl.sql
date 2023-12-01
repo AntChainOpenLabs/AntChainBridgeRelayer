@@ -67,21 +67,6 @@ CREATE TABLE `anchor_process`
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
 
-drop table if exists anchor_system_config;
-CREATE TABLE `anchor_system_config`
-(
-    `id`           int(11) NOT NULL AUTO_INCREMENT,
-    `conf_key`     varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-    `conf_value`   varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-    `gmt_create`   datetime                                                      DEFAULT CURRENT_TIMESTAMP,
-    `gmt_modified` datetime                                                      DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `conf_key` (`conf_key`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_general_ci
-  ROW_FORMAT = DYNAMIC;
-
 drop table if exists `domain_cert`;
 CREATE TABLE `domain_cert`
 (
@@ -183,7 +168,8 @@ CREATE TABLE `auth_msg_pool`
     `gmt_modified`              datetime                                                      DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `state` (`process_state`),
-    KEY `idx_domainname_trustlevel_processstate` (`domain_name`, `trust_level`, `process_state`)
+    KEY `idx_domainname_trustlevel_processstate` (`domain_name`, `trust_level`, `process_state`),
+    KEY `idx_domainname_processstate` (`domain_name`, `process_state`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci
@@ -386,6 +372,10 @@ CREATE TABLE IF NOT EXISTS `mark_dt_task`
     `gmt_create`   DATETIME     DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified` DATETIME     DEFAULT CURRENT_TIMESTAMP
 );
+CREATE UNIQUE INDEX mark_dt_task_idx1
+    ON mark_dt_task (task_type, unique_key, node_id);
+CREATE INDEX mark_dt_task_idx2
+    ON mark_dt_task (state, task_type, node_id);
 
 drop table if exists dt_active_node;
 CREATE TABLE `dt_active_node`

@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.cache.Cache;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -63,6 +64,9 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
 
     @Value("${dt.node.activate.length:3000}")
     private long activateLength;
+
+    @Resource
+    private Cache<String, RelayerNetwork.Item> relayerNetworkItemCache;
 
     @Override
     public void addNetworkItems(String networkId, Map<String, RelayerNetwork.Item> relayerNetworkItems) {
@@ -123,12 +127,19 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     @Override
     public RelayerNetwork.Item getNetworkItem(String domain) {
         try {
-            return ConvertUtil.convertFromRelayerNetworkEntity(
-                    relayerNetworkMapper.selectOne(
-                            new LambdaQueryWrapper<RelayerNetworkEntity>()
-                                    .eq(RelayerNetworkEntity::getDomain, domain)
-                    )
+            if (relayerNetworkItemCache.containsKey(domain)) {
+                return relayerNetworkItemCache.get(domain);
+            }
+            RelayerNetworkEntity entity = relayerNetworkMapper.selectOne(
+                    new LambdaQueryWrapper<RelayerNetworkEntity>()
+                            .eq(RelayerNetworkEntity::getDomain, domain)
             );
+            if (ObjectUtil.isNull(entity)) {
+                return null;
+            }
+            RelayerNetwork.Item item = ConvertUtil.convertFromRelayerNetworkEntity(entity);
+            relayerNetworkItemCache.put(domain, item);
+            return item;
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_RELAYER_NETWORK_ERROR,
