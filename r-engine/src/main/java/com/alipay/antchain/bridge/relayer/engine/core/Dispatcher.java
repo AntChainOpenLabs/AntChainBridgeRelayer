@@ -57,7 +57,7 @@ public class Dispatcher {
         }
 
         try {
-            log.info("dispatch distributed tasks now.");
+            log.debug("dispatch distributed tasks now.");
 
             List<IDistributedTask> tasks = new ArrayList<>(splitBlockchainTask(getRunningBlockchains()));
             tasks.add(
@@ -80,7 +80,7 @@ public class Dispatcher {
                 log.warn("none online nodes!");
                 return;
             }
-            log.info("size of online node : {}", onlineNodes.size());
+            log.debug("size of online node : {}", onlineNodes.size());
 
             // 给剩余任务分配时间片
             doDispatch(onlineNodes, tasksToDispatch);

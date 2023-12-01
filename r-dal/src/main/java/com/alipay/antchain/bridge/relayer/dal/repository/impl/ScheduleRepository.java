@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.cache.Cache;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.constant.DTActiveNodeStateEnum;
@@ -334,7 +335,7 @@ public class ScheduleRepository implements IScheduleRepository {
                             )
             );
             if (ObjectUtil.isEmpty(entities)) {
-                return null;
+                return ListUtil.empty();
             }
             return entities.stream().map(ConvertUtil::convertFromMarkDTTaskEntity).collect(Collectors.toList());
         } catch (Exception e) {

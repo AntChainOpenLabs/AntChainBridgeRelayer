@@ -49,7 +49,7 @@ public class BizDuty {
         if (tasks.isEmpty()) {
             log.debug("empty duty tasks");
         } else {
-            log.info("biz duty tasks size {}", tasks.size());
+            log.debug("biz duty tasks size {}", tasks.size());
         }
 
         for (BizDistributedTask task : tasks) {

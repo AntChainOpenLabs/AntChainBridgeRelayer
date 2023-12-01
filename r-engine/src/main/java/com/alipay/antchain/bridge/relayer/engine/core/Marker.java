@@ -55,7 +55,7 @@ public class Marker {
         }
 
         try {
-            log.info("process mark task now.");
+            log.debug("process mark task now.");
             List<MarkDTTask> taskList = scheduleRepository.peekInitOrTimeoutMarkDTTask(markBatchSize);
             if (taskList.isEmpty()) {
                 return;

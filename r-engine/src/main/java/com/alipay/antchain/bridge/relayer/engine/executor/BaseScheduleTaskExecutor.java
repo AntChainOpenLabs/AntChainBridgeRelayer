@@ -41,7 +41,7 @@ public abstract class BaseScheduleTaskExecutor {
                 log.info("task is running : {}", task.getUniqueTaskKey());
                 return;
             } else {
-                log.info("task finish : {}", task.getUniqueTaskKey());
+                log.debug("task finish : {}", task.getUniqueTaskKey());
                 currentTasks.remove(task.getUniqueTaskKey());
             }
         }
@@ -53,7 +53,7 @@ public abstract class BaseScheduleTaskExecutor {
         }
 
         // 触发执行
-        log.info("execute task : {}", task.getUniqueTaskKey());
+        log.debug("execute task : {}", task.getUniqueTaskKey());
 
         Future currentTask = executor.submit(genTask(task));
 

@@ -464,7 +464,7 @@ public class BCDNSManager implements IBCDNSManager {
 
     @Override
     public List<DomainCertApplicationDO> getAllApplyingDomainCertApplications() {
-        log.info("try to get all applying domain cert applications");
+        log.debug("try to get all applying domain cert applications");
         try {
             return bcdnsRepository.getDomainCertApplicationsByState(DomainCertApplicationStateEnum.APPLYING);
         } catch (AntChainBridgeRelayerException e) {
