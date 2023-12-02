@@ -584,6 +584,9 @@ public class BCDNSManager implements IBCDNSManager {
     @Override
     public DomainRouter getDomainRouter(String destDomain) {
         for (String domainSpace : ListUtil.sort(getAllBCDNSDomainSpace(), String::compareTo)) {
+            if (!CrossChainDomain.isDerivedFrom(destDomain, domainSpace)) {
+                continue;
+            }
             log.info("look up the domain router for {} from BCDNS with space [{}]", destDomain, domainSpace);
             DomainRouter currDomainRouter = getBCDNSService(domainSpace).queryDomainRouter(
                     QueryDomainRouterRequest.builder()

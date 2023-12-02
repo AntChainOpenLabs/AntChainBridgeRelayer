@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS `domain_cert`
     UNIQUE KEY `domain` (`domain`)
 );
 
-CREATE TABLE `domain_cert_application`
+CREATE TABLE IF NOT EXISTS `domain_cert_application`
 (
     `id`            INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
     `domain`        VARCHAR(128) UNIQUE NOT NULL,
@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS `domain_space_cert`
     `id`                int(11) NOT NULL AUTO_INCREMENT,
     `domain_space`      varchar(128) DEFAULT NULL,
     `parent_space`      varchar(128) DEFAULT NULL,
+    `owner_oid_hex`     BINARY  NOT NULL,
     `description`       varchar(128) DEFAULT NULL,
     `domain_space_cert` longblob,
     `gmt_create`        datetime     DEFAULT CURRENT_TIMESTAMP,
@@ -294,8 +295,8 @@ CREATE TABLE `biz_dt_task`
     `gmt_create`   datetime     DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified` datetime     DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_task_type_unique_key` (`task_type`, `unique_key`),
-    UNIQUE KEY `uk_task` (`node_id`, `task_type`, `unique_key`)
+    UNIQUE KEY `uk_biz_task_type_unique_key` (`task_type`, `unique_key`),
+    UNIQUE KEY `uk_biz_task` (`node_id`, `task_type`, `unique_key`)
 );
 
 CREATE TABLE IF NOT EXISTS `mark_dt_task`

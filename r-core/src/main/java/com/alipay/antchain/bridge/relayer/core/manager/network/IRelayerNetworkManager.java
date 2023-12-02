@@ -205,10 +205,10 @@ public interface IRelayerNetworkManager {
      * 在amRequest和udagRequest的时候，从发现中心获取域名对应的relayer信息，
      * 尝试握手获取并验证对应的信息，存储域名到数据库。
      *     TODO: <a href="https://crosschain.yuque.com/org-wiki-crosschain-zvbyzk/zg3xnv/pguzbyb4r4obpxfb#Da3Vt">Need to implement</a>
+     *
      * @param domainRouter
-     * @return
      */
-    boolean tryHandshake(DomainRouter domainRouter);
+    void tryHandshake(DomainRouter domainRouter);
 
     /**
      * 更新relayerNodeInfo

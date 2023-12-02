@@ -52,13 +52,31 @@ public class RelayerClientPool implements IRelayerClientPool {
             );
         }
 
-
         return clientMap.get(remoteRelayerNodeInfo.getNodeId());
     }
 
     @Override
     public RelayerClient createRelayerClient(Relayer destRelayer) {
-        return null;
+        RelayerNodeInfo tempNodeInfo = new RelayerNodeInfo();
+        tempNodeInfo.setEndpoints(destRelayer.getNetAddressList());
+        tempNodeInfo.setNodeId("relayer_cert_id:" + destRelayer.getRelayerCertId());
+
+        try {
+            WSRelayerClient client = new WSRelayerClient(
+                    tempNodeInfo,
+                    relayerCredentialManager,
+                    defaultNetworkId,
+                    wsRelayerClientThreadsPool,
+                    wsSslFactory.getSslContext().getSocketFactory()
+            );
+            client.startup();
+            return client;
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    StrUtil.format("failed to create new relayer client for {}: ", StrUtil.join(",", tempNodeInfo.getEndpoints())),
+                    e
+            );
+        }
     }
 
     public void addRelayerClient(String nodeId, RelayerClient client) {

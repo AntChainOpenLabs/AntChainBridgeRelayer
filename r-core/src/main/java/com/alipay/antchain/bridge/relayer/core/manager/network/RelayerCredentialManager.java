@@ -27,6 +27,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
+import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
@@ -111,12 +112,7 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
         if (!bcdnsManager.validateCrossChainCertificate(relayerRequest.getSenderRelayerCertificate())) {
             return false;
         }
-        if (
-                ObjectUtil.notEqual(
-                        CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
-                        relayerRequest.getSenderRelayerCertificate().getType()
-                )
-        ) {
+        if (!CrossChainCertificateUtil.isRelayerCert(relayerRequest.getSenderRelayerCertificate())) {
             return false;
         }
 

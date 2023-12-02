@@ -462,11 +462,20 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     }
 
     @Override
-    public boolean tryHandshake(DomainRouter domainRouter) {
+    public void tryHandshake(DomainRouter domainRouter) {
         try {
-//            relayerClientPool.getRelayerClient()
-//            domainRouter.getDestRelayer().getNetAddressList()
-            return false;
+            RelayerClient relayerClient = relayerClientPool.createRelayerClient(domainRouter.getDestRelayer());
+            if (ObjectUtil.isNull(relayerClient)) {
+                throw new RuntimeException(
+                        StrUtil.format(
+                                "none relayer client for domain router ( domain: {}, relayer_cert_id: {}, endpoints: {} )",
+                                domainRouter.getDestDomain().getDomain(),
+                                domainRouter.getDestRelayer().getRelayerCertId(),
+                                StrUtil.join(",", domainRouter.getDestRelayer().getNetAddressList())
+                        )
+                );
+            }
+
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_RELAYER_HANDSHAKE_FAILED,

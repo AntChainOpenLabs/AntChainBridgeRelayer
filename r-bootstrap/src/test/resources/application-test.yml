@@ -20,7 +20,7 @@ relayer:
   network:
     id: 1
     node:
-      sig_algo: SM3WITHSM2
+      sig_algo: Ed25519
       server:
         mode: https
         port: 8082
