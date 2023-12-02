@@ -20,6 +20,7 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
+import com.alipay.antchain.bridge.bcdns.types.base.Relayer;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
@@ -28,6 +29,8 @@ import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
 import com.alipay.antchain.bridge.relayer.core.service.anchor.tasks.BlockTaskTypeEnum;
 import com.alipay.antchain.bridge.relayer.core.service.anchor.tasks.NotifyTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.core.types.network.IRelayerClientPool;
+import com.alipay.antchain.bridge.relayer.core.types.network.RelayerClient;
 import com.alipay.antchain.bridge.relayer.dal.entities.AnchorProcessEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.DomainCertEntity;
 import com.alipay.antchain.bridge.relayer.dal.mapper.AnchorProcessMapper;
@@ -54,6 +57,9 @@ public class BlockchainRepositoryTest extends TestBase {
 
     @Resource
     private AnchorProcessMapper anchorProcessMapper;
+
+    @Resource
+    private IRelayerClientPool relayerClientPool;
 
     private void saveSomeBlockchains() {
 
@@ -105,6 +111,11 @@ public class BlockchainRepositoryTest extends TestBase {
 
     @Test
     public void testSaveBlockchainMeta() {
+
+        RelayerClient relayerClient = relayerClientPool.createRelayerClient(
+                new Relayer("test", ListUtil.toList("https://0.0.0.0:8082"))
+        );
+        relayerClient.getRelayerNodeInfo();
         BlockchainMeta blockchainMeta = new BlockchainMeta("testchain", "testchain.id", "", "", blockchainProperties1);
         blockchainRepository.saveBlockchainMeta(blockchainMeta);
         Assert.assertThrows(AntChainBridgeRelayerException.class, () -> blockchainRepository.saveBlockchainMeta(blockchainMeta));
