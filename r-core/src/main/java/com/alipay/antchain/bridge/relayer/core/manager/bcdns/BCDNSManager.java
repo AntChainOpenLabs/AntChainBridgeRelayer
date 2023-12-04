@@ -595,6 +595,7 @@ public class BCDNSManager implements IBCDNSManager {
                                                     new CrossChainDomain(domain),
                                                     new Relayer(
                                                             localRelayerCertificate.getId(),
+                                                            localRelayerCertificate,
                                                             localEndpoints
                                                     )
                                             )

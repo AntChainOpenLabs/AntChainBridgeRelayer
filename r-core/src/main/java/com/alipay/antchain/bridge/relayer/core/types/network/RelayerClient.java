@@ -5,7 +5,6 @@ import java.util.Map;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
-import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloCompleteRespPayload;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloStartRespPayload;
 
 /**
@@ -52,7 +51,7 @@ public interface RelayerClient {
 
     HelloStartRespPayload helloStart(byte[] rand, String relayerNodeId);
 
-    HelloCompleteRespPayload helloComplete(
+    void helloComplete(
             RelayerNodeInfo localRelayerNodeInfo,
             Map<String, AbstractCrossChainCertificate> domainSpaceCertPath,
             byte[] remoteRand

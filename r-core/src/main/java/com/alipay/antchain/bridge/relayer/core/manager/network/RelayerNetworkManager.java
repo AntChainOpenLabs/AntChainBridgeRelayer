@@ -50,7 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Getter
 @Component
-public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
+public class RelayerNetworkManager implements IRelayerNetworkManager {
 
     @Value("${relayer.network.node.crosschain_cert_path:null}")
     private String relayerCrossChainCertPath;
@@ -442,6 +442,11 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     }
 
     @Override
+    public boolean hasRemoteRelayerNode(String relayerNodeId) {
+        return relayerNetworkRepository.hasRelayerNode(relayerNodeId);
+    }
+
+    @Override
     public RelayerNodeInfo getRemoteRelayerNodeInfoByCertId(String relayerCertId) {
         return relayerNetworkRepository.getRelayerNodeByCertId(relayerCertId, true);
     }
@@ -468,9 +473,9 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
             if (ObjectUtil.isNull(relayerClient)) {
                 throw new RuntimeException(
                         StrUtil.format(
-                                "none relayer client for domain router ( domain: {}, relayer_cert_id: {}, endpoints: {} )",
+                                "none relayer client for domain router ( domain: {}, node_id: {}, endpoints: {} )",
                                 domainRouter.getDestDomain().getDomain(),
-                                domainRouter.getDestRelayer().getRelayerCertId(),
+                                RelayerNodeInfo.calculateNodeId(domainRouter.getDestRelayer().getRelayerCert()),
                                 StrUtil.join(",", domainRouter.getDestRelayer().getNetAddressList())
                         )
                 );
@@ -481,8 +486,8 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_RELAYER_HANDSHAKE_FAILED,
                     e,
-                    "failed to handshake with relayer with cert id {} and net addresses {}",
-                    domainRouter.getDestRelayer().getRelayerCertId(),
+                    "failed to handshake with relayer with node id {} and net addresses {}",
+                    RelayerNodeInfo.calculateNodeId(domainRouter.getDestRelayer().getRelayerCert()),
                     StrUtil.join(",", domainRouter.getDestRelayer().getNetAddressList())
             );
         }

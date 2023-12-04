@@ -24,4 +24,6 @@ public interface IRelayerClientPool {
     RelayerClient getRelayerClient(RelayerNodeInfo remoteRelayerNodeInfo);
 
     RelayerClient createRelayerClient(Relayer destRelayer);
+
+    void addRelayerClient(String nodeId, RelayerClient relayerClient);
 }

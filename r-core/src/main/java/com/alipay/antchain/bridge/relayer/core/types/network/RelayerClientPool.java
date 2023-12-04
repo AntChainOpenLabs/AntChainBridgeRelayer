@@ -59,7 +59,7 @@ public class RelayerClientPool implements IRelayerClientPool {
     public RelayerClient createRelayerClient(Relayer destRelayer) {
         RelayerNodeInfo tempNodeInfo = new RelayerNodeInfo();
         tempNodeInfo.setEndpoints(destRelayer.getNetAddressList());
-        tempNodeInfo.setNodeId("relayer_cert_id:" + destRelayer.getRelayerCertId());
+        tempNodeInfo.setNodeId(RelayerNodeInfo.calculateNodeId(destRelayer.getRelayerCert()));
 
         try {
             WSRelayerClient client = new WSRelayerClient(

@@ -101,6 +101,8 @@ public enum RelayerErrorCodeEnum {
 
     SERVER_ADMIN_UNEXPECTED_ERROR("0403", "unexpected error"),
 
+    SERVER_RELAYER_HELLO_ERROR("0404", "relayer hello error"),
+
     /**
      *
      */

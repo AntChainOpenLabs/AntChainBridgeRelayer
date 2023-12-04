@@ -342,7 +342,17 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                         request.getDomainSpaceCertPath()
                 )
         ) {
-            throw new RuntimeException("failed to verify the relayer cert with cert path");
+            throw new RuntimeException(
+                    StrUtil.format(
+                            "failed to verify the relayer {} 's cert {} with cert path [ {} ]",
+                            remoteNodeInfo.getNodeId(),
+                            remoteNodeInfo.getRelayerCrossChainCertificate().encodeToBase64(),
+                            request.getDomainSpaceCertPath().entrySet().stream()
+                                    .map(entry -> StrUtil.format("{} : {}", entry.getKey(), entry.getValue().encodeToBase64()))
+                                    .reduce((s1, s2) -> s1 + ", " + s2)
+                                    .orElse("")
+                    )
+            );
         }
 
         byte[] myRand = getMyRelayerHelloRand(remoteNodeInfo.getNodeId());
@@ -369,7 +379,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
         getRelayerNetworkManager().addRelayerNode(remoteNodeInfo);
 
         return RelayerResponse.createSuccessResponse(
-                new HelloCompleteRespPayload(),
+                () -> null,
                 getRelayerCredentialManager()
         );
     }

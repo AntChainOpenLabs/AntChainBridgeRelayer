@@ -55,7 +55,7 @@ public class RelayerNodeInfo {
         return DigestUtil.sha256Hex(
                 RelayerCredentialSubject.decode(
                         crossChainCertificate.getCredentialSubject()
-                ).getSubjectPublicKey().getEncoded()
+                ).getApplicant().encode()
         );
     }
 

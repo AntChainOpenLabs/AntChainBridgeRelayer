@@ -215,7 +215,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
     }
 
     @Override
-    public HelloCompleteRespPayload helloComplete(RelayerNodeInfo localRelayerNodeInfo, Map<String, AbstractCrossChainCertificate> domainSpaceCertPath, byte[] remoteRand) {
+    public void helloComplete(RelayerNodeInfo localRelayerNodeInfo, Map<String, AbstractCrossChainCertificate> domainSpaceCertPath, byte[] remoteRand) {
         RelayerResponse response = sendRequest(
                 new HelloCompleteRequest(
                         localRelayerNodeInfo,
@@ -234,11 +234,6 @@ public abstract class BaseRelayerClient implements RelayerClient {
                     )
             );
         }
-        HelloCompleteRespPayload helloCompleteRespPayload = HelloCompleteRespPayload.decodeFromJson(response.getResponsePayload());
-        if (ObjectUtil.isNull(helloCompleteRespPayload)) {
-            throw new RuntimeException("payload is null for hello complete response");
-        }
-        return helloCompleteRespPayload;
     }
 
     @Override

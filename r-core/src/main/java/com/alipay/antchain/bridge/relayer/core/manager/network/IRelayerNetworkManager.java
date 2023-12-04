@@ -178,6 +178,8 @@ public interface IRelayerNetworkManager {
 
     boolean hasRemoteRelayerNodeInfoByCertId(String relayerCertId);
 
+    boolean hasRemoteRelayerNode(String relayerNodeId);
+
     RelayerNodeInfo getRemoteRelayerNodeInfoByCertId(String relayerCertId);
 
     /**
