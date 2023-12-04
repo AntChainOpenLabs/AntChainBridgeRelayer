@@ -27,6 +27,7 @@ import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentia
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
+import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
@@ -69,6 +70,7 @@ public class WSRelayerServer implements ApplicationRunner {
             IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
             ReceiverService receiverService,
+            ICrossChainMessageRepository crossChainMessageRepository,
             RedissonClient redisson,
             boolean isDiscoveryService
     ) {
@@ -79,6 +81,7 @@ public class WSRelayerServer implements ApplicationRunner {
                 bcdnsManager,
                 relayerCredentialManager,
                 receiverService,
+                crossChainMessageRepository,
                 redisson,
                 defaultNetworkId,
                 isDiscoveryService);

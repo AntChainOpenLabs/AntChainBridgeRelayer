@@ -22,6 +22,7 @@ import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentia
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.RelayerRequestType;
+import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -49,6 +50,8 @@ public abstract class BaseRelayerServer {
 
     private ReceiverService receiverService;
 
+    private ICrossChainMessageRepository crossChainMessageRepository;
+
     private RedissonClient redisson;
 
     public BaseRelayerServer(
@@ -56,6 +59,7 @@ public abstract class BaseRelayerServer {
             IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
             ReceiverService receiverService,
+            ICrossChainMessageRepository crossChainMessageRepository,
             RedissonClient redisson,
             String defaultNetworkId,
             boolean isDiscoveryServer
@@ -64,14 +68,14 @@ public abstract class BaseRelayerServer {
         this.bcdnsManager = bcdnsManager;
         this.relayerCredentialManager = relayerCredentialManager;
         this.receiverService = receiverService;
+        this.crossChainMessageRepository = crossChainMessageRepository;
         this.defaultNetworkId = defaultNetworkId;
         this.isDiscoveryServer = isDiscoveryServer;
         this.redisson = redisson;
     }
 
-    public void amRequest(String domainName, String authMsg, String udagProof, String ledgerInfo) {
-
-        receiverService.receiveOffChainAMRequest(domainName, authMsg, udagProof, ledgerInfo);
+    public void amRequest(String domainName, String ucpId, String authMsg, String udagProof, String ledgerInfo) {
+        receiverService.receiveOffChainAMRequest(domainName, ucpId, authMsg, udagProof, ledgerInfo);
     }
 
     public void doHandshake(RelayerNodeInfo nodeInfo, String networkId) {

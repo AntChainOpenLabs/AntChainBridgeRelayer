@@ -139,6 +139,7 @@ public class ConvertUtil {
                 authMsgPoolEntity.getUcpId(),
                 authMsgPoolEntity.getAmClientContractAddress(),
                 authMsgPoolEntity.getProcessState(),
+                authMsgPoolEntity.getFailCount(),
                 authMessage
         );
     }
@@ -157,6 +158,7 @@ public class ConvertUtil {
         entity.setTrustLevel(authMsgWrapper.getTrustLevel());
         entity.setPayload(authMsgWrapper.getPayload());
         entity.setProcessState(authMsgWrapper.getProcessState());
+        entity.setFailCount(authMsgWrapper.getFailCount());
         entity.setExt(authMsgWrapper.getRawLedgerInfo());
 
         return entity;

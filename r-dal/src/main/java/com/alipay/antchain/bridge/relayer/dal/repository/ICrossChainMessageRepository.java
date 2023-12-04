@@ -55,6 +55,8 @@ public interface ICrossChainMessageRepository {
 
     AuthMsgWrapper getAuthMessage(long authMsgId);
 
+    String getUcpId(long authMsgId);
+
     AuthMsgWrapper getAuthMessage(long authMsgId, boolean lock);
 
     SDPMsgWrapper getSDPMessage(long id, boolean lock);
@@ -63,13 +65,15 @@ public interface ICrossChainMessageRepository {
 
     List<UniformCrosschainPacketContext> peekUCPMessages(String domain, UniformCrosschainPacketStateEnum processState, int limit);
 
-    List<AuthMsgWrapper> peekAuthMessages(String domain, int limit);
+    List<AuthMsgWrapper> peekAuthMessages(String domain, int limit, int failLimit);
 
     List<AuthMsgWrapper> peekNotReadyAuthMessages(String domain, int limit);
 
     boolean hasNotReadyAuthMessages(String domain);
 
     List<SDPMsgWrapper> peekSDPMessages(String receiverBlockchainProduct, String receiverBlockchainId, SDPMsgProcessStateEnum processState, int limit);
+
+    List<SDPMsgWrapper> peekSDPMessagesSent(String senderBlockchainProduct, String senderBlockchainId, SDPMsgProcessStateEnum processState, int limit);
 
     List<SDPMsgWrapper> peekTxFinishedSDPMessageIds(String receiverBlockchainProduct, String receiverBlockchainId, int limit);
 

@@ -126,10 +126,6 @@ public class RelayerRequest {
         }
     }
 
-    public void setRequestTypeCode(String requestType) {
-        this.requestType = RelayerRequestType.parseFromValue(requestType);
-    }
-
     public String calcRelayerNodeId() {
         return RelayerNodeInfo.calculateNodeId(senderRelayerCertificate);
     }

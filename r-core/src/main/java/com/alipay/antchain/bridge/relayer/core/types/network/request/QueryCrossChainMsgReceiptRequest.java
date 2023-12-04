@@ -16,6 +16,9 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network.request;
 
+
+import java.util.List;
+
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
@@ -24,45 +27,21 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AMRelayerRequest extends RelayerRequest {
-
-    public static AMRelayerRequest createFrom(RelayerRequest relayerRequest) {
-        AMRelayerRequest request = JSON.parseObject(relayerRequest.getRequestPayload(), AMRelayerRequest.class);
+public class QueryCrossChainMsgReceiptRequest extends RelayerRequest {
+    public static QueryCrossChainMsgReceiptRequest createFrom(RelayerRequest relayerRequest) {
+        QueryCrossChainMsgReceiptRequest request = JSON.parseObject(relayerRequest.getRequestPayload(), QueryCrossChainMsgReceiptRequest.class);
         BeanUtil.copyProperties(relayerRequest, request);
         return request;
     }
 
     @JSONField
-    private String udagProof;
+    private List<String> ucpIds;
 
-    @JSONField
-    private String ucpId;
-
-    @JSONField
-    private String authMsg;
-
-    @JSONField
-    private String domainName;
-
-    @JSONField
-    private String ledgerInfo;
-
-    public AMRelayerRequest(
-            String udagProof,
-            String ucpId,
-            String authMsg,
-            String domainName,
-            String ledgerInfo
-    ) {
+    public QueryCrossChainMsgReceiptRequest(List<String> ucpIds) {
         super(
-                RelayerRequestType.AM_REQUEST
+                RelayerRequestType.QUERY_CROSSCHAIN_MSG_RECEIPT
         );
-        this.udagProof = udagProof;
-        this.ucpId = ucpId;
-        this.authMsg = authMsg;
-        this.domainName = domainName;
-        this.ledgerInfo = ledgerInfo;
-
+        this.ucpIds = ucpIds;
         setRequestPayload(
                 JSON.toJSONBytes(this)
         );

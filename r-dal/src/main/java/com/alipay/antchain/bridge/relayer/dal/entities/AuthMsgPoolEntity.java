@@ -64,6 +64,9 @@ public class AuthMsgPoolEntity extends BaseEntity {
     @TableField("process_state")
     private AuthMsgProcessStateEnum processState;
 
+    @TableField("fail_count")
+    private Integer failCount;
+
     @TableField("ext")
     private byte[] ext;
 }

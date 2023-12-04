@@ -77,6 +77,8 @@ public enum RelayerErrorCodeEnum {
 
     CORE_RELAYER_HANDSHAKE_FAILED("0208", "relayer handshake failed"),
 
+    SEND_AM_TO_REMOTE_RELAYER_FAILED("0209", "send am to relayer failed"),
+
     SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED("0301", "process auth msg failed"),
 
     SERVICE_CORE_PROCESS_PROCESS_CCMSG_FAILED("0302", "process ccmsg failed"),

@@ -135,12 +135,13 @@ CREATE TABLE IF NOT EXISTS `auth_msg_pool`
     `trust_level`               int(11)      DEFAULT 2,
     `payload`                   mediumblob,
     `process_state`             varchar(64)  DEFAULT NULL,
+    `fail_count`                int(11)      DEFAULT 0,
     `ext`                       mediumblob,
     `gmt_create`                datetime     DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`              datetime     DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `state` (`process_state`),
-    KEY `idx_domainname_trustlevel_processstate` (`domain_name`, `trust_level`, `process_state`),
+    KEY `idx_1` (`domain_name`, `trust_level`, `process_state`, `fail_count`),
     KEY `idx_domainname_processstate` (`domain_name`, `process_state`)
 );
 
@@ -209,7 +210,7 @@ CREATE TABLE IF NOT EXISTS `relayer_node`
 (
     `id`                   int(11) NOT NULL AUTO_INCREMENT,
     `node_id`              varchar(64)   DEFAULT NULL,
-    `relayer_cert_id`      varchar(128) DEFAULT NULL,
+    `relayer_cert_id`      varchar(128)  DEFAULT NULL,
     `node_crosschain_cert` binary        DEFAULT NULL,
     `node_sig_algo`        varchar(255)  DEFAULT NULL,
     `domains`              varchar(2048) DEFAULT NULL,
@@ -236,6 +237,7 @@ CREATE TABLE IF NOT EXISTS `auth_msg_archive`
     `trust_level`               int(11)      DEFAULT 2,
     `payload`                   mediumblob,
     `process_state`             varchar(64)  DEFAULT NULL,
+    `fail_count`                int(11)      DEFAULT 0,
     `ext`                       mediumblob,
     `gmt_create`                datetime     DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`              datetime     DEFAULT CURRENT_TIMESTAMP,

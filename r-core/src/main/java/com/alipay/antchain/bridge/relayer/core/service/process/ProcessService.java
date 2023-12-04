@@ -64,6 +64,9 @@ public class ProcessService {
     @Value("${relayer.service.process.ccmsg.batch_size:64}")
     private int ccmsgBatchSize;
 
+    @Value("${relayer.service.process.ccmsg.fail_limit:10}")
+    private int ccmsgFailLimit;
+
     @Value("${relayer.service.process.ccmsg.not_ready_port.batch_size:64}")
     private int notReadyPortBatchSize;
 
@@ -89,7 +92,8 @@ public class ProcessService {
         } else if (StrUtil.isNotEmpty(domainName)) {
             authMsgWrapperList = crossChainMessageRepository.peekAuthMessages(
                     domainName,
-                    ccmsgBatchSize
+                    ccmsgBatchSize,
+                    ccmsgFailLimit
             );
         }
 

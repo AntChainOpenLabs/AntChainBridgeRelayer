@@ -121,27 +121,11 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
         }
     }
 
-    public List<AuthMsgWrapper> peekAuthMessages(String domain, int limit) {
+    public List<AuthMsgWrapper> peekAuthMessages(String domain, int limit, int failLimit) {
         try {
             List<AuthMsgPoolEntity> entities = authMsgPoolMapper.selectList(
                     new LambdaQueryWrapper<AuthMsgPoolEntity>()
-                            .select(
-                                    ListUtil.toList(
-                                            BaseEntity::getId,
-                                            AuthMsgPoolEntity::getUcpId,
-                                            AuthMsgPoolEntity::getProduct,
-                                            AuthMsgPoolEntity::getBlockchainId,
-                                            AuthMsgPoolEntity::getDomain,
-                                            AuthMsgPoolEntity::getAmClientContractAddress,
-                                            AuthMsgPoolEntity::getVersion,
-                                            AuthMsgPoolEntity::getMsgSender,
-                                            AuthMsgPoolEntity::getProtocolType,
-                                            AuthMsgPoolEntity::getTrustLevel,
-                                            AuthMsgPoolEntity::getPayload,
-                                            AuthMsgPoolEntity::getProcessState,
-                                            AuthMsgPoolEntity::getExt
-                                    )
-                            ).eq(AuthMsgPoolEntity::getDomain, domain)
+                            .eq(AuthMsgPoolEntity::getDomain, domain)
                             .and(
                                     wrapper -> wrapper.eq(AuthMsgPoolEntity::getTrustLevel, AuthMsgTrustLevelEnum.NEGATIVE_TRUST)
                                             .eq(AuthMsgPoolEntity::getProcessState, AuthMsgProcessStateEnum.PROVED)
@@ -152,7 +136,8 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                                                     wrapper1 -> wrapper1.eq(AuthMsgPoolEntity::getTrustLevel, AuthMsgTrustLevelEnum.ZERO_TRUST)
                                                             .eq(AuthMsgPoolEntity::getProcessState, AuthMsgProcessStateEnum.PROVED)
                                             )
-                            ).last("limit " + limit)
+                            ).lt(AuthMsgPoolEntity::getFailCount, failLimit)
+                            .last("limit " + limit)
             );
             if (ObjectUtil.isEmpty(entities)) {
                 return ListUtil.empty();
@@ -391,6 +376,28 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     }
 
     @Override
+    public String getUcpId(long authMsgId) {
+        try {
+            AuthMsgPoolEntity entity =
+                    this.authMsgPoolMapper.selectOne(
+                            new LambdaQueryWrapper<AuthMsgPoolEntity>()
+                                    .select(ListUtil.toList(AuthMsgPoolEntity::getUcpId))
+                                    .eq(BaseEntity::getId, authMsgId)
+                    );
+            if (ObjectUtil.isNull(entity)) {
+                return null;
+            }
+            return entity.getUcpId();
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    StrUtil.format("failed to get ucp id for {}", authMsgId),
+                    e
+            );
+        }
+    }
+
+    @Override
     public AuthMsgWrapper getAuthMessage(long authMsgId, boolean lock) {
         try {
             AuthMsgPoolEntity entity = lock ?
@@ -505,6 +512,34 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                     StrUtil.format(
                             "failed to peek {} sdp messages for chain (product: {}, blockchain_id: {})",
                             processState.getCode(), receiverBlockchainProduct, receiverBlockchainId
+                    ), e
+            );
+        }
+    }
+
+    @Override
+    public List<SDPMsgWrapper> peekSDPMessagesSent(String senderBlockchainProduct, String senderBlockchainId, SDPMsgProcessStateEnum processState, int limit) {
+        try {
+            List<SDPMsgPoolEntity> entities = sdpMsgPoolMapper.selectList(
+                    new LambdaQueryWrapper<SDPMsgPoolEntity>()
+                            .eq(SDPMsgPoolEntity::getSenderBlockchainProduct, senderBlockchainProduct)
+                            .eq(SDPMsgPoolEntity::getSenderBlockchainId, senderBlockchainId)
+                            .eq(SDPMsgPoolEntity::getProcessState, processState)
+                            .last("limit " + limit)
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return ListUtil.empty();
+            }
+
+            return entities.stream()
+                    .map(ConvertUtil::convertFromSDPMsgPoolEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    StrUtil.format(
+                            "failed to peek {} sdp messages sent to network for chain (product: {}, blockchain_id: {})",
+                            processState.getCode(), senderBlockchainProduct, senderBlockchainId
                     ), e
             );
         }

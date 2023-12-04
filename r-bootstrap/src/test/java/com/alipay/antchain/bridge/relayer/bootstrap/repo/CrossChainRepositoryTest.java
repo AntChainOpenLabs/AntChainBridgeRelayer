@@ -108,7 +108,7 @@ public class CrossChainRepositoryTest extends TestBase {
     public void testPeekAuthMessages() {
         saveElevenAM(getAMCurrentId());
 
-        List<AuthMsgWrapper> authMsgWrappers = crossChainMessageRepository.peekAuthMessages("test", 10);
+        List<AuthMsgWrapper> authMsgWrappers = crossChainMessageRepository.peekAuthMessages("test", 10, 10);
         Assert.assertEquals(10, authMsgWrappers.size());
     }
 
@@ -143,9 +143,8 @@ public class CrossChainRepositoryTest extends TestBase {
                             "test",
                             HexUtil.encodeHexStr(ByteUtil.intToBytes(i)),
                             "am",
-                            AuthMsgProcessStateEnum.PROCESSED,
-                            authMessage
-                    )
+                            AuthMsgProcessStateEnum.PROCESSED, 0,
+                            authMessage)
             );
         }
 
@@ -197,6 +196,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         HexUtil.encodeHexStr(ByteUtil.intToBytes(9)),
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
+                                        0,
                                         authMessage
                                 ),
                                 "eth",
@@ -267,6 +267,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         HexUtil.encodeHexStr(ByteUtil.intToBytes(10)),
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
+                                        0,
                                         authMessage
                                 ),
                                 "eth",
@@ -293,6 +294,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         HexUtil.encodeHexStr(ByteUtil.intToBytes(9)),
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
+                                        0,
                                         authMessage
                                 ),
                                 "eth",
@@ -333,6 +335,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         HexUtil.encodeHexStr(ByteUtil.intToBytes(9)),
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
+                                        0,
                                         authMessage
                                 ),
                                 "eth",
@@ -387,9 +390,8 @@ public class CrossChainRepositoryTest extends TestBase {
                                     "test",
                                     HexUtil.encodeHexStr(ByteUtil.intToBytes(i)),
                                     "am",
-                                    AuthMsgProcessStateEnum.PENDING,
-                                    authMessage
-                            )
+                                    AuthMsgProcessStateEnum.PENDING, 0,
+                                    authMessage)
                     )
             );
         }
@@ -424,6 +426,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                     HexUtil.encodeHexStr(ByteUtil.intToBytes(i)),
                                     "am",
                                     AuthMsgProcessStateEnum.PENDING,
+                                    0,
                                     authMessage
                             ),
                             sdpMessage

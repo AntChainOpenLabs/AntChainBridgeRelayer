@@ -298,7 +298,7 @@ public class DomainRouterQueryService {
 
     private void buildCrossChainChannel(RelayerNodeInfo nodeInfo, String senderDomain, DomainRouter domainRouter) {
         log.info("channel start request with relayer {} for domain {}", nodeInfo.getNodeId(), domainRouter.getDestDomain());
-        RelayerClient relayerClient = relayerClientPool.getRelayerClient(nodeInfo);
+        RelayerClient relayerClient = relayerClientPool.getRelayerClient(nodeInfo, domainRouter.getDestDomain().getDomain());
 
         RelayerBlockchainContent blockchainContent = relayerClient.channelStart(domainRouter.getDestDomain().getDomain());
         if (ObjectUtil.isNull(blockchainContent)) {

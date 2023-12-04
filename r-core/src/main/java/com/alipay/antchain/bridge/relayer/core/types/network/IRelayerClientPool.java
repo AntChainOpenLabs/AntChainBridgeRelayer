@@ -21,7 +21,9 @@ import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 
 public interface IRelayerClientPool {
 
-    RelayerClient getRelayerClient(RelayerNodeInfo remoteRelayerNodeInfo);
+    RelayerClient getRelayerClient(RelayerNodeInfo remoteRelayerNodeInfo, String domain);
+
+    RelayerClient getRelayerClientByDomain(String domain);
 
     RelayerClient createRelayerClient(Relayer destRelayer);
 

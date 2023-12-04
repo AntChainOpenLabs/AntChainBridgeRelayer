@@ -16,12 +16,14 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network;
 
+import java.util.List;
 import java.util.Map;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainMessageReceipt;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
@@ -126,9 +128,10 @@ public abstract class BaseRelayerClient implements RelayerClient {
     }
 
     @Override
-    public void amRequest(String domainName, String authMsg, String udagProof, String ledgerInfo) {
+    public void amRequest(String domainName, String ucpId, String authMsg, String udagProof, String ledgerInfo) {
         RelayerRequest request = new AMRelayerRequest(
                 udagProof,
+                ucpId,
                 authMsg,
                 domainName,
                 ledgerInfo
@@ -150,6 +153,28 @@ public abstract class BaseRelayerClient implements RelayerClient {
                     )
             );
         }
+    }
+
+    @Override
+    public List<CrossChainMessageReceipt> queryCrossChainMessageReceipts(List<String> ucpIds) {
+        RelayerResponse response = sendRequest(new QueryCrossChainMsgReceiptRequest(ucpIds));
+        if (ObjectUtil.isNull(response)) {
+            throw new RuntimeException(
+                    "query cc msg receipts but get null response"
+            );
+        } else if (!response.isSuccess()) {
+            throw new RuntimeException(
+                    StrUtil.format(
+                            "failed to query crosschain msg receipts [{}] from remote relayer: (code: {}, msg: {})",
+                            StrUtil.join(", ", ucpIds), response.getResponseCode(), response.getResponseMessage()
+                    )
+            );
+        }
+        QueryCrossChainMsgReceiptsRespPayload respPayload = QueryCrossChainMsgReceiptsRespPayload.decodeFromJson(response.getResponsePayload());
+        if (ObjectUtil.isNull(respPayload)) {
+            throw new RuntimeException("payload is null for query cc msg receipt response");
+        }
+        return respPayload.getReceipts();
     }
 
     @Override

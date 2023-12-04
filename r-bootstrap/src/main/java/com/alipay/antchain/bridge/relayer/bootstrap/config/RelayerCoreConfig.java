@@ -39,6 +39,7 @@ import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentia
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
+import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository;
 import com.alipay.antchain.bridge.relayer.server.network.WSRelayerServer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -172,6 +173,7 @@ public class RelayerCoreConfig {
             IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
             ReceiverService receiverService,
+            ICrossChainMessageRepository crossChainMessageRepository,
             RedissonClient redisson
     ) {
         try {
@@ -185,6 +187,7 @@ public class RelayerCoreConfig {
                     bcdnsManager,
                     relayerCredentialManager,
                     receiverService,
+                    crossChainMessageRepository,
                     redisson,
                     isDiscoveryService
             );

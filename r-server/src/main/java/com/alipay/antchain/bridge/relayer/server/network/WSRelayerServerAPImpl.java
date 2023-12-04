@@ -19,6 +19,7 @@ package com.alipay.antchain.bridge.relayer.server.network;
 import java.security.Signature;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
@@ -42,6 +43,7 @@ import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.exception.RejectRequestException;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.*;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.*;
+import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBucket;
@@ -61,11 +63,12 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
             IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
             ReceiverService receiverService,
+            ICrossChainMessageRepository crossChainMessageRepository,
             RedissonClient redisson,
             String defaultNetworkId,
             boolean isDiscoveryServer
     ) {
-        super(relayerNetworkManager, bcdnsManager, relayerCredentialManager, receiverService, redisson, defaultNetworkId, isDiscoveryServer);
+        super(relayerNetworkManager, bcdnsManager, relayerCredentialManager, receiverService, crossChainMessageRepository, redisson, defaultNetworkId, isDiscoveryServer);
     }
 
     @Override
@@ -119,6 +122,10 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                 case AM_REQUEST:
                     return processAMRequest(
                             AMRelayerRequest.createFrom(request)
+                    ).encode();
+                case QUERY_CROSSCHAIN_MSG_RECEIPT:
+                    return processCrossChainMsgReceiptsQuery(
+                            QueryCrossChainMsgReceiptRequest.createFrom(request)
                     ).encode();
                 case HANDSHAKE:
                     return processHandshakeRequest(
@@ -240,6 +247,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
         try {
             amRequest(
                     request.getDomainName(),
+                    request.getUcpId(),
                     request.getAuthMsg(),
                     request.getUdagProof(),
                     request.getLedgerInfo()
@@ -270,6 +278,24 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
         return RelayerResponse.createSuccessResponse(
                 () -> null,
+                getRelayerCredentialManager()
+        );
+    }
+
+    private RelayerResponse processCrossChainMsgReceiptsQuery(QueryCrossChainMsgReceiptRequest request) {
+        if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(),  request.calcRelayerNodeId());
+            return RelayerResponse.createFailureResponse(
+                    "verify crosschain cert failed",
+                    getRelayerCredentialManager()
+            );
+        }
+
+        //TODO: query sdp with ucpIds
+        return RelayerResponse.createSuccessResponse(
+                new QueryCrossChainMsgReceiptsRespPayload(
+                        new ArrayList<>()
+                ),
                 getRelayerCredentialManager()
         );
     }

@@ -192,7 +192,7 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
 
             // 如果公钥以及domain信息没设置，则远程请求补充
             if (ObjectUtil.isNull(nodeInfo.getRelayerCrossChainCertificate())) {
-                RelayerClient relayerClient = relayerClientPool.getRelayerClient(nodeInfo);
+                RelayerClient relayerClient = relayerClientPool.getRelayerClient(nodeInfo, null);
                 if (ObjectUtil.isNull(relayerClient)) {
                     throw new AntChainBridgeRelayerException(
                             RelayerErrorCodeEnum.CORE_RELAYER_NETWORK_ERROR,
@@ -298,7 +298,7 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
                     networkId,
                     relayerNode,
                     Assert.notNull(
-                            relayerClientPool.getRelayerClient(relayerNode).getRelayerBlockchainContent(),
+                            relayerClientPool.getRelayerClient(relayerNode, null).getRelayerBlockchainContent(),
                             "null blockchain content from relayer {}",
                             nodeId
                     ),

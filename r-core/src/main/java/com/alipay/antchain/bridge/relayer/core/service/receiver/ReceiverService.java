@@ -47,10 +47,12 @@ public class ReceiverService {
      * @param authMsg
      * @return
      */
-    public void receiveOffChainAMRequest(String domainName, String authMsg, String udagProof, String ledgerInfo) {
+    public void receiveOffChainAMRequest(String domainName, String ucpId, String authMsg, String udagProof, String ledgerInfo) {
 
         AuthMsgWrapper authMsgWrapper = new AuthMsgWrapper();
         authMsgWrapper.setDomain(domainName);
+        authMsgWrapper.setUcpId(ucpId);
+        //TODO: ucpID 处理一下
         authMsgWrapper.setLedgerInfo(ledgerInfo);
         authMsgWrapper.setAuthMessage(
                 AuthMessageFactory.createAuthMessage(

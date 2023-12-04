@@ -1,8 +1,10 @@
 package com.alipay.antchain.bridge.relayer.core.types.network;
 
+import java.util.List;
 import java.util.Map;
 
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainMessageReceipt;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloStartRespPayload;
@@ -37,11 +39,14 @@ public interface RelayerClient {
     /**
      * 发送AM请求
      *
+     * @param ucpId
      * @param authMsg
      * @param udagProof
      * @return
      */
-    void amRequest(String domainName, String authMsg, String udagProof, String ledgerInfo);
+    void amRequest(String domainName, String ucpId, String authMsg, String udagProof, String ledgerInfo);
+
+    List<CrossChainMessageReceipt> queryCrossChainMessageReceipts(List<String> ucpIds);
 
     /**
      * @param nodeInfo

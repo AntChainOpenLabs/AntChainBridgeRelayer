@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class RelayerClientPool implements IRelayerClientPool {
 
+    private static final String DOMAIN_CACHE_KEY_PREFIX = "DOMAIN^";
+
     @Resource
     private IRelayerCredentialManager relayerCredentialManager;
 
@@ -31,9 +33,12 @@ public class RelayerClientPool implements IRelayerClientPool {
 
     private final Map<String, RelayerClient> clientMap = MapUtil.newConcurrentHashMap();
 
-    public RelayerClient getRelayerClient(RelayerNodeInfo remoteRelayerNodeInfo) {
+    public RelayerClient getRelayerClient(RelayerNodeInfo remoteRelayerNodeInfo, String domain) {
 
         try {
+            if (StrUtil.isNotEmpty(domain) && clientMap.containsKey(DOMAIN_CACHE_KEY_PREFIX + domain)) {
+                clientMap.get(DOMAIN_CACHE_KEY_PREFIX + domain);
+            }
             if (!clientMap.containsKey(remoteRelayerNodeInfo.getNodeId())) {
                 WSRelayerClient client = new WSRelayerClient(
                         remoteRelayerNodeInfo,
@@ -44,6 +49,9 @@ public class RelayerClientPool implements IRelayerClientPool {
                 );
                 client.startup();
                 clientMap.put(remoteRelayerNodeInfo.getNodeId(), client);
+                if (StrUtil.isNotEmpty(domain)) {
+                    clientMap.put(DOMAIN_CACHE_KEY_PREFIX + domain, client);
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(
@@ -53,6 +61,10 @@ public class RelayerClientPool implements IRelayerClientPool {
         }
 
         return clientMap.get(remoteRelayerNodeInfo.getNodeId());
+    }
+
+    public RelayerClient getRelayerClientByDomain(String domain) {
+        return clientMap.get(DOMAIN_CACHE_KEY_PREFIX + domain);
     }
 
     @Override

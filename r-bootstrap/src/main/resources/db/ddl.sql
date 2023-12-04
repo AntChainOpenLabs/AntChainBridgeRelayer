@@ -163,12 +163,13 @@ CREATE TABLE `auth_msg_pool`
     `trust_level`               int(11)                                                       DEFAULT 2,
     `payload`                   mediumblob,
     `process_state`             varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `fail_count`                int(11)                                                       DEFAULT 0,
     `ext`                       mediumblob,
     `gmt_create`                datetime                                                      DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`              datetime                                                      DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `state` (`process_state`),
-    KEY `idx_domainname_trustlevel_processstate` (`domain_name`, `trust_level`, `process_state`),
+    KEY `idx_1` (`domain_name`, `trust_level`, `process_state`, `fail_count`),
     KEY `idx_domainname_processstate` (`domain_name`, `process_state`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -284,6 +285,7 @@ CREATE TABLE `auth_msg_archive`
     `trust_level`               int(11)                                                       DEFAULT 2,
     `payload`                   mediumblob,
     `process_state`             varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  DEFAULT NULL,
+    `fail_count`                int(11)                                                       DEFAULT 0,
     `ext`                       mediumblob,
     `gmt_create`                datetime                                                      DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`              datetime                                                      DEFAULT CURRENT_TIMESTAMP,
