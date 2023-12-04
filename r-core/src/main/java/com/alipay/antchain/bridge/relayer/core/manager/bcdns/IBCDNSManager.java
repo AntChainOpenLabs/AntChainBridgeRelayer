@@ -55,6 +55,11 @@ public interface IBCDNSManager {
 
     boolean validateCrossChainCertificate(AbstractCrossChainCertificate certificate);
 
+    boolean validateCrossChainCertificate(
+            AbstractCrossChainCertificate certificate,
+            Map<String, AbstractCrossChainCertificate> domainSpaceCertPath
+    );
+
     void saveDomainSpaceCerts(Map<String, AbstractCrossChainCertificate> domainSpaceCerts);
 
     String applyDomainCertificate(String domainSpace, String domain, ObjectIdentity applicantOid, byte[] rawSubject);

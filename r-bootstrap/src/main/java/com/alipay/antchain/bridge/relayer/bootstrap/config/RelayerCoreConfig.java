@@ -44,6 +44,7 @@ import com.alipay.antchain.bridge.relayer.server.network.WSRelayerServer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.SneakyThrows;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -170,7 +171,8 @@ public class RelayerCoreConfig {
             IRelayerNetworkManager relayerNetworkManager,
             IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
-            ReceiverService receiverService
+            ReceiverService receiverService,
+            RedissonClient redisson
     ) {
         try {
             return new WSRelayerServer(
@@ -183,6 +185,7 @@ public class RelayerCoreConfig {
                     bcdnsManager,
                     relayerCredentialManager,
                     receiverService,
+                    redisson,
                     isDiscoveryService
             );
         } catch (Exception e) {

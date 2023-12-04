@@ -103,7 +103,9 @@ public class RelayerResponse {
         relayerResponse.setResponseCode(errorCode);
         relayerResponse.setResponseMessage(message);
         relayerResponse.setResponsePayload(ObjectUtil.isNull(payload) ? "" : payload.encode());
-        relayerCredentialManager.signRelayerResponse(relayerResponse);
+        if (!(payload instanceof HelloStartRespPayload)) {
+            relayerCredentialManager.signRelayerResponse(relayerResponse);
+        }
 
         return relayerResponse;
     }

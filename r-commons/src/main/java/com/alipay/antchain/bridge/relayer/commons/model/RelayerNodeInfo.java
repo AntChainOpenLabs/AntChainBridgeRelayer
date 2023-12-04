@@ -134,6 +134,8 @@ public class RelayerNodeInfo {
                     )
             );
 
+            info.setSigAlgo(stream.readUTF());
+
             int endpointSize = stream.readInt();
 
             while (endpointSize > 0) {
@@ -291,6 +293,7 @@ public class RelayerNodeInfo {
             stream.writeUTF(
                     Base64.encode(relayerCrossChainCertificate.encode())
             );
+            stream.writeUTF(sigAlgo);
 
             stream.writeInt(endpoints.size());
             for (String endpoint : endpoints) {

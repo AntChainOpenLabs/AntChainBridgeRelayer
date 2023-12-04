@@ -18,6 +18,7 @@ package com.alipay.antchain.bridge.relayer.core.manager.bcdns;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -334,11 +335,41 @@ public class BCDNSManager implements IBCDNSManager {
     }
 
     @Override
+    public boolean validateCrossChainCertificate(AbstractCrossChainCertificate certificate, Map<String, AbstractCrossChainCertificate> domainSpaceCertPath) {
+        try {
+            List<AbstractCrossChainCertificate> sequentialCerts = domainSpaceCertPath.entrySet().stream().sorted(
+                            Comparator.comparing(o -> StrUtil.reverse(o.getKey()))
+                    ).map(Map.Entry::getValue)
+                    .collect(Collectors.toList());
+
+            DomainSpaceCertWrapper bcdnsRootCert = bcdnsRepository.getDomainSpaceCert(CrossChainDomain.ROOT_DOMAIN_SPACE);
+            if (ObjectUtil.isNull(bcdnsRootCert)) {
+                throw new RuntimeException("none root domain space cert set in DB");
+            }
+            sequentialCerts.set(0, bcdnsRootCert.getDomainSpaceCert());
+
+            if (sequentialCerts.size() > 1) {
+                verifyCertPath(sequentialCerts, 0);
+                saveDomainSpaceCerts(domainSpaceCertPath);
+            }
+
+            return sequentialCerts.get(sequentialCerts.size() - 1)
+                    .getCredentialSubjectInstance().verifyIssueProof(
+                            certificate.getEncodedToSign(),
+                            certificate.getProof()
+                    );
+        } catch (Exception e) {
+            log.error("failed to verify crosschain cert (type: {}, cert_id: {})", certificate.getType().name(), certificate.getId(), e);
+            return false;
+        }
+    }
+
+    @Override
     public void saveDomainSpaceCerts(Map<String, AbstractCrossChainCertificate> domainSpaceCerts) {
         for (Map.Entry<String, AbstractCrossChainCertificate> entry : domainSpaceCerts.entrySet()) {
             try {
                 if (bcdnsRepository.hasDomainSpaceCert(entry.getKey())) {
-                    log.warn("DomainSpace {} already exists", entry.getKey());
+                    log.info("DomainSpace {} already exists", entry.getKey());
                     continue;
                 }
                 bcdnsRepository.saveDomainSpaceCert(new DomainSpaceCertWrapper(entry.getValue()));
@@ -606,5 +637,27 @@ public class BCDNSManager implements IBCDNSManager {
             return currDomainRouter;
         }
         return null;
+    }
+
+    private void verifyCertPath(List<AbstractCrossChainCertificate> certPath, int currIndex) {
+        if (currIndex == certPath.size() - 2) {
+            if (
+                    !certPath.get(currIndex).getCredentialSubjectInstance().verifyIssueProof(
+                            certPath.get(currIndex + 1).getEncodedToSign(),
+                            certPath.get(currIndex + 1).getProof()
+                    )
+            ) {
+                throw new RuntimeException(
+                        StrUtil.format(
+                                "failed to verify {} cert with its parent {}",
+                                CrossChainCertificateUtil.getCrossChainDomain(certPath.get(currIndex)),
+                                CrossChainCertificateUtil.getCrossChainDomain(certPath.get(currIndex + 1))
+                        )
+                );
+            }
+            return;
+        }
+
+        verifyCertPath(certPath, currIndex + 1);
     }
 }

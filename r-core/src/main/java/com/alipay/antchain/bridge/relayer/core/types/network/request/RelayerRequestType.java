@@ -61,7 +61,19 @@ public enum RelayerRequestType {
      */
     DELETE_DOMAIN("deleteDomain"),
 
-    GET_RELAYER_BLOCKCHAIN_CONTENT("getRelayerBlockChainContent");
+    GET_RELAYER_BLOCKCHAIN_CONTENT("getRelayerBlockChainContent"),
+
+    HELLO_START("helloStart"),
+
+    HELLO_COMPLETE("helloComplete"),
+
+    CROSSCHAIN_CHANNEL_START("crosschainChannelStart"),
+
+    // TODO:
+    //  发送没有且接收端也没有：先完成relayer 连接建立，然后对from链和to链建立channel，
+    //   发送有而接收端没有：如果在消息发送之后，接收端发现本地没有发送链信息，就拒绝该消息，建立一个domainRouterQuery任务，
+    //   将路由和链信息保存下来；不过发送端消息，会持续发不出去，可能会影响某条链发往其他链。
+    CROSSCHAIN_CHANNEL_COMPLETE("crosschainChannelComplete");
 
     private final String code;
 
@@ -84,6 +96,10 @@ public enum RelayerRequestType {
             return DELETE_DOMAIN;
         } else if (StrUtil.equals(value, GET_RELAYER_BLOCKCHAIN_CONTENT.code)) {
             return GET_RELAYER_BLOCKCHAIN_CONTENT;
+        } else if (StrUtil.equals(value, HELLO_START.code)) {
+            return HELLO_START;
+        } else if (StrUtil.equals(value, HELLO_COMPLETE.code)) {
+            return HELLO_COMPLETE;
         }
         throw new AntChainBridgeRelayerException(
                 RelayerErrorCodeEnum.UNKNOWN_INTERNAL_ERROR,
@@ -111,6 +127,10 @@ public enum RelayerRequestType {
                 return DELETE_DOMAIN;
             case 8:
                 return GET_RELAYER_BLOCKCHAIN_CONTENT;
+            case 9:
+                return HELLO_START;
+            case 10:
+                return HELLO_COMPLETE;
             default:
                 return null;
         }

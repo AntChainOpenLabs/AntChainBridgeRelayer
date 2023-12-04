@@ -476,6 +476,7 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
                 );
             }
 
+
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_RELAYER_HANDSHAKE_FAILED,

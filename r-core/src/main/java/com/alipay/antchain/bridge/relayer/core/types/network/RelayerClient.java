@@ -1,7 +1,12 @@
 package com.alipay.antchain.bridge.relayer.core.types.network;
 
+import java.util.Map;
+
+import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloCompleteRespPayload;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloStartRespPayload;
 
 /**
  * 实现节点endpoint客通讯客户端、服务端
@@ -26,7 +31,6 @@ public interface RelayerClient {
     RelayerBlockchainContent getRelayerBlockchainInfo(String supportedDomain);
 
     /**
-     *
      * @return
      */
     RelayerBlockchainContent getRelayerBlockchainContent();
@@ -41,9 +45,16 @@ public interface RelayerClient {
     void amRequest(String domainName, String authMsg, String udagProof, String ledgerInfo);
 
     /**
-     *
      * @param nodeInfo
      * @return
      */
     RelayerNodeInfo handshake(RelayerNodeInfo nodeInfo, String networkId);
+
+    HelloStartRespPayload helloStart(byte[] rand, String relayerNodeId);
+
+    HelloCompleteRespPayload helloComplete(
+            RelayerNodeInfo localRelayerNodeInfo,
+            Map<String, AbstractCrossChainCertificate> domainSpaceCertPath,
+            byte[] remoteRand
+    );
 }

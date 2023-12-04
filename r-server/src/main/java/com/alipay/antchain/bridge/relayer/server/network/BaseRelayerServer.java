@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RedissonClient;
 
 /**
  * Endpoint Server基类
@@ -48,11 +49,14 @@ public abstract class BaseRelayerServer {
 
     private ReceiverService receiverService;
 
+    private RedissonClient redisson;
+
     public BaseRelayerServer(
             IRelayerNetworkManager relayerNetworkManager,
             IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
             ReceiverService receiverService,
+            RedissonClient redisson,
             String defaultNetworkId,
             boolean isDiscoveryServer
     ) {
@@ -62,6 +66,7 @@ public abstract class BaseRelayerServer {
         this.receiverService = receiverService;
         this.defaultNetworkId = defaultNetworkId;
         this.isDiscoveryServer = isDiscoveryServer;
+        this.redisson = redisson;
     }
 
     public void amRequest(String domainName, String authMsg, String udagProof, String ledgerInfo) {

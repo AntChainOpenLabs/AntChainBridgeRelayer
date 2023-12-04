@@ -58,6 +58,9 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
     @Value("${relayer.network.node.sig_algo:SHA256WithRSA}")
     private String localNodeSigAlgo;
 
+    @Value("#{relayerCoreConfig.localRelayerIssuerDomainSpace}")
+    private String localRelayerIssuerDomainSpace;
+
     @Resource
     private IBCDNSManager bcdnsManager;
 
@@ -97,6 +100,22 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_RELAYER_NETWORK_ERROR,
                     "failed to sign response",
+                    e
+            );
+        }
+    }
+
+    @Override
+    public byte[] signHelloRand(byte[] rand) {
+        try {
+            Signature signer = Signature.getInstance(localNodeSigAlgo);
+            signer.initSign(localRelayerPrivateKey);
+            signer.update(rand);
+            return signer.sign();
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_RELAYER_NETWORK_ERROR,
+                    "failed to sign hello rand",
                     e
             );
         }

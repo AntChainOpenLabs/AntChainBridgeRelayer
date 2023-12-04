@@ -16,14 +16,19 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network;
 
+import java.util.Map;
+
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.*;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.HandshakeRespPayload;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloCompleteRespPayload;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloStartRespPayload;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.RelayerResponse;
 import lombok.Getter;
 import lombok.Setter;
@@ -189,6 +194,54 @@ public abstract class BaseRelayerClient implements RelayerClient {
         log.debug("handshake with relayer {} success with response: {}", this.remoteNodeInfo.getNodeId(), response.getResponsePayload());
 
         return remoteNodeInfo;
+    }
+
+    @Override
+    public HelloStartRespPayload helloStart(byte[] rand, String relayerNodeId) {
+        RelayerResponse response = sendRequest(new HelloStartRequest(rand, relayerNodeId));
+        if (ObjectUtil.isNull(response)) {
+            throw new RuntimeException(
+                    "say hello that ask remote relayer to sign the rand bytes with null response"
+            );
+        } else if (!response.isSuccess()) {
+            throw new RuntimeException(
+                    String.format("failed to say hello that ask remote relayer to sign the rand bytes: (code: %d, msg: %s)",
+                            response.getResponseCode(), response.getResponseMessage()
+                    )
+            );
+        }
+        HelloStartRespPayload helloStartRespPayload = HelloStartRespPayload.decodeFromJson(response.getResponsePayload());
+        if (ObjectUtil.isNull(helloStartRespPayload)) {
+            throw new RuntimeException("payload is null for hell ask response");
+        }
+        return helloStartRespPayload;
+    }
+
+    @Override
+    public HelloCompleteRespPayload helloComplete(RelayerNodeInfo localRelayerNodeInfo, Map<String, AbstractCrossChainCertificate> domainSpaceCertPath, byte[] remoteRand) {
+        RelayerResponse response = sendRequest(
+                new HelloCompleteRequest(
+                        localRelayerNodeInfo,
+                        domainSpaceCertPath,
+                        relayerCredentialManager.signHelloRand(remoteRand)
+                )
+        );
+        if (ObjectUtil.isNull(response)) {
+            throw new RuntimeException(
+                    "sending hello complete request to remote relayer with null response"
+            );
+        } else if (!response.isSuccess()) {
+            throw new RuntimeException(
+                    String.format("failed to send hello complete request to remote relayer : (code: %d, msg: %s)",
+                            response.getResponseCode(), response.getResponseMessage()
+                    )
+            );
+        }
+        HelloCompleteRespPayload helloCompleteRespPayload = HelloCompleteRespPayload.decodeFromJson(response.getResponsePayload());
+        if (ObjectUtil.isNull(helloCompleteRespPayload)) {
+            throw new RuntimeException("payload is null for hell complete response");
+        }
+        return helloCompleteRespPayload;
     }
 
     private RelayerResponse validateRelayerResponse(RelayerResponse relayerResponse) {

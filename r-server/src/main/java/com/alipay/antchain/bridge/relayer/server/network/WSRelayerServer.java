@@ -33,6 +33,7 @@ import com.sun.net.httpserver.HttpsParameters;
 import com.sun.net.httpserver.HttpsServer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RedissonClient;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -68,6 +69,7 @@ public class WSRelayerServer implements ApplicationRunner {
             IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
             ReceiverService receiverService,
+            RedissonClient redisson,
             boolean isDiscoveryService
     ) {
         this.serverMode = serverMode;
@@ -77,9 +79,9 @@ public class WSRelayerServer implements ApplicationRunner {
                 bcdnsManager,
                 relayerCredentialManager,
                 receiverService,
+                redisson,
                 defaultNetworkId,
-                isDiscoveryService
-        );
+                isDiscoveryService);
         this.workers = wsRelayerServerExecutorService;
         this.wsSslFactory = wsSslFactory;
     }
@@ -113,9 +115,9 @@ public class WSRelayerServer implements ApplicationRunner {
                 new HttpsConfigurator(wsSslFactory.getSslContext()) {
                     public void configure(HttpsParameters params) {
                         SSLContext c = getSSLContext();
-                        SSLParameters sslparams = c.getDefaultSSLParameters();
-                        sslparams.setNeedClientAuth(needClientAuth);
-                        params.setSSLParameters(sslparams);
+                        SSLParameters sslParams = c.getDefaultSSLParameters();
+                        sslParams.setNeedClientAuth(needClientAuth);
+                        params.setSSLParameters(sslParams);
                     }
                 }
         );

@@ -35,6 +35,8 @@ public interface IRelayerCredentialManager {
      */
     void signRelayerResponse(RelayerResponse relayerResponse);
 
+    byte[] signHelloRand(byte[] rand);
+
     AbstractCrossChainCertificate getLocalRelayerCertificate();
 
     RelayerCredentialSubject getLocalRelayerCredentialSubject();
@@ -48,4 +50,6 @@ public interface IRelayerCredentialManager {
     String getLocalNodeSigAlgo();
 
     PrivateKey getLocalRelayerPrivateKey();
+
+    String getLocalRelayerIssuerDomainSpace();
 }
