@@ -15,6 +15,7 @@ import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyo
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.service.domainrouter.DomainRouterQueryService;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -80,17 +81,18 @@ public class AsyncReceiveHandler {
                             && StrUtil.isEmpty(relayerNetworkManager.findRemoteRelayer(sdpMessage.getTargetDomain().getDomain()))
             ) {
                 authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.NOT_READY);
-                markForDomainRouterQuery(sdpMessage.getTargetDomain().getDomain());
+                markForDomainRouterQuery(authMsgWrapper.getDomain(), sdpMessage.getTargetDomain().getDomain());
             }
         }
         return authMsgWrapper;
     }
 
-    private void markForDomainRouterQuery(String receiverDomain) {
-        if (scheduleRepository.hasMarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, receiverDomain)) {
+    private void markForDomainRouterQuery(String senderDomain, String receiverDomain) {
+        String uniqueKey = DomainRouterQueryService.generateDomainRouterQueryTaskUniqueKey(senderDomain, receiverDomain);
+        if (scheduleRepository.hasMarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, uniqueKey)) {
             return;
         }
-        MarkDTTask task = new MarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, receiverDomain);
+        MarkDTTask task = new MarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, uniqueKey);
         task.setState(MarkDTTaskStateEnum.INIT);
         scheduleRepository.insertMarkDTTask(task);
     }

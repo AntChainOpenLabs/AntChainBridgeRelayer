@@ -51,6 +51,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Slf4j
 public class DomainRouterQueryService {
 
+    private static final String KEY_SEPARATOR = "^^";
+
+    public static String generateDomainRouterQueryTaskUniqueKey(String senderDomain, String receiverDomain) {
+        return StrUtil.format("{}{}{}", senderDomain, KEY_SEPARATOR, receiverDomain);
+    }
+
     @Value("${relayer.service.domain_router.batch_size:8}")
     private int domainRouterBatchSize;
 
@@ -112,7 +118,9 @@ public class DomainRouterQueryService {
                 new TransactionCallbackWithoutResult() {
                     @Override
                     protected void doInTransactionWithoutResult(TransactionStatus status) {
-                        String destDomain = task.getUniqueKey();
+                        List<String> domains = StrUtil.split(task.getUniqueKey(), KEY_SEPARATOR);
+                        String senderDomain = domains.get(0);
+                        String destDomain = domains.get(1);
                         if (ObjectUtil.isNotNull(relayerNetworkManager.findNetworkItemByDomainName(destDomain))) {
                             log.info("domain router already exist for {}", destDomain);
                             return;
@@ -124,9 +132,9 @@ public class DomainRouterQueryService {
                         }
 
                         if (relayerNetworkManager.hasRemoteRelayerNodeInfoByCertId(domainRouter.getDestRelayer().getRelayerCertId())) {
-                            processIfRelayerExistLocally(domainRouter);
+                            processIfRelayerExistLocally(senderDomain, domainRouter);
                         } else {
-                            processIfUnknownRelayer(domainRouter);
+                            processIfUnknownRelayer(senderDomain, domainRouter);
                         }
 
                         scheduleRepository.updateMarkDTTaskState(
@@ -140,7 +148,7 @@ public class DomainRouterQueryService {
         );
     }
 
-    private void processIfRelayerExistLocally(DomainRouter domainRouter) {
+    private void processIfRelayerExistLocally(String senderDomain, DomainRouter domainRouter) {
         RelayerNodeInfo nodeInfo = relayerNetworkManager.getRemoteRelayerNodeInfoByCertId(
                 domainRouter.getDestRelayer().getRelayerCertId()
         );
@@ -178,7 +186,7 @@ public class DomainRouterQueryService {
         );
     }
 
-    private void processIfUnknownRelayer(DomainRouter domainRouter) {
+    private void processIfUnknownRelayer(String senderDomain, DomainRouter domainRouter) {
 
     }
 }

@@ -57,4 +57,8 @@ public interface RelayerClient {
             Map<String, AbstractCrossChainCertificate> domainSpaceCertPath,
             byte[] remoteRand
     );
+
+    RelayerBlockchainContent channelStart(String destDomain);
+
+    void channelComplete(String senderDomain, RelayerBlockchainContent contentWithSenderBlockchain);
 }

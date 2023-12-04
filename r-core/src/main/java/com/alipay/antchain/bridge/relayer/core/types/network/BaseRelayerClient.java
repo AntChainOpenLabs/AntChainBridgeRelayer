@@ -26,10 +26,7 @@ import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.*;
-import com.alipay.antchain.bridge.relayer.core.types.network.response.HandshakeRespPayload;
-import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloCompleteRespPayload;
-import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloStartRespPayload;
-import com.alipay.antchain.bridge.relayer.core.types.network.response.RelayerResponse;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -212,7 +209,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
         }
         HelloStartRespPayload helloStartRespPayload = HelloStartRespPayload.decodeFromJson(response.getResponsePayload());
         if (ObjectUtil.isNull(helloStartRespPayload)) {
-            throw new RuntimeException("payload is null for hell ask response");
+            throw new RuntimeException("payload is null for hello ask response");
         }
         return helloStartRespPayload;
     }
@@ -228,7 +225,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
         );
         if (ObjectUtil.isNull(response)) {
             throw new RuntimeException(
-                    "sending hello complete request to remote relayer with null response"
+                    "sending hello complete request to remote relayer but get null response"
             );
         } else if (!response.isSuccess()) {
             throw new RuntimeException(
@@ -239,9 +236,50 @@ public abstract class BaseRelayerClient implements RelayerClient {
         }
         HelloCompleteRespPayload helloCompleteRespPayload = HelloCompleteRespPayload.decodeFromJson(response.getResponsePayload());
         if (ObjectUtil.isNull(helloCompleteRespPayload)) {
-            throw new RuntimeException("payload is null for hell complete response");
+            throw new RuntimeException("payload is null for hello complete response");
         }
         return helloCompleteRespPayload;
+    }
+
+    @Override
+    public RelayerBlockchainContent channelStart(String destDomain) {
+        RelayerRequest request = new ChannelStartRequest(destDomain);
+        relayerCredentialManager.signRelayerRequest(request);
+        RelayerResponse response = validateRelayerResponse(sendRequest(request));
+        if (ObjectUtil.isNull(response)) {
+            throw new RuntimeException(
+                    "sending channel start request to remote relayer but get null response"
+            );
+        } else if (!response.isSuccess()) {
+            throw new RuntimeException(
+                    String.format("failed to send channel start complete request to remote relayer : (code: %d, msg: %s)",
+                            response.getResponseCode(), response.getResponseMessage()
+                    )
+            );
+        }
+        ChannelStartRespPayload channelStartRespPayload = ChannelStartRespPayload.decodeFromJson(response.getResponsePayload());
+        if (ObjectUtil.isNull(channelStartRespPayload)) {
+            throw new RuntimeException("payload is null for channel start response");
+        }
+        return RelayerBlockchainContent.decodeFromJson(channelStartRespPayload.getContentWithSingleBlockchain());
+    }
+
+    @Override
+    public void channelComplete(String senderDomain, RelayerBlockchainContent contentWithSenderBlockchain) {
+        RelayerRequest request = new ChannelCompleteRequest(senderDomain, contentWithSenderBlockchain);
+        relayerCredentialManager.signRelayerRequest(request);
+        RelayerResponse response = validateRelayerResponse(sendRequest(request));
+        if (ObjectUtil.isNull(response)) {
+            throw new RuntimeException(
+                    "sending channel complete request to remote relayer but get null response"
+            );
+        } else if (!response.isSuccess()) {
+            throw new RuntimeException(
+                    String.format("failed to send channel complete request to remote relayer : (code: %d, msg: %s)",
+                            response.getResponseCode(), response.getResponseMessage()
+                    )
+            );
+        }
     }
 
     private RelayerResponse validateRelayerResponse(RelayerResponse relayerResponse) {

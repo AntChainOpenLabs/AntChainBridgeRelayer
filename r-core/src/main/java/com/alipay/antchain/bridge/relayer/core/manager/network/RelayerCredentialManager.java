@@ -19,13 +19,10 @@ package com.alipay.antchain.bridge.relayer.core.manager.network;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.util.Set;
-
 import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ConcurrentHashSet;
-import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
-import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
 import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
@@ -124,13 +121,12 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
     @Override
     public boolean validateRelayerRequest(RelayerRequest relayerRequest) {
 
-        if (validatedCertIdCache.contains(relayerRequest.calcRelayerNodeId())) {
-            return true;
+        if (!validatedCertIdCache.contains(relayerRequest.calcRelayerNodeId())) {
+            if (!bcdnsManager.validateCrossChainCertificate(relayerRequest.getSenderRelayerCertificate())) {
+                return false;
+            }
         }
 
-        if (!bcdnsManager.validateCrossChainCertificate(relayerRequest.getSenderRelayerCertificate())) {
-            return false;
-        }
         if (!CrossChainCertificateUtil.isRelayerCert(relayerRequest.getSenderRelayerCertificate())) {
             return false;
         }
@@ -144,18 +140,13 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
 
     @Override
     public boolean validateRelayerResponse(RelayerResponse relayerResponse) {
-        if (validatedCertIdCache.contains(relayerResponse.calcRelayerNodeId())) {
-            return true;
+        if (!validatedCertIdCache.contains(relayerResponse.calcRelayerNodeId())) {
+            if (!bcdnsManager.validateCrossChainCertificate(relayerResponse.getRemoteRelayerCertificate())) {
+                return false;
+            }
         }
-        if (!bcdnsManager.validateCrossChainCertificate(relayerResponse.getRemoteRelayerCertificate())) {
-            return false;
-        }
-        if (
-                ObjectUtil.notEqual(
-                        CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
-                        relayerResponse.getRemoteRelayerCertificate().getType()
-                )
-        ) {
+
+        if (!CrossChainCertificateUtil.isRelayerCert(relayerResponse.getRemoteRelayerCertificate())) {
             return false;
         }
 

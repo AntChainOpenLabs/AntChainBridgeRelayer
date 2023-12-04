@@ -41,10 +41,7 @@ import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkMa
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.exception.RejectRequestException;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.*;
-import com.alipay.antchain.bridge.relayer.core.types.network.response.HandshakeRespPayload;
-import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloCompleteRespPayload;
-import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloStartRespPayload;
-import com.alipay.antchain.bridge.relayer.core.types.network.response.RelayerResponse;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.*;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBucket;
@@ -135,6 +132,10 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                     return processHelloStart(HelloStartRequest.createFrom(request)).encode();
                 case HELLO_COMPLETE:
                     return processHelloComplete(HelloCompleteRequest.createFrom(request)).encode();
+                case CROSSCHAIN_CHANNEL_START:
+                    return processChannelStart(ChannelStartRequest.createFrom(request)).encode();
+                case CROSSCHAIN_CHANNEL_COMPLETE:
+                    return processChannelComplete(ChannelCompleteRequest.createFrom(request)).encode();
                 default:
                     return RelayerResponse.createFailureResponse(
                             "request type not supported: " + request.getRequestType().getCode(),
@@ -159,7 +160,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
     private RelayerResponse processGetRelayerBlockchainInfo(GetRelayerBlockchainInfoRelayerRequest request) {
         if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
-            log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(),  request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
                     "verify crosschain cert failed",
                     getRelayerCredentialManager()
@@ -196,7 +197,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
     private RelayerResponse processGetRelayerBlockchainContent(GetRelayerBlockchainContentRelayerRequest request) {
         if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
-            log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(),  request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
                     "verify crosschain cert failed",
                     getRelayerCredentialManager()
@@ -229,7 +230,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
     private RelayerResponse processAMRequest(AMRelayerRequest request) {
         if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
-            log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(),  request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
                     "verify crosschain cert failed",
                     getRelayerCredentialManager()
@@ -275,7 +276,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
     private RelayerResponse processHandshakeRequest(HandshakeRelayerRequest request) {
         if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
-            log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(),  request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
                     "verify crosschain cert failed",
                     getRelayerCredentialManager()
@@ -369,6 +370,81 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
         return RelayerResponse.createSuccessResponse(
                 new HelloCompleteRespPayload(),
+                getRelayerCredentialManager()
+        );
+    }
+
+    private RelayerResponse processChannelStart(ChannelStartRequest request) {
+        if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(),  request.calcRelayerNodeId());
+            return RelayerResponse.createFailureResponse(
+                    "verify crosschain cert failed",
+                    getRelayerCredentialManager()
+            );
+        }
+
+        RelayerBlockchainInfo blockchainInfo;
+        try {
+            blockchainInfo = getRelayerNetworkManager().getRelayerBlockchainInfo(request.getDomain());
+        } catch (AntChainBridgeRelayerException e) {
+            log.error("failed to process channel start request for domain {} from relayer {}", request.getDomain(), request.calcRelayerNodeId(), e);
+            return RelayerResponse.createFailureResponse(
+                    e.getMsg(),
+                    getRelayerCredentialManager()
+            );
+        }
+        if (ObjectUtil.isNull(blockchainInfo)) {
+            return RelayerResponse.createFailureResponse(
+                    "empty result",
+                    getRelayerCredentialManager()
+            );
+        }
+
+        return RelayerResponse.createSuccessResponse(
+                new ChannelStartRespPayload(
+                        new RelayerBlockchainContent(
+                                MapUtil.builder(blockchainInfo.getDomainCert().getDomain(), blockchainInfo).build(),
+                                getBcdnsManager().getTrustRootCertChain(blockchainInfo.getDomainCert().getDomainSpace())
+                        ).encodeToJson()
+                ),
+                getRelayerCredentialManager()
+        );
+    }
+
+    private RelayerResponse processChannelComplete(ChannelCompleteRequest request) {
+        if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(), request.calcRelayerNodeId());
+            return RelayerResponse.createFailureResponse(
+                    "verify crosschain cert failed",
+                    getRelayerCredentialManager()
+            );
+        }
+
+        RelayerBlockchainContent content = RelayerBlockchainContent.decodeFromJson(request.getRawContentWithSingleBlockchain());
+        if (ObjectUtil.isNull(content)) {
+            log.error("null relayer blockchain content in request from relayer {} for domain {}", request.calcRelayerNodeId(), request.getDomain());
+            return RelayerResponse.createFailureResponse(
+                    "null relayer blockchain content",
+                    getRelayerCredentialManager()
+            );
+        }
+        if (ObjectUtil.isNull(content.getRelayerBlockchainInfo(request.getDomain()))) {
+            log.error("null relayer blockchain content in request from relayer {} for domain {}", request.calcRelayerNodeId(), request.getDomain());
+            return RelayerResponse.createFailureResponse(
+                    "null relayer blockchain info",
+                    getRelayerCredentialManager()
+            );
+        }
+
+        getRelayerNetworkManager().validateAndSaveBlockchainContent(
+                getDefaultNetworkId(),
+                getRelayerNetworkManager().getRelayerNodeInfo(),
+                content,
+                false
+        );
+
+        return RelayerResponse.createSuccessResponse(
+                () -> null,
                 getRelayerCredentialManager()
         );
     }
