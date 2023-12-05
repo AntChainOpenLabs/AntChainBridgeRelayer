@@ -64,5 +64,5 @@ public interface RelayerClient {
 
     RelayerBlockchainContent channelStart(String destDomain);
 
-    void channelComplete(String senderDomain, RelayerBlockchainContent contentWithSenderBlockchain);
+    void channelComplete(String senderDomain, String receiverDomain, RelayerBlockchainContent contentWithSenderBlockchain);
 }

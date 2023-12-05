@@ -52,7 +52,6 @@ public class ReceiverService {
         AuthMsgWrapper authMsgWrapper = new AuthMsgWrapper();
         authMsgWrapper.setDomain(domainName);
         authMsgWrapper.setUcpId(ucpId);
-        //TODO: ucpID 处理一下
         authMsgWrapper.setLedgerInfo(ledgerInfo);
         authMsgWrapper.setAuthMessage(
                 AuthMessageFactory.createAuthMessage(

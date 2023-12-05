@@ -69,10 +69,6 @@ public enum RelayerRequestType {
 
     CROSSCHAIN_CHANNEL_START("crosschainChannelStart"),
 
-    // TODO:
-    //  发送没有且接收端也没有：先完成relayer 连接建立，然后对from链和to链建立channel，
-    //   发送有而接收端没有：如果在消息发送之后，接收端发现本地没有发送链信息，就拒绝该消息，建立一个domainRouterQuery任务，
-    //   将路由和链信息保存下来；不过发送端消息，会持续发不出去，可能会影响某条链发往其他链。
     CROSSCHAIN_CHANNEL_COMPLETE("crosschainChannelComplete"),
 
     QUERY_CROSSCHAIN_MSG_RECEIPT("queryCrossChainMsgReceipt");

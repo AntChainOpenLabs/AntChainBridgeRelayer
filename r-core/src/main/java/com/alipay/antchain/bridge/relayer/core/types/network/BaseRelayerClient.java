@@ -285,8 +285,8 @@ public abstract class BaseRelayerClient implements RelayerClient {
     }
 
     @Override
-    public void channelComplete(String senderDomain, RelayerBlockchainContent contentWithSenderBlockchain) {
-        RelayerRequest request = new ChannelCompleteRequest(senderDomain, contentWithSenderBlockchain);
+    public void channelComplete(String senderDomain, String receiverDomain, RelayerBlockchainContent contentWithSenderBlockchain) {
+        RelayerRequest request = new ChannelCompleteRequest(senderDomain, receiverDomain, contentWithSenderBlockchain);
         relayerCredentialManager.signRelayerRequest(request);
         RelayerResponse response = validateRelayerResponse(sendRequest(request));
         if (ObjectUtil.isNull(response)) {

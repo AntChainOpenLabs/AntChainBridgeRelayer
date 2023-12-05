@@ -9,13 +9,12 @@ import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.core.sdp.ISDPMessage;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageFactory;
 import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
-import com.alipay.antchain.bridge.relayer.commons.model.*;
+import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
+import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
+import com.alipay.antchain.bridge.relayer.commons.model.UniformCrosschainPacketContext;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
-import com.alipay.antchain.bridge.relayer.core.service.domainrouter.DomainRouterQueryService;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -78,23 +77,16 @@ public class AsyncReceiveHandler {
             ISDPMessage sdpMessage = SDPMessageFactory.createSDPMessage(authMsgWrapper.getAuthMessage().getPayload());
             if (
                     !blockchainManager.hasBlockchain(sdpMessage.getTargetDomain().getDomain())
-                            && StrUtil.isEmpty(relayerNetworkManager.findRemoteRelayer(sdpMessage.getTargetDomain().getDomain()))
+                            && (
+                            StrUtil.isEmpty(relayerNetworkManager.findRemoteRelayer(sdpMessage.getTargetDomain().getDomain()))
+                                    || !relayerNetworkManager.hasCrossChainChannel(authMsgWrapper.getDomain(), sdpMessage.getTargetDomain().getDomain())
+                    )
             ) {
                 authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.NOT_READY);
-                markForDomainRouterQuery(authMsgWrapper.getDomain(), sdpMessage.getTargetDomain().getDomain());
+                scheduleRepository.markForDomainRouterQuery(authMsgWrapper.getDomain(), sdpMessage.getTargetDomain().getDomain());
             }
         }
         return authMsgWrapper;
-    }
-
-    private void markForDomainRouterQuery(String senderDomain, String receiverDomain) {
-        String uniqueKey = DomainRouterQueryService.generateDomainRouterQueryTaskUniqueKey(senderDomain, receiverDomain);
-        if (scheduleRepository.hasMarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, uniqueKey)) {
-            return;
-        }
-        MarkDTTask task = new MarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, uniqueKey);
-        task.setState(MarkDTTaskStateEnum.INIT);
-        scheduleRepository.insertMarkDTTask(task);
     }
 
     public boolean receiveAMClientReceipt(List<SDPMsgCommitResult> commitResults) {

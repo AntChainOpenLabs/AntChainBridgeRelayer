@@ -169,7 +169,7 @@ CREATE TABLE `auth_msg_pool`
     `gmt_modified`              datetime                                                      DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `state` (`process_state`),
-    KEY `idx_1` (`domain_name`, `trust_level`, `process_state`, `fail_count`),
+    KEY `idx_am_pool_peek` (`domain_name`, `trust_level`, `process_state`, `fail_count`),
     KEY `idx_domainname_processstate` (`domain_name`, `process_state`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
@@ -248,6 +248,20 @@ CREATE TABLE `relayer_network`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci
   ROW_FORMAT = DYNAMIC;
+
+DROP TABLE IF EXISTS crosschain_channel;
+CREATE TABLE `crosschain_channel`
+(
+    `id`              INT(11) NOT NULL AUTO_INCREMENT,
+    `local_domain`    VARCHAR(128) DEFAULT NULL,
+    `remote_domain`   VARCHAR(128) DEFAULT NULL,
+    `relayer_node_id` VARCHAR(64)  DEFAULT NULL,
+    `state`           VARCHAR(64)  DEFAULT NULL,
+    `gmt_create`      DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified`    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `cc_channel_domains` (`local_domain`, `remote_domain`)
+);
 
 drop table if exists relayer_node;
 CREATE TABLE `relayer_node`

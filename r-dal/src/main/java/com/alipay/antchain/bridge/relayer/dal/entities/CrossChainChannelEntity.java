@@ -14,31 +14,28 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.commons.model;
+package com.alipay.antchain.bridge.relayer.dal.entities;
 
-import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
-public class MarkDTTask {
+@TableName("crosschain_channel")
+public class CrossChainChannelEntity extends BaseEntity {
 
-    public MarkDTTask(MarkDTTaskTypeEnum taskType, String uniqueKey) {
-        this.taskType = taskType;
-        this.uniqueKey = uniqueKey;
-    }
+    @TableField("local_domain")
+    private String localDomain;
 
-    private MarkDTTaskTypeEnum taskType;
+    @TableField("remote_domain")
+    private String remoteDomain;
 
-    private String uniqueKey;
+    @TableField("relayer_node_id")
+    private String relayerNodeId;
 
-    private String nodeId;
-
-    private MarkDTTaskStateEnum state;
-
-    private Long endTime;
+    @TableField("state")
+    private CrossChainChannelStateEnum state;
 }

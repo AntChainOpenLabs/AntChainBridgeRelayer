@@ -45,11 +45,13 @@ import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.Synchronized;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@Slf4j
 public class ScheduleRepository implements IScheduleRepository {
 
     private static final String SCHEDULE_LOCK_KEY = "RELAYER_SCHEDULE_LOCK";
@@ -289,6 +291,18 @@ public class ScheduleRepository implements IScheduleRepository {
                     e
             );
         }
+    }
+
+    public void markForDomainRouterQuery(String senderDomain, String receiverDomain) {
+        String uniqueKey = DomainRouterQueryMarkDTTask.generateDomainRouterQueryTaskUniqueKey(senderDomain, receiverDomain);
+        log.info("try to start a mark task for domain router query: {} ", uniqueKey);
+        if (hasMarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, uniqueKey)) {
+            log.warn("mark task for domain router query already exist: {} ", uniqueKey);
+            return;
+        }
+        MarkDTTask task = new MarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, uniqueKey);
+        task.setState(MarkDTTaskStateEnum.INIT);
+        insertMarkDTTask(task);
     }
 
     @Override

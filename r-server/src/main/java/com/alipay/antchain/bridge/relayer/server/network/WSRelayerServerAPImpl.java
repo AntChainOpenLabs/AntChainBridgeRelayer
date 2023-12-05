@@ -458,14 +458,14 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
         RelayerBlockchainContent content = RelayerBlockchainContent.decodeFromJson(request.getRawContentWithSingleBlockchain());
         if (ObjectUtil.isNull(content)) {
-            log.error("null relayer blockchain content in request from relayer {} for domain {}", request.calcRelayerNodeId(), request.getDomain());
+            log.error("null relayer blockchain content in request from relayer {} for domain {}", request.calcRelayerNodeId(), request.getSenderDomain());
             return RelayerResponse.createFailureResponse(
                     "null relayer blockchain content",
                     getRelayerCredentialManager()
             );
         }
-        if (ObjectUtil.isNull(content.getRelayerBlockchainInfo(request.getDomain()))) {
-            log.error("null relayer blockchain content in request from relayer {} for domain {}", request.calcRelayerNodeId(), request.getDomain());
+        if (ObjectUtil.isNull(content.getRelayerBlockchainInfo(request.getSenderDomain()))) {
+            log.error("null relayer blockchain content in request from relayer {} for domain {}", request.calcRelayerNodeId(), request.getSenderDomain());
             return RelayerResponse.createFailureResponse(
                     "null relayer blockchain info",
                     getRelayerCredentialManager()
@@ -477,6 +477,11 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                 getRelayerNetworkManager().getRelayerNodeInfo(),
                 content,
                 false
+        );
+        getRelayerNetworkManager().createNewCrossChainChannel(
+                request.getReceiverDomain(),
+                request.getSenderDomain(),
+                request.calcRelayerNodeId()
         );
 
         return RelayerResponse.createSuccessResponse(

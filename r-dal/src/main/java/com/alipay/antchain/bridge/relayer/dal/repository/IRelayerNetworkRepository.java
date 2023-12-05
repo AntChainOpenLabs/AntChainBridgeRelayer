@@ -19,6 +19,8 @@ package com.alipay.antchain.bridge.relayer.dal.repository;
 import java.util.List;
 import java.util.Map;
 
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerHealthInfo;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNetwork;
@@ -65,4 +67,14 @@ public interface IRelayerNetworkRepository {
     boolean hasRelayerNode(String nodeId);
 
     List<RelayerHealthInfo> getAllRelayerHealthInfo();
+
+    boolean hasCrossChainChannel(String localDomain, String remoteDomain);
+
+    void addCrossChainChannel(CrossChainChannelDO crossChainChannelDO);
+
+    void updateCrossChainChannel(CrossChainChannelDO crossChainChannelDO);
+
+    CrossChainChannelDO getCrossChainChannel(String localDomain, String remoteDomain);
+
+    void updateCrossChainChannelState(String localDomain, String remoteDomain, CrossChainChannelStateEnum state);
 }

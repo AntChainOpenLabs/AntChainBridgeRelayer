@@ -149,8 +149,9 @@ public class BlockNotifyTask extends BlockBaseTask {
                 for (BlockWorker worker : workersByTask.get(notifyTaskType)) {
                     if (!worker.process(block)) {
                         log.error(
-                                "worker process block failed: [ blockchain: {}, height: {} ]",
-                                getProcessContext().getBlockchainMeta().getMetaKey(), 
+                                "worker {} process block failed: [ blockchain: {}, height: {} ]",
+                                notifyTaskType,
+                                getProcessContext().getBlockchainMeta().getMetaKey(),
                                 currentHeight
                         );
                         processResult = false;

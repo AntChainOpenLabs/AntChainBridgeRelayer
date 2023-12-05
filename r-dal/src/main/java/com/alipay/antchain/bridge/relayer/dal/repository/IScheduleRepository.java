@@ -54,6 +54,8 @@ public interface IScheduleRepository {
 
     void insertMarkDTTask(MarkDTTask markDTTask);
 
+    void markForDomainRouterQuery(String senderDomain, String receiverDomain);
+
     boolean hasMarkDTTask(MarkDTTaskTypeEnum taskType, String uniqueKey);
 
     List<MarkDTTask> peekInitOrTimeoutMarkDTTask(int limit);

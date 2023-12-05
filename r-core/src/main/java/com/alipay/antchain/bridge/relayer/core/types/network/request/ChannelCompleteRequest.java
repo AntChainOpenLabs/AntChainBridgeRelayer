@@ -36,19 +36,24 @@ public class ChannelCompleteRequest extends RelayerRequest {
     }
 
     @JSONField
-    private String domain;
+    private String senderDomain;
+
+    @JSONField
+    private String receiverDomain;
 
     @JSONField
     private String rawContentWithSingleBlockchain;
 
     public ChannelCompleteRequest(
-            String domain,
+            String senderDomain,
+            String receiverDomain,
             RelayerBlockchainContent content
     ) {
         super(
                 RelayerRequestType.CROSSCHAIN_CHANNEL_COMPLETE
         );
-        this.domain = domain;
+        this.senderDomain = senderDomain;
+        this.receiverDomain = receiverDomain;
         this.rawContentWithSingleBlockchain = content.encodeToJson();
         setRequestPayload(
                 JSON.toJSONBytes(this)

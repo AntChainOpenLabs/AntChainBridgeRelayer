@@ -31,6 +31,8 @@ import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
@@ -501,6 +503,41 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
     @Override
     public List<RelayerHealthInfo> healthCheckRelayers() {
         return relayerNetworkRepository.getAllRelayerHealthInfo();
+    }
+
+    @Override
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
+    public void createNewCrossChainChannel(String localDomain, String remoteDomain, String relayerNodeId) {
+        try {
+            if (relayerNetworkRepository.hasCrossChainChannel(localDomain, remoteDomain)) {
+                relayerNetworkRepository.updateCrossChainChannel(
+                        new CrossChainChannelDO(localDomain, remoteDomain, relayerNodeId, CrossChainChannelStateEnum.CONNECTED)
+                );
+            } else {
+                relayerNetworkRepository.addCrossChainChannel(
+                        new CrossChainChannelDO(localDomain, remoteDomain, relayerNodeId, CrossChainChannelStateEnum.CONNECTED)
+                );
+            }
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_CREATE_NEW_CROSSCHAIN_CHANNEL_FAILED,
+                    e,
+                    "failed to create new crosschain channel ( local: {}, remote: {}, relayer: {} )",
+                    localDomain, remoteDomain, relayerNodeId
+            );
+        }
+    }
+
+    @Override
+    public CrossChainChannelDO getCrossChainChannel(String localDomain, String remoteDomain) {
+        return relayerNetworkRepository.getCrossChainChannel(localDomain, remoteDomain);
+    }
+
+    @Override
+    public boolean hasCrossChainChannel(String localDomain, String remoteDomain) {
+        return relayerNetworkRepository.hasCrossChainChannel(localDomain, remoteDomain);
     }
 
     private void processRelayerBlockchainInfo(String networkId, String domain, RelayerNodeInfo relayerNode,

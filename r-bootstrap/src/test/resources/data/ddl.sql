@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS `auth_msg_pool`
     `gmt_modified`              datetime     DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `state` (`process_state`),
-    KEY `idx_1` (`domain_name`, `trust_level`, `process_state`, `fail_count`),
+    KEY `idx_am_pool_peek` (`domain_name`, `trust_level`, `process_state`, `fail_count`),
     KEY `idx_domainname_processstate` (`domain_name`, `process_state`)
 );
 
@@ -206,6 +206,19 @@ CREATE TABLE IF NOT EXISTS `relayer_network`
     UNIQUE KEY `uk_item` (`network_id`, `domain`, `node_id`)
 );
 
+CREATE TABLE `crosschain_channel`
+(
+    `id`              INT(11) NOT NULL AUTO_INCREMENT,
+    `local_domain`    VARCHAR(128) DEFAULT NULL,
+    `remote_domain`   VARCHAR(128) DEFAULT NULL,
+    `relayer_node_id` VARCHAR(64)  DEFAULT NULL,
+    `state`           VARCHAR(64)  DEFAULT NULL,
+    `gmt_create`      DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    `gmt_modified`    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `cc_channel_domains` (`local_domain`, `remote_domain`)
+);
+
 CREATE TABLE IF NOT EXISTS `relayer_node`
 (
     `id`                   int(11) NOT NULL AUTO_INCREMENT,
@@ -241,7 +254,8 @@ CREATE TABLE IF NOT EXISTS `auth_msg_archive`
     `ext`                       mediumblob,
     `gmt_create`                datetime     DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`              datetime     DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    UNIQUE KEY am_archive_ucp_id (`ucp_id`)
 );
 
 CREATE TABLE IF NOT EXISTS `sdp_msg_archive`
@@ -267,7 +281,8 @@ CREATE TABLE IF NOT EXISTS `sdp_msg_archive`
     `tx_fail_reason`              varchar(256) DEFAULT NULL,
     `gmt_create`                  datetime     DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`                datetime     DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    UNIQUE KEY sdp_archive_am_id (`auth_msg_id`)
 );
 
 CREATE TABLE IF NOT EXISTS `blockchain_dt_task`

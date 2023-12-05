@@ -7,19 +7,23 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.core.sdp.AbstractSDPMessage;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageFactory;
-import com.alipay.antchain.bridge.relayer.commons.constant.*;
+import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgTrustLevelEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
-import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.manager.gov.IGovernManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.types.exception.CrossChainChannelNotExistException;
 import com.alipay.antchain.bridge.relayer.core.types.exception.SendAuthMessageException;
 import com.alipay.antchain.bridge.relayer.core.types.exception.UnknownRelayerForDestDomainException;
 import com.alipay.antchain.bridge.relayer.core.types.network.IRelayerClientPool;
 import com.alipay.antchain.bridge.relayer.core.types.network.RelayerClient;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
+import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.impl.BlockchainIdleDCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,7 +59,7 @@ public class AuthenticMessageProcess {
     private IRelayerClientPool relayerClientPool;
 
     @Resource
-    private IBCDNSManager bcdnsManager;
+    private IScheduleRepository scheduleRepository;
 
     @Value("${relayer.service.process.sdp.acl_on:true}")
     private boolean sdpACLOn;
@@ -120,6 +124,11 @@ public class AuthenticMessageProcess {
                 log.warn("am {} with fail count {} process failed", amMsgWrapper.getAuthMsgId(), amMsgWrapper.getFailCount(), e);
             }
             return crossChainMessageRepository.updateAuthMessage(amMsgWrapper);
+        } catch (CrossChainChannelNotExistException e) {
+            log.error("failed to process sdp (send: {}, dest: {}) because that crosschain channel not found: ",
+                    e.getSenderDomain(), e.getReceiverDomain(), e);
+            scheduleRepository.markForDomainRouterQuery(e.getSenderDomain(), e.getReceiverDomain());
+            return true;
         } catch (AntChainBridgeRelayerException e) {
             throw e;
         } catch (Exception e) {
@@ -132,7 +141,6 @@ public class AuthenticMessageProcess {
                     amMsgWrapper.isNetworkAM()
             );
         }
-
     }
 
     private void processLocalAM(AuthMsgWrapper authMsgWrapper) {
@@ -254,8 +262,18 @@ public class AuthenticMessageProcess {
                     StrUtil.format("relayer not exist for dest domain {}", sdpMsgWrapper.getReceiverBlockchainDomain())
             );
         }
+        if (
+                blockchainManager.hasBlockchain(sdpMsgWrapper.getSenderBlockchainDomain())
+                        && !relayerNetworkManager.hasCrossChainChannel(sdpMsgWrapper.getSenderBlockchainDomain(), sdpMsgWrapper.getReceiverBlockchainDomain())
+        ) {
+            throw new CrossChainChannelNotExistException(
+                    sdpMsgWrapper.getSenderBlockchainDomain(),
+                    sdpMsgWrapper.getReceiverBlockchainDomain(),
+                    StrUtil.format("crosschain channel not exist for local sdp msg (send: {}, dest: {})",
+                            sdpMsgWrapper.getSenderBlockchainDomain(), sdpMsgWrapper.getReceiverBlockchainDomain())
+            );
+        }
         try {
-            // TODO: 未来需要更新接口，以支持不同信任等级的流程
             RelayerClient relayerClient = relayerClientPool.getRelayerClientByDomain(sdpMsgWrapper.getReceiverBlockchainDomain());
             if (ObjectUtil.isNull(relayerClient)) {
                 relayerClient = relayerClientPool.getRelayerClient(
@@ -290,7 +308,6 @@ public class AuthenticMessageProcess {
         sdpMsgWrapper.setProcessState(SDPMsgProcessStateEnum.REMOTE_PENDING);
         crossChainMessageRepository.putSDPMessage(sdpMsgWrapper);
 
-        // TODO: 应当对发出的SDP消息，也进行存储putSDPMessage
         log.info(
                 "successful to send message " +
                         "( version: {}, from_blockchain: {}, sender: {}, receiver_blockchain: {}, receiver: {}, seq: {}, am_id: {} ) " +

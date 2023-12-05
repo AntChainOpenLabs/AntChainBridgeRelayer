@@ -1,7 +1,6 @@
 package com.alipay.antchain.bridge.relayer.core.service.committer;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
@@ -18,10 +17,9 @@ import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgPackage;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
-import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
-import com.alipay.antchain.bridge.relayer.core.service.anchor.MultiAnchorProcessService;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.AbstractBlockchainClient;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.BlockchainClientPool;
+import com.alipay.antchain.bridge.relayer.core.utils.ProcessUtils;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.ISystemConfigRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.impl.BlockchainIdleDCache;
@@ -49,13 +47,7 @@ public class CommitterService {
     private ICrossChainMessageRepository crossChainMessageRepository;
 
     @Resource
-    private IBlockchainManager blockchainManager;
-
-    @Resource
     private BlockchainClientPool blockchainClientPool;
-
-    @Resource
-    private MultiAnchorProcessService multiAnchorProcessService;
 
     @Resource
     private ISystemConfigRepository systemConfigRepository;
@@ -89,7 +81,7 @@ public class CommitterService {
             );
         }
 
-        if (sdpMsgWrappers.size() > 0) {
+        if (!sdpMsgWrappers.isEmpty()) {
             log.info("peek {} sdp msg for blockchain {} from pool", sdpMsgWrappers.size(), blockchainId);
         } else {
             this.blockchainIdleDCache.setLastEmptyAMSendQueueTime(blockchainProduct, blockchainId);
@@ -102,7 +94,7 @@ public class CommitterService {
                 committerServiceCoreSize
         );
 
-        if (sdpMsgsMap.size() > 0) {
+        if (!sdpMsgsMap.isEmpty()) {
             log.info("peek {} sdp msg sessions for blockchain {} from pool", sdpMsgsMap.size(), blockchainId);
         } else {
             log.debug("peek zero sdp msg sessions for blockchain {} from pool", blockchainId);
@@ -122,22 +114,7 @@ public class CommitterService {
         }
 
         // 等待执行完成
-        do {
-            List<Future> checkFutures = Lists.reverse(Lists.newArrayList(futures));
-            for (Future future : checkFutures) {
-                try {
-                    future.get();
-                } catch (InterruptedException e) {
-                    log.error("worker interrupted exception for blockchain {}-{}.", blockchainProduct, blockchainId, e);
-                } catch (ExecutionException e) {
-                    log.error("worker execution fail for blockchain {}-{}.", blockchainProduct, blockchainId, e);
-                } finally {
-                    if (future.isDone()) {
-                        futures.remove(future);
-                    }
-                }
-            }
-        } while (!futures.isEmpty());
+        ProcessUtils.waitAllFuturesDone(blockchainProduct, blockchainId, futures, log);
     }
 
     private boolean isBusyBlockchain(String blockchainProduct, String blockchainId) {
@@ -191,7 +168,7 @@ public class CommitterService {
             }
 
             // 如果无序消息的总数大于0，就按各个session的消息数目比例，均分掉剩余的线程
-            if (unorderedMap.size() > 0) {
+            if (!unorderedMap.isEmpty()) {
                 // 因为要重新分配后，在add回unorderedMap，所以这里先删除
                 unorderedMap.keySet().forEach(sdpMsgsMap::remove);
                 leftWorkerNum += unorderedMap.size();
@@ -224,7 +201,6 @@ public class CommitterService {
 
     private Runnable wrapRequestTask(String sessionName, List<SDPMsgWrapper> sessionMsgs) {
         return () -> {
-
             Lock sessionLock = crossChainMessageRepository.getSessionLock(sessionName);
             sessionLock.lock();
             log.info("get distributed lock for session {}", sessionName);

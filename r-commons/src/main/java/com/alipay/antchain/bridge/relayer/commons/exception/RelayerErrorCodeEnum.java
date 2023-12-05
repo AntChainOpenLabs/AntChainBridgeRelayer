@@ -77,7 +77,11 @@ public enum RelayerErrorCodeEnum {
 
     CORE_RELAYER_HANDSHAKE_FAILED("0208", "relayer handshake failed"),
 
-    SEND_AM_TO_REMOTE_RELAYER_FAILED("0209", "send am to relayer failed"),
+    CORE_SEND_AM_TO_REMOTE_RELAYER_FAILED("0209", "send am to relayer failed"),
+
+    CORE_CREATE_NEW_CROSSCHAIN_CHANNEL_FAILED("0210", "create new crosschain channel failed"),
+
+    CORE_CROSSCHAIN_CHANNEL_NOT_EXIST_DOMAIN("0211", "crosschain channel not exist"),
 
     SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED("0301", "process auth msg failed"),
 

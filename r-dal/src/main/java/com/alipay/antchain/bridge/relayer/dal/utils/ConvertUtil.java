@@ -37,6 +37,7 @@ import com.alipay.antchain.bridge.commons.core.am.*;
 import com.alipay.antchain.bridge.commons.core.base.*;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV1;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV2;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.dal.entities.*;
 import lombok.NonNull;
@@ -512,5 +513,13 @@ public class ConvertUtil {
         MarkDTTask task = BeanUtil.copyProperties(entity, MarkDTTask.class, MarkDTTaskEntity.Fields.endTime);
         task.setEndTime(entity.getEndTime().getTime());
         return task;
+    }
+
+    public static CrossChainChannelDO convertFromCrossChainChannelEntity(CrossChainChannelEntity entity) {
+        return BeanUtil.copyProperties(entity, CrossChainChannelDO.class);
+    }
+
+    public static CrossChainChannelEntity convertFromCrossChainChannelDO(CrossChainChannelDO crossChainChannelDO) {
+        return BeanUtil.copyProperties(crossChainChannelDO, CrossChainChannelEntity.class);
     }
 }

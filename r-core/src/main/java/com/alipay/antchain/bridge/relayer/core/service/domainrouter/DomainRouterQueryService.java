@@ -33,15 +33,14 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
+import com.alipay.antchain.bridge.bcdns.types.base.Relayer;
 import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
-import com.alipay.antchain.bridge.relayer.commons.model.MarkDTTask;
-import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
-import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
-import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
+import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
@@ -62,11 +61,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Slf4j
 public class DomainRouterQueryService {
 
-    private static final String KEY_SEPARATOR = "^^";
-
-    public static String generateDomainRouterQueryTaskUniqueKey(String senderDomain, String receiverDomain) {
-        return StrUtil.format("{}{}{}", senderDomain, KEY_SEPARATOR, receiverDomain);
-    }
 
     @Value("${relayer.service.domain_router.batch_size:8}")
     private int domainRouterBatchSize;
@@ -132,33 +126,34 @@ public class DomainRouterQueryService {
                 new TransactionCallbackWithoutResult() {
                     @Override
                     protected void doInTransactionWithoutResult(TransactionStatus status) {
-                        List<String> domains = StrUtil.split(task.getUniqueKey(), KEY_SEPARATOR);
-                        String senderDomain = domains.get(0);
-                        String destDomain = domains.get(1);
-
+                        DomainRouterQueryMarkDTTask currTask = new DomainRouterQueryMarkDTTask(task);
+                        String senderDomain = currTask.getSenderDomain();
+                        String destDomain = currTask.getReceiverDomain();
                         log.info("start to query domain router with channel {}-{} and handshake with relayer", senderDomain, destDomain);
 
-                        if (ObjectUtil.isNotNull(relayerNetworkManager.findNetworkItemByDomainName(destDomain))) {
-                            log.info("domain router already exist for {}", destDomain);
+                        String remoteRelayerNodeId = relayerNetworkManager.findRemoteRelayer(destDomain);
+                        if (
+                                StrUtil.isNotEmpty(remoteRelayerNodeId)
+                                        && relayerNetworkManager.hasCrossChainChannel(senderDomain, destDomain)
+                        ) {
+                            log.error("domain router for {} and crosschain channel {}-{} already exist ",
+                                    destDomain, senderDomain, destDomain);
                             return;
                         }
 
-                        DomainRouter domainRouter = bcdnsManager.getDomainRouter(destDomain);
-                        if (ObjectUtil.isNull(domainRouter)) {
-                            throw new RuntimeException(
-                                    StrUtil.format(
-                                            "found no domain router for channel {}-{} on all BCDNS",
-                                            senderDomain, destDomain
-                                    )
-                            );
-                        }
-
-                        if (relayerNetworkManager.hasRemoteRelayerNode(
-                                RelayerNodeInfo.calculateNodeId(domainRouter.getDestRelayer().getRelayerCert()))
-                        ) {
-                            processIfRelayerExistLocally(senderDomain, domainRouter);
+                        if (StrUtil.isNotEmpty(remoteRelayerNodeId)) {
+                            processIfRelayerExistAndLocalRouter(remoteRelayerNodeId, senderDomain, destDomain);
                         } else {
-                            processIfUnknownRelayer(senderDomain, domainRouter);
+                            DomainRouter domainRouter = getDomainRouterFromNetwork(senderDomain, destDomain);
+                            if (relayerNetworkManager.hasRemoteRelayerNode(
+                                    RelayerNodeInfo.calculateNodeId(
+                                            getDomainRouterFromNetwork(senderDomain, destDomain).getDestRelayer().getRelayerCert()
+                                    )
+                            )) {
+                                processIfRelayerExistButNoLocalRouter(senderDomain, domainRouter);
+                            } else {
+                                processIfUnknownRelayer(senderDomain, domainRouter);
+                            }
                         }
 
                         scheduleRepository.updateMarkDTTaskState(
@@ -174,7 +169,37 @@ public class DomainRouterQueryService {
         );
     }
 
-    private void processIfRelayerExistLocally(String senderDomain, DomainRouter domainRouter) {
+
+    private DomainRouter getDomainRouterFromNetwork(String senderDomain, String destDomain) {
+        DomainRouter domainRouter = bcdnsManager.getDomainRouter(destDomain);
+        if (ObjectUtil.isNull(domainRouter)) {
+            throw new RuntimeException(
+                    StrUtil.format(
+                            "found no domain router for channel {}-{} on all BCDNS",
+                            senderDomain, destDomain
+                    )
+            );
+        }
+        return domainRouter;
+    }
+
+    private DomainRouter getDomainRouterFromLocal(RelayerNodeInfo remoteNodeInfo, String destDomain) {
+        return new DomainRouter(
+                new CrossChainDomain(destDomain),
+                new Relayer(
+                        remoteNodeInfo.getRelayerCertId(),
+                        remoteNodeInfo.getRelayerCrossChainCertificate(),
+                        remoteNodeInfo.getEndpoints()
+                )
+        );
+    }
+
+    private void processIfRelayerExistAndLocalRouter(String remoteRelayerNodeId, String senderDomain, String destDomain) {
+        RelayerNodeInfo remoteNodeInfo = relayerNetworkManager.getRelayerNode(remoteRelayerNodeId, false);
+        buildCrossChainChannel(remoteNodeInfo, senderDomain, getDomainRouterFromLocal(remoteNodeInfo, destDomain), false);
+    }
+
+    private void processIfRelayerExistButNoLocalRouter(String senderDomain, DomainRouter domainRouter) {
 
         log.info("process domain router for channel {}-{} with relayer existed", senderDomain, domainRouter.getDestDomain().getDomain());
 
@@ -187,7 +212,7 @@ public class DomainRouterQueryService {
                 ListUtil.toList(new HashSet<>(nodeInfo.getEndpoints()).iterator())
         );
 
-        buildCrossChainChannel(nodeInfo, senderDomain, domainRouter);
+        buildCrossChainChannel(nodeInfo, senderDomain, domainRouter, true);
     }
 
     private void processIfUnknownRelayer(String senderDomain, DomainRouter domainRouter) {
@@ -197,7 +222,8 @@ public class DomainRouterQueryService {
         buildCrossChainChannel(
                 helloWithRelayer(domainRouter),
                 senderDomain,
-                domainRouter
+                domainRouter,
+                true
         );
     }
 
@@ -296,28 +322,32 @@ public class DomainRouterQueryService {
         return remoteNodeInfo;
     }
 
-    private void buildCrossChainChannel(RelayerNodeInfo nodeInfo, String senderDomain, DomainRouter domainRouter) {
+    private void buildCrossChainChannel(RelayerNodeInfo nodeInfo, String senderDomain, DomainRouter domainRouter, boolean channelStartNeed) {
         log.info("channel start request with relayer {} for domain {}", nodeInfo.getNodeId(), domainRouter.getDestDomain());
         RelayerClient relayerClient = relayerClientPool.getRelayerClient(nodeInfo, domainRouter.getDestDomain().getDomain());
 
-        RelayerBlockchainContent blockchainContent = relayerClient.channelStart(domainRouter.getDestDomain().getDomain());
-        if (ObjectUtil.isNull(blockchainContent)) {
-            throw new RuntimeException(
-                    StrUtil.format("null relayer blockchain content returned from {}", nodeInfo.getNodeId())
-            );
-        }
-        if (ObjectUtil.isNull(blockchainContent.getRelayerBlockchainInfo(domainRouter.getDestDomain().getDomain()))) {
-            throw new RuntimeException(
-                    StrUtil.format("null relayer blockchain info returned from {}", nodeInfo.getNodeId())
-            );
-        }
+        if (channelStartNeed) {
+            RelayerBlockchainContent blockchainContent = relayerClient.channelStart(domainRouter.getDestDomain().getDomain());
+            if (ObjectUtil.isNull(blockchainContent)) {
+                throw new RuntimeException(
+                        StrUtil.format("null relayer blockchain content returned from {}", nodeInfo.getNodeId())
+                );
+            }
+            if (ObjectUtil.isNull(blockchainContent.getRelayerBlockchainInfo(domainRouter.getDestDomain().getDomain()))) {
+                throw new RuntimeException(
+                        StrUtil.format("null relayer blockchain info returned from {}", nodeInfo.getNodeId())
+                );
+            }
 
-        relayerNetworkManager.validateAndSaveBlockchainContent(
-                defaultNetworkId,
-                nodeInfo,
-                blockchainContent,
-                false
-        );
+            relayerNetworkManager.validateAndSaveBlockchainContent(
+                    defaultNetworkId,
+                    nodeInfo,
+                    blockchainContent,
+                    false
+            );
+        } else {
+            log.info("channel start already done because that relayer network already exist for domain {}", domainRouter.getDestDomain().getDomain());
+        }
 
         RelayerBlockchainInfo relayerBlockchainInfo = relayerNetworkManager.getRelayerBlockchainInfo(senderDomain);
         if (ObjectUtil.isNull(relayerBlockchainInfo)) {
@@ -327,11 +357,14 @@ public class DomainRouterQueryService {
         log.info("channel complete request with relayer {} for domain {}", nodeInfo.getNodeId(), senderDomain);
         relayerClient.channelComplete(
                 senderDomain,
+                domainRouter.getDestDomain().getDomain(),
                 new RelayerBlockchainContent(
                         MapUtil.builder(senderDomain, relayerBlockchainInfo).build(),
                         bcdnsManager.getTrustRootCertChain(relayerBlockchainInfo.getDomainCert().getDomainSpace())
                 )
         );
+
+        relayerNetworkManager.createNewCrossChainChannel(senderDomain, domainRouter.getDestDomain().getDomain(), nodeInfo.getNodeId());
 
         log.info(
                 "built channel ( send: {} , receive: {} ) with relayer {} that its ( relayer_node_id: {} )",

@@ -18,13 +18,16 @@ package com.alipay.antchain.bridge.relayer.core.types.exception;
 
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
+import lombok.Getter;
 
-public class SendAuthMessageException extends AntChainBridgeRelayerException {
-    public SendAuthMessageException(Throwable throwable, String formatStr, Object... objects) {
-        super(RelayerErrorCodeEnum.CORE_SEND_AM_TO_REMOTE_RELAYER_FAILED, throwable, formatStr, objects);
-    }
+@Getter
+public class CrossChainChannelNotExistException extends AntChainBridgeRelayerException {
 
-    public SendAuthMessageException(String message) {
-        super(RelayerErrorCodeEnum.CORE_SEND_AM_TO_REMOTE_RELAYER_FAILED, message);
+    private String senderDomain;
+
+    private String receiverDomain;
+
+    public CrossChainChannelNotExistException(String senderDomain, String receiverDomain, String message) {
+        super(RelayerErrorCodeEnum.CORE_UNKNOWN_RELAYER_FOR_DEST_DOMAIN, message);
     }
 }

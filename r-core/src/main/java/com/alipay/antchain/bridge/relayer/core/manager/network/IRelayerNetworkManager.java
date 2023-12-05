@@ -3,6 +3,7 @@ package com.alipay.antchain.bridge.relayer.core.manager.network;
 import java.util.List;
 
 import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
 import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 
@@ -226,4 +227,10 @@ public interface IRelayerNetworkManager {
      * @return
      */
     List<RelayerHealthInfo> healthCheckRelayers();
+
+    void createNewCrossChainChannel(String localDomain, String remoteDomain, String relayerNodeId);
+
+    CrossChainChannelDO getCrossChainChannel(String localDomain, String remoteDomain);
+
+    boolean hasCrossChainChannel(String localDomain, String remoteDomain);
 }
