@@ -17,17 +17,19 @@
 package com.alipay.antchain.bridge.relayer.core.types.network.request;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.codec.Base64;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
+import com.alipay.antchain.bridge.commons.core.am.IAuthMessage;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class AMRelayerRequest extends RelayerRequest {
+public class PropagateCrossChainMsgRequest extends RelayerRequest {
 
-    public static AMRelayerRequest createFrom(RelayerRequest relayerRequest) {
-        AMRelayerRequest request = JSON.parseObject(relayerRequest.getRequestPayload(), AMRelayerRequest.class);
+    public static PropagateCrossChainMsgRequest createFrom(RelayerRequest relayerRequest) {
+        PropagateCrossChainMsgRequest request = JSON.parseObject(relayerRequest.getRequestPayload(), PropagateCrossChainMsgRequest.class);
         BeanUtil.copyProperties(relayerRequest, request);
         return request;
     }
@@ -47,10 +49,10 @@ public class AMRelayerRequest extends RelayerRequest {
     @JSONField
     private String ledgerInfo;
 
-    public AMRelayerRequest(
+    public PropagateCrossChainMsgRequest(
             String udagProof,
             String ucpId,
-            String authMsg,
+            IAuthMessage authMsg,
             String domainName,
             String ledgerInfo
     ) {
@@ -59,7 +61,7 @@ public class AMRelayerRequest extends RelayerRequest {
         );
         this.udagProof = udagProof;
         this.ucpId = ucpId;
-        this.authMsg = authMsg;
+        this.authMsg = Base64.encode(authMsg.encode());
         this.domainName = domainName;
         this.ledgerInfo = ledgerInfo;
 

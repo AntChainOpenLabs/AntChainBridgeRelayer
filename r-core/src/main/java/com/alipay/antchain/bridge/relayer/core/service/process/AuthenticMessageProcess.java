@@ -1,6 +1,5 @@
 package com.alipay.antchain.bridge.relayer.core.service.process;
 
-import java.util.Base64;
 import javax.annotation.Resource;
 
 import cn.hutool.core.util.ObjectUtil;
@@ -29,13 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-/**
- * AM消息处理器
- * <p>
- * 根据不同的上层AM协议，处理流程不一样
- * <p>
- * 如果是MSG消息，则需要将取UDAG数据后，将消息拆分为一条发送消息落库
- */
 @Component
 @Slf4j
 public class AuthenticMessageProcess {
@@ -281,10 +273,10 @@ public class AuthenticMessageProcess {
                         sdpMsgWrapper.getReceiverBlockchainDomain()
                 );
             }
-            relayerClient.amRequest(
+            relayerClient.propagateCrossChainMsg(
                     sdpMsgWrapper.getSenderBlockchainDomain(),
                     sdpMsgWrapper.getAuthMsgWrapper().getUcpId(),
-                    Base64.getEncoder().encodeToString(sdpMsgWrapper.getAuthMsgWrapper().getAuthMessage().encode()),
+                    sdpMsgWrapper.getAuthMsgWrapper().getAuthMessage(),
                     "",
                     new String(sdpMsgWrapper.getAuthMsgWrapper().getRawLedgerInfo())
             );

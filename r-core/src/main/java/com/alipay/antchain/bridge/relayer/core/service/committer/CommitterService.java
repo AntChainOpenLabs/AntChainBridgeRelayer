@@ -101,7 +101,6 @@ public class CommitterService {
         }
 
         List<Future> futures = new ArrayList<>();
-        // 记录当前SDP消息数目，用于性能统计
         for (Map.Entry<String, List<SDPMsgWrapper>> entry : sdpMsgsMap.entrySet()) {
             futures.add(
                     committerServiceThreadsPool.submit(
@@ -209,7 +208,7 @@ public class CommitterService {
                         new TransactionCallbackWithoutResult() {
                             @Override
                             protected void doInTransactionWithoutResult(TransactionStatus status) {
-                                // 这是个分布式并发任务，加了session锁后，要check下每个p2p消息的最新状态，防止重复处理
+                                // 这是个分布式并发任务，加了session锁后，要check下每个SDP消息的最新状态，防止重复处理
                                 List<SDPMsgWrapper> sessionMsgsUpdate = filterOutdatedMsg(sessionMsgs);
 
                                 // p2p按seq排序，后续需要按序提交
@@ -253,10 +252,10 @@ public class CommitterService {
      * @param msgSet
      */
     private void updateExpiredMsg(ParsedSDPMsgSet msgSet) {
-        if (msgSet.getExpired().size() != 0) {
+        if (!msgSet.getExpired().isEmpty()) {
             for (SDPMsgWrapper msg : msgSet.getExpired()) {
                 msg.setProcessState(SDPMsgProcessStateEnum.TX_SUCCESS);
-                log.info("AMCommitter: am has commit on chain {}", msg.getAuthMsgWrapper().getAuthMsgId());
+                log.info("AMCommitter: am {} has been committed on chain", msg.getAuthMsgWrapper().getAuthMsgId());
                 if (!crossChainMessageRepository.updateSDPMessage(msg)) {
                     throw new RuntimeException("database update failed");
                 }
@@ -275,7 +274,7 @@ public class CommitterService {
         updateExpiredMsg(msgSet);
 
         // 处理新数据
-        if (msgSet.getUpload().size() == 0) {
+        if (msgSet.getUpload().isEmpty()) {
             return;
         }
 

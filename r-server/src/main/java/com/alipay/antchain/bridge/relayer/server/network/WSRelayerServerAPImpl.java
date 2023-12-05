@@ -120,8 +120,8 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                             GetRelayerBlockchainContentRelayerRequest.createFrom(request)
                     ).encode();
                 case PROPAGATE_CROSSCHAIN_MESSAGE:
-                    return processAMRequest(
-                            AMRelayerRequest.createFrom(request)
+                    return processPropagateCrossChainMsgRequest(
+                            PropagateCrossChainMsgRequest.createFrom(request)
                     ).encode();
                 case QUERY_CROSSCHAIN_MSG_RECEIPT:
                     return processCrossChainMsgReceiptsQuery(
@@ -227,7 +227,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
         );
     }
 
-    private RelayerResponse processAMRequest(AMRelayerRequest request) {
+    private RelayerResponse processPropagateCrossChainMsgRequest(PropagateCrossChainMsgRequest request) {
         if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
             log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(), request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(

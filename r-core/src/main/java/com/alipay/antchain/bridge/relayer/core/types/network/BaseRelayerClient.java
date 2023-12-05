@@ -23,6 +23,7 @@ import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.core.am.IAuthMessage;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainMessageReceipt;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
@@ -125,8 +126,8 @@ public abstract class BaseRelayerClient implements RelayerClient {
     }
 
     @Override
-    public void amRequest(String domainName, String ucpId, String authMsg, String udagProof, String ledgerInfo) {
-        RelayerRequest request = new AMRelayerRequest(
+    public void propagateCrossChainMsg(String domainName, String ucpId, IAuthMessage authMsg, String udagProof, String ledgerInfo) {
+        RelayerRequest request = new PropagateCrossChainMsgRequest(
                 udagProof,
                 ucpId,
                 authMsg,

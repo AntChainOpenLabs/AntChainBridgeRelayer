@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.core.am.IAuthMessage;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainMessageReceipt;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
@@ -39,7 +40,7 @@ public interface RelayerClient {
      * @param udagProof
      * @return
      */
-    void amRequest(String domainName, String ucpId, String authMsg, String udagProof, String ledgerInfo);
+    void propagateCrossChainMsg(String domainName, String ucpId, IAuthMessage authMsg, String udagProof, String ledgerInfo);
 
     Map<String, CrossChainMessageReceipt> queryCrossChainMessageReceipts(List<String> ucpIds);
 
