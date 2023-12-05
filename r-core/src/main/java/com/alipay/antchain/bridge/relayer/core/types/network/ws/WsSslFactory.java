@@ -16,40 +16,35 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network.ws;
 
-import java.io.ByteArrayInputStream;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import javax.net.ssl.*;
 
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.net.SSLUtil;
 import cn.hutool.crypto.PemUtil;
 import io.grpc.util.CertificateUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
 public class WsSslFactory {
 
     @Value("${relayer.network.node.tls.private_key_path}")
-    private String privateKeyPath;
+    private Resource privateKeyPath;
 
     @Value("${relayer.network.node.tls.trust_ca_path}")
-    private String trustCaPath;
+    private Resource trustCaPath;
 
 //    private PrivateKey randomTLSPrivateKey;
 //
 //    private Certificate randomTLSCert;
 
     public SSLContext getSslContext() throws Exception {
-        PrivateKey privateKey = PemUtil.readPemPrivateKey(
-                new ByteArrayInputStream(FileUtil.readBytes(privateKeyPath))
-        );
-        Certificate[] trustCertificates = CertificateUtils.getX509Certificates(
-                new ByteArrayInputStream(FileUtil.readBytes(trustCaPath))
-        );
+        PrivateKey privateKey = PemUtil.readPemPrivateKey(privateKeyPath.getInputStream());
+        Certificate[] trustCertificates = CertificateUtils.getX509Certificates(trustCaPath.getInputStream());
 //        if (ObjectUtil.isNull(randomTLSPrivateKey)) {
 //            KeyPair keyPair = KeyUtil.generateKeyPair("RSA", 2048);
 //            randomTLSPrivateKey = keyPair.getPrivate();

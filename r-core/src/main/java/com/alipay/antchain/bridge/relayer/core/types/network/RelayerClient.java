@@ -9,11 +9,6 @@ import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloStartRespPayload;
 
-/**
- * 实现节点endpoint客通讯客户端、服务端
- *
- * @author honglin.qhl
- */
 public interface RelayerClient {
 
     /**
@@ -47,12 +42,6 @@ public interface RelayerClient {
     void amRequest(String domainName, String ucpId, String authMsg, String udagProof, String ledgerInfo);
 
     Map<String, CrossChainMessageReceipt> queryCrossChainMessageReceipts(List<String> ucpIds);
-
-    /**
-     * @param nodeInfo
-     * @return
-     */
-    RelayerNodeInfo handshake(RelayerNodeInfo nodeInfo, String networkId);
 
     HelloStartRespPayload helloStart(byte[] rand, String relayerNodeId);
 

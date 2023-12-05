@@ -55,7 +55,7 @@ public class AMRelayerRequest extends RelayerRequest {
             String ledgerInfo
     ) {
         super(
-                RelayerRequestType.AM_REQUEST
+                RelayerRequestType.PROPAGATE_CROSSCHAIN_MESSAGE
         );
         this.udagProof = udagProof;
         this.ucpId = ucpId;

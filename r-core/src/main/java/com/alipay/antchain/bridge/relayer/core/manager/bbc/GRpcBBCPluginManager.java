@@ -6,8 +6,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.io.resource.Resource;
-import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -33,6 +31,7 @@ import io.grpc.TlsChannelCredentials;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.OpenSsl;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
@@ -64,8 +63,8 @@ public class GRpcBBCPluginManager implements IBBCPluginManager {
     private final int errorLimitForHeartbeat;
 
     public GRpcBBCPluginManager(
-            String clientKeyPath,
-            String clientCaPath,
+            Resource clientKeyPath,
+            Resource clientCaPath,
             IPluginServerRepository pluginServerRepository,
             TransactionTemplate transactionTemplate,
             ExecutorService clientExecutorService,
@@ -73,8 +72,8 @@ public class GRpcBBCPluginManager implements IBBCPluginManager {
             long heartbeatDelayedTime,
             int errorLimitForHeartbeat
     ) {
-        this.tlsClientKeyFile = ResourceUtil.getResourceObj(clientKeyPath);
-        this.tlsClientCaFile = ResourceUtil.getResourceObj(clientCaPath);
+        this.tlsClientKeyFile = clientKeyPath;
+        this.tlsClientCaFile = clientCaPath;
         this.pluginServerRepository = pluginServerRepository;
         this.transactionTemplate = transactionTemplate;
         this.clientExecutorService = clientExecutorService;
@@ -220,7 +219,7 @@ public class GRpcBBCPluginManager implements IBBCPluginManager {
         ManagedChannel channel;
         try {
             TlsChannelCredentials.Builder tlsBuilder = TlsChannelCredentials.newBuilder();
-            tlsBuilder.keyManager(this.tlsClientCaFile.getStream(), this.tlsClientKeyFile.getStream());
+            tlsBuilder.keyManager(this.tlsClientCaFile.getInputStream(), this.tlsClientKeyFile.getInputStream());
             tlsBuilder.trustManager(
                     new ByteArrayInputStream(pluginServerDO.getProperties().getPluginServerCert().getBytes())
             );

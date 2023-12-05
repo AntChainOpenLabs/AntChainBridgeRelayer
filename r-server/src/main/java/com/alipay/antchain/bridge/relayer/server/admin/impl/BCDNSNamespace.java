@@ -17,11 +17,12 @@
 package com.alipay.antchain.bridge.relayer.server.admin.impl;
 
 import java.io.ByteArrayInputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.PublicKey;
 import javax.annotation.Resource;
 
 import cn.ac.caict.bid.model.BIDDocumentOperation;
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.KeyUtil;
@@ -125,7 +126,7 @@ public class BCDNSNamespace extends AbstractNamespace {
             byte[] rawSubject = null;
             ObjectIdentity oid = null;
             if (ObjectIdentityType.parseFromValue(applicantOidType) == ObjectIdentityType.BID) {
-                rawSubject = FileUtil.readBytes("file:" + oidFilePath);
+                rawSubject = Files.readAllBytes(Paths.get(oidFilePath));
                 BIDDocumentOperation bidDocumentOperation = BIDHelper.getBIDDocumentFromRawSubject(rawSubject);
                 oid = new BIDInfoObjectIdentity(
                         BIDHelper.encAddress(
@@ -134,7 +135,7 @@ public class BCDNSNamespace extends AbstractNamespace {
                         )
                 );
             } else if (ObjectIdentityType.parseFromValue(applicantOidType) == ObjectIdentityType.X509_PUBLIC_KEY_INFO) {
-                PublicKey publicKey = readPublicKeyFromPem(FileUtil.readBytes("file:" + oidFilePath));
+                PublicKey publicKey = readPublicKeyFromPem(Files.readAllBytes(Paths.get(oidFilePath)));
                 oid = new X509PubkeyInfoObjectIdentity(publicKey.getEncoded());
                 rawSubject = new byte[]{};
             }

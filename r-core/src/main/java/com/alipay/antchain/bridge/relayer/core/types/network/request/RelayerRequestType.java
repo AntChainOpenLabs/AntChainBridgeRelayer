@@ -29,39 +29,15 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum RelayerRequestType {
 
-    // relayer之间的请求
     GET_RELAYER_NODE_INFO("getRelayerNodeInfo"),
 
     GET_RELAYER_BLOCKCHAIN_INFO("getBlockchainInfo"),
 
-    AM_REQUEST("amRequest"),
-
-    /**
-     * 建立可信连接，进行握手
-     */
-    HANDSHAKE("handshake"),
-
-    /**
-     * 获取指定的域名信息
-     */
-    GET_RELAYER_FOR_DOMAIN("getRelayerForDomain"),
-
-    /**
-     * 注册域名
-     */
-    REGISTER_DOMAIN("registerDomain"),
-
-    /**
-     * 更新指定域名
-     */
-    UPDATE_DOMAIN("updateDomain"),
-
-    /**
-     * 让relayer配置中心删除对应域名
-     */
-    DELETE_DOMAIN("deleteDomain"),
-
     GET_RELAYER_BLOCKCHAIN_CONTENT("getRelayerBlockChainContent"),
+
+    PROPAGATE_CROSSCHAIN_MESSAGE("propagateCrossChainMsg"),
+
+    QUERY_CROSSCHAIN_MSG_RECEIPT("queryCrossChainMsgReceipt"),
 
     HELLO_START("helloStart"),
 
@@ -69,9 +45,7 @@ public enum RelayerRequestType {
 
     CROSSCHAIN_CHANNEL_START("crosschainChannelStart"),
 
-    CROSSCHAIN_CHANNEL_COMPLETE("crosschainChannelComplete"),
-
-    QUERY_CROSSCHAIN_MSG_RECEIPT("queryCrossChainMsgReceipt");
+    CROSSCHAIN_CHANNEL_COMPLETE("crosschainChannelComplete");
 
     private final String code;
 
@@ -80,18 +54,8 @@ public enum RelayerRequestType {
             return GET_RELAYER_NODE_INFO;
         } else if (StrUtil.equals(value, GET_RELAYER_BLOCKCHAIN_INFO.code)) {
             return GET_RELAYER_BLOCKCHAIN_INFO;
-        } else if (StrUtil.equals(value, AM_REQUEST.code)) {
-            return AM_REQUEST;
-        } else if (StrUtil.equals(value, HANDSHAKE.code)) {
-            return HANDSHAKE;
-        } else if (StrUtil.equals(value, GET_RELAYER_FOR_DOMAIN.code)) {
-            return GET_RELAYER_FOR_DOMAIN;
-        } else if (StrUtil.equals(value, REGISTER_DOMAIN.code)) {
-            return REGISTER_DOMAIN;
-        } else if (StrUtil.equals(value, UPDATE_DOMAIN.code)) {
-            return UPDATE_DOMAIN;
-        } else if (StrUtil.equals(value, DELETE_DOMAIN.code)) {
-            return DELETE_DOMAIN;
+        } else if (StrUtil.equals(value, PROPAGATE_CROSSCHAIN_MESSAGE.code)) {
+            return PROPAGATE_CROSSCHAIN_MESSAGE;
         } else if (StrUtil.equals(value, GET_RELAYER_BLOCKCHAIN_CONTENT.code)) {
             return GET_RELAYER_BLOCKCHAIN_CONTENT;
         } else if (StrUtil.equals(value, HELLO_START.code)) {
@@ -118,29 +82,19 @@ public enum RelayerRequestType {
             case 1:
                 return GET_RELAYER_BLOCKCHAIN_INFO;
             case 2:
-                return AM_REQUEST;
-            case 3:
-                return HANDSHAKE;
-            case 4:
-                return GET_RELAYER_FOR_DOMAIN;
-            case 5:
-                return REGISTER_DOMAIN;
-            case 6:
-                return UPDATE_DOMAIN;
-            case 7:
-                return DELETE_DOMAIN;
-            case 8:
                 return GET_RELAYER_BLOCKCHAIN_CONTENT;
-            case 9:
-                return HELLO_START;
-            case 10:
-                return HELLO_COMPLETE;
-            case 11:
-                return CROSSCHAIN_CHANNEL_START;
-            case 12:
-                return CROSSCHAIN_CHANNEL_COMPLETE;
-            case 13:
+            case 3:
+                return PROPAGATE_CROSSCHAIN_MESSAGE;
+            case 4:
                 return QUERY_CROSSCHAIN_MSG_RECEIPT;
+            case 5:
+                return HELLO_START;
+            case 6:
+                return HELLO_COMPLETE;
+            case 7:
+                return CROSSCHAIN_CHANNEL_START;
+            case 8:
+                return CROSSCHAIN_CHANNEL_COMPLETE;
             default:
                 return null;
         }

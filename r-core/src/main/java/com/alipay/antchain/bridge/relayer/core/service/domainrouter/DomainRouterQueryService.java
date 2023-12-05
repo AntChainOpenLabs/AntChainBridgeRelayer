@@ -61,7 +61,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Slf4j
 public class DomainRouterQueryService {
 
-
     @Value("${relayer.service.domain_router.batch_size:8}")
     private int domainRouterBatchSize;
 

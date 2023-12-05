@@ -33,9 +33,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Endpoint Client基类
- */
 @Getter
 @Setter
 @Slf4j
@@ -175,47 +172,6 @@ public abstract class BaseRelayerClient implements RelayerClient {
             throw new RuntimeException("payload is null for query cc msg receipt response");
         }
         return respPayload.getReceipts();
-    }
-
-    @Override
-    public RelayerNodeInfo handshake(RelayerNodeInfo senderNodeInfo, String networkId) {
-        RelayerRequest request = new HandshakeRelayerRequest(
-                senderNodeInfo,
-                defaultNetworkId
-        );
-
-        RelayerResponse response = validateRelayerResponse(sendRequest(request));
-        if (ObjectUtil.isNull(response)) {
-            throw new RuntimeException(
-                    StrUtil.format(
-                            "handshake with relayer {} failed: response is empty",
-                            senderNodeInfo.getNodeId()
-                    )
-            );
-        } else if (!response.isSuccess()) {
-            throw new RuntimeException(
-                    String.format("handshake with relayer {} failed: (code: %d, msg: %s)",
-                            response.getResponseCode(), response.getResponseMessage()
-                    )
-            );
-        }
-
-        HandshakeRespPayload handshakeRespPayload = HandshakeRespPayload.decodeFromJson(response.getResponsePayload());
-        RelayerNodeInfo remoteNodeInfo = RelayerNodeInfo.decode(
-                Base64.decode(handshakeRespPayload.getRemoteNodeInfo())
-        );
-
-        remoteNodeInfo.getProperties().getProperties().put(
-                "network_id",
-                ObjectUtil.defaultIfEmpty(
-                        handshakeRespPayload.getRemoteNetworkId(),
-                        defaultNetworkId
-                )
-        );
-
-        log.debug("handshake with relayer {} success with response: {}", this.remoteNodeInfo.getNodeId(), response.getResponsePayload());
-
-        return remoteNodeInfo;
     }
 
     @Override

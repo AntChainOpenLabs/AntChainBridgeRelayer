@@ -16,7 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.bootstrap.config;
 
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -52,16 +52,17 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
 public class RelayerCoreConfig {
 
-    @Value("${relayer.plugin_server_manager.grpc.auth.tls.client.key.path:config/relayer.key}")
-    private String clientKeyPath;
+    @Value("${relayer.plugin_server_manager.grpc_auth.tls_client.key_path:config/relayer.key}")
+    private Resource clientKeyPath;
 
-    @Value("${relayer.plugin_server_manager.grpc.auth.tls.client.ca.path:config/relayer.crt}")
-    private String clientCaPath;
+    @Value("${relayer.plugin_server_manager.grpc_auth.tls_client.ca_path:config/relayer.crt}")
+    private Resource clientCaPath;
 
     @Value("${relayer.plugin_server_manager.grpc.thread.num:32}")
     private int clientThreadNum;
@@ -76,10 +77,10 @@ public class RelayerCoreConfig {
     private int errorLimitForHeartbeat;
 
     @Value("${relayer.network.node.crosschain_cert_path:null}")
-    private String relayerCrossChainCertPath;
+    private Resource relayerCrossChainCert;
 
     @Value("${relayer.network.node.private_key_path}")
-    private String relayerPrivateKeyPath;
+    private Resource relayerPrivateKeyPath;
 
     @Value("${relayer.network.node.issue_domain_space:}")
     private String relayerIssuerDomainSpace;
@@ -97,9 +98,14 @@ public class RelayerCoreConfig {
     private boolean isDiscoveryService;
 
     public AbstractCrossChainCertificate getLocalRelayerCrossChainCertificate() {
-        AbstractCrossChainCertificate relayerCertificate = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
-                FileUtil.readBytes(relayerCrossChainCertPath)
-        );
+        AbstractCrossChainCertificate relayerCertificate = null;
+        try {
+            relayerCertificate = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+                    FileUtil.readBytes(relayerCrossChainCert.getFile())
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         Assert.isTrue(CrossChainCertificateUtil.isRelayerCert(relayerCertificate));
         return relayerCertificate;
     }
@@ -114,12 +120,10 @@ public class RelayerCoreConfig {
 
     @SneakyThrows
     public PrivateKey getLocalPrivateKey() {
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(FileUtil.readBytes(relayerPrivateKeyPath));
         try {
-            return PemUtil.readPemPrivateKey(inputStream);
+            return PemUtil.readPemPrivateKey(relayerPrivateKeyPath.getInputStream());
         } catch (Exception e) {
-            inputStream.reset();
-            byte[] rawPemOb = PemUtil.readPem(inputStream);
+            byte[] rawPemOb = PemUtil.readPem(relayerPrivateKeyPath.getInputStream());
             KeyFactory keyFactory = KeyFactory.getInstance(
                     PrivateKeyInfo.getInstance(rawPemOb).getPrivateKeyAlgorithm().getAlgorithm().getId()
             );

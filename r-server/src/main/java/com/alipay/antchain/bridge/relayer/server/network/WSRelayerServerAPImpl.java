@@ -108,14 +108,6 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                 ).encode();
             }
 
-            if (isAboutDomain(request.getRequestType()) && !isDiscoveryServer()) {
-                log.error("Invalid relayer request from relayer {} that sending request about Discovery Service", request.calcRelayerNodeId());
-                return RelayerResponse.createFailureResponse(
-                        "node you connected isn't a relayer discovery server",
-                        getRelayerCredentialManager()
-                ).encode();
-            }
-
             switch (request.getRequestType()) {
                 case GET_RELAYER_NODE_INFO:
                     return processGetRelayerNodeInfo().encode();
@@ -123,21 +115,17 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                     return processGetRelayerBlockchainInfo(
                             GetRelayerBlockchainInfoRelayerRequest.createFrom(request)
                     ).encode();
-                case AM_REQUEST:
+                case GET_RELAYER_BLOCKCHAIN_CONTENT:
+                    return processGetRelayerBlockchainContent(
+                            GetRelayerBlockchainContentRelayerRequest.createFrom(request)
+                    ).encode();
+                case PROPAGATE_CROSSCHAIN_MESSAGE:
                     return processAMRequest(
                             AMRelayerRequest.createFrom(request)
                     ).encode();
                 case QUERY_CROSSCHAIN_MSG_RECEIPT:
                     return processCrossChainMsgReceiptsQuery(
                             QueryCrossChainMsgReceiptRequest.createFrom(request)
-                    ).encode();
-                case HANDSHAKE:
-                    return processHandshakeRequest(
-                            HandshakeRelayerRequest.createFrom(request)
-                    ).encode();
-                case GET_RELAYER_BLOCKCHAIN_CONTENT:
-                    return processGetRelayerBlockchainContent(
-                            GetRelayerBlockchainContentRelayerRequest.createFrom(request)
                     ).encode();
                 case HELLO_START:
                     return processHelloStart(HelloStartRequest.createFrom(request)).encode();
@@ -249,7 +237,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
         }
 
         try {
-            amRequest(
+            propagateCrossChainMsg(
                     request.getDomainName(),
                     request.getUcpId(),
                     request.getAuthMsg(),
@@ -318,45 +306,6 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                                 Map.Entry::getKey,
                                 Map.Entry::getValue
                         ))
-                ),
-                getRelayerCredentialManager()
-        );
-    }
-
-    private RelayerResponse processHandshakeRequest(HandshakeRelayerRequest request) {
-        if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
-            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(), request.calcRelayerNodeId());
-            return RelayerResponse.createFailureResponse(
-                    "verify crosschain cert failed",
-                    getRelayerCredentialManager()
-            );
-        }
-
-        try {
-            doHandshake(
-                    request.getSenderNodeInfo(),
-                    request.getNetworkId()
-            );
-        } catch (AntChainBridgeRelayerException e) {
-            log.error(
-                    "handle handshake request from relayer {} failed: ",
-                    request.calcRelayerNodeId(),
-                    e
-            );
-            return RelayerResponse.createFailureResponse(
-                    e.getMsg(),
-                    getRelayerCredentialManager()
-            );
-        }
-
-        log.info("handle handshake request from relayer {} success: ", request.calcRelayerNodeId());
-
-        return RelayerResponse.createSuccessResponse(
-                new HandshakeRespPayload(
-                        getDefaultNetworkId(),
-                        Base64.encode(
-                                getRelayerNetworkManager().getRelayerNodeInfoWithContent().encodeWithProperties()
-                        )
                 ),
                 getRelayerCredentialManager()
         );
