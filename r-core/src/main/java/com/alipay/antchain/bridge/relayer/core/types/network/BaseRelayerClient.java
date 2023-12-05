@@ -156,7 +156,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
     }
 
     @Override
-    public List<CrossChainMessageReceipt> queryCrossChainMessageReceipts(List<String> ucpIds) {
+    public Map<String, CrossChainMessageReceipt> queryCrossChainMessageReceipts(List<String> ucpIds) {
         RelayerResponse response = sendRequest(new QueryCrossChainMsgReceiptRequest(ucpIds));
         if (ObjectUtil.isNull(response)) {
             throw new RuntimeException(

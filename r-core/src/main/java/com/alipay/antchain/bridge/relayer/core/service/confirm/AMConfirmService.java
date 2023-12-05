@@ -1,7 +1,9 @@
 package com.alipay.antchain.bridge.relayer.core.service.confirm;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -9,6 +11,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainMessageReceipt;
@@ -62,21 +65,60 @@ public class AMConfirmService {
                 SDPMsgProcessStateEnum.TX_PENDING,
                 confirmBatchSize
         );
+
+        List<Future<CrossChainMessageReceipt>> futureList = new ArrayList<>();
+        sdpMsgWrappers.forEach(
+                sdpMsgWrapper -> futureList.add(
+                        confirmServiceThreadsPool.submit(
+                                () -> heteroBlockchainClient.queryCommittedTxReceipt(sdpMsgWrapper.getTxHash())
+                        )
+                )
+        );
+
+        List<SDPMsgCommitResult> commitResults = new ArrayList<>();
+        futureList.forEach(
+                future -> {
+                    CrossChainMessageReceipt receipt;
+                    try {
+                        receipt = future.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(
+                                String.format("failed to query cross-chain receipt for ( product: %s, bid: %s )", product, blockchainId),
+                                e
+                        );
+                    }
+                    if (receipt.isConfirmed()) {
+                        commitResults.add(
+                                new SDPMsgCommitResult(
+                                        product,
+                                        blockchainId,
+                                        receipt.getTxhash(),
+                                        receipt.isSuccessful(),
+                                        receipt.getErrorMsg(),
+                                        System.currentTimeMillis()
+                                )
+                        );
+                        log.info("sdp confirmed : (tx: {}, is_success: {}, error_msg: {})",
+                                receipt.getTxhash(), receipt.isSuccessful(), receipt.getErrorMsg());
+                    }
+                }
+        );
+
+        crossChainMessageRepository.updateSDPMessageResults(commitResults);
+    }
+
+    public void processSentToRemoteRelayer(String product, String blockchainId) {
         List<SDPMsgWrapper> sdpMsgWrappersSent = crossChainMessageRepository.peekSDPMessagesSent(
                 product,
                 blockchainId,
                 SDPMsgProcessStateEnum.REMOTE_PENDING,
                 confirmBatchSize
         );
+        if (ObjectUtil.isEmpty(sdpMsgWrappersSent)) {
+            return;
+        }
 
-        List<Future<List<CrossChainMessageReceipt>>> futureList = new ArrayList<>();
-        sdpMsgWrappers.forEach(
-                sdpMsgWrapper -> futureList.add(
-                        confirmServiceThreadsPool.submit(
-                                () -> ListUtil.toList(heteroBlockchainClient.queryCommittedTxReceipt(sdpMsgWrapper.getTxHash()))
-                        )
-                )
-        );
+        List<Future<Map<Long, CrossChainMessageReceipt>>> futureList = new ArrayList<>();
         sdpMsgWrappersSent.stream().collect(Collectors.groupingBy(SDPMsgWrapper::getReceiverBlockchainDomain))
                 .forEach((key, value) -> futureList.add(
                         confirmServiceThreadsPool.submit(
@@ -88,16 +130,32 @@ public class AMConfirmService {
                                                 key
                                         );
                                     }
-                                    List<String> ucpIds = value.stream().map(
-                                                    sdpMsgWrapper -> crossChainMessageRepository.getUcpId(
-                                                            sdpMsgWrapper.getAuthMsgWrapper().getAuthMsgId()
+                                    Map<String, Long> ucpIdsMap = value.stream().map(
+                                                    sdpMsgWrapper -> MapUtil.entry(
+                                                            sdpMsgWrapper.getId(),
+                                                            crossChainMessageRepository.getUcpId(
+                                                                    sdpMsgWrapper.getAuthMsgWrapper().getAuthMsgId()
+                                                            )
                                                     )
-                                            ).filter(StrUtil::isNotEmpty)
-                                            .collect(Collectors.toList());
-                                    if (ObjectUtil.isNotEmpty(ucpIds)) {
-                                        return relayerClient.queryCrossChainMessageReceipts(ucpIds);
+                                            ).filter(entry -> StrUtil.isNotEmpty(entry.getValue()))
+                                            .collect(Collectors.toMap(
+                                                    Map.Entry::getValue,
+                                                    Map.Entry::getKey
+                                            ));
+                                    if (ObjectUtil.isNotEmpty(ucpIdsMap)) {
+                                        Map<String, CrossChainMessageReceipt> receiptMap = relayerClient.queryCrossChainMessageReceipts(
+                                                ListUtil.toList(ucpIdsMap.keySet())
+                                        );
+                                        if (ObjectUtil.isEmpty(receiptMap)) {
+                                            return new HashMap<>();
+                                        }
+                                        return receiptMap.entrySet().stream()
+                                                .collect(Collectors.toMap(
+                                                        entry -> ucpIdsMap.get(entry.getKey()),
+                                                        Map.Entry::getValue
+                                                ));
                                     }
-                                    return new ArrayList<>();
+                                    return new HashMap<>();
                                 }
                         )
                 ));
@@ -105,20 +163,21 @@ public class AMConfirmService {
         List<SDPMsgCommitResult> commitResults = new ArrayList<>();
         futureList.forEach(
                 future -> {
-                    List<CrossChainMessageReceipt> receipts;
+                    Map<Long, CrossChainMessageReceipt> receiptMap;
                     try {
-                        receipts = future.get();
+                        receiptMap = future.get();
                     } catch (InterruptedException | ExecutionException e) {
                         throw new RuntimeException(
                                 String.format("failed to query cross-chain receipt for ( product: %s, bid: %s )", product, blockchainId),
                                 e
                         );
                     }
-                    receipts.forEach(
-                            receipt -> {
+                    receiptMap.forEach(
+                            (k, receipt) -> {
                                 if (receipt.isConfirmed()) {
                                     commitResults.add(
                                             new SDPMsgCommitResult(
+                                                    k,
                                                     product,
                                                     blockchainId,
                                                     receipt.getTxhash(),
@@ -127,6 +186,10 @@ public class AMConfirmService {
                                                     System.currentTimeMillis()
                                             )
                                     );
+                                    log.info("sdp {} confirmed by remote relayer: (tx: {}, is_success: {}, error_msg: {})",
+                                            k, receipt.getTxhash(), receipt.isSuccessful(), receipt.getErrorMsg());
+                                } else {
+                                    log.info("sdp {} still not confirmed by remote relayer", k);
                                 }
                             }
                     );

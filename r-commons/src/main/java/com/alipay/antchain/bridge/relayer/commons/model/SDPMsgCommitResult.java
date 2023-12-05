@@ -31,6 +31,8 @@ public class SDPMsgCommitResult {
 
     public final static int TX_MSG_PREFIX_LEN = 20;
 
+    private Long sdpMsgId;
+
     private String receiveProduct;
 
     private String receiveBlockchainId;
@@ -66,6 +68,17 @@ public class SDPMsgCommitResult {
 
     public SDPMsgCommitResult(String receiveProduct, String receiveBlockchainId, String txHash, boolean commitSuccess,
                               String failReason, long blockTimestamp) {
+        this.receiveProduct = receiveProduct;
+        this.receiveBlockchainId = receiveBlockchainId;
+        this.txHash = txHash;
+        this.commitSuccess = commitSuccess;
+        this.failReason = failReason;
+        this.blockTimestamp = blockTimestamp;
+    }
+
+    public SDPMsgCommitResult(Long sdpMsgId, String receiveProduct, String receiveBlockchainId, String txHash, boolean commitSuccess,
+                              String failReason, long blockTimestamp) {
+        this.sdpMsgId = sdpMsgId;
         this.receiveProduct = receiveProduct;
         this.receiveBlockchainId = receiveBlockchainId;
         this.txHash = txHash;

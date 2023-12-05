@@ -16,7 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network.response;
 
-import java.util.List;
+import java.util.Map;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
@@ -34,7 +34,7 @@ public class QueryCrossChainMsgReceiptsRespPayload implements IResponsePayload {
     }
 
     @JSONField(name = "receipts")
-    private List<CrossChainMessageReceipt> receipts;
+    private Map<String, CrossChainMessageReceipt> receipts;
 
     @Override
     public String encode() {

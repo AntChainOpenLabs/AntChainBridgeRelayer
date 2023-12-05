@@ -36,14 +36,8 @@ import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.UniformCrosschainPacketContext;
-import com.alipay.antchain.bridge.relayer.dal.entities.AuthMsgPoolEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.BaseEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.SDPMsgPoolEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.UCPPoolEntity;
-import com.alipay.antchain.bridge.relayer.dal.mapper.AuthMsgArchiveMapper;
-import com.alipay.antchain.bridge.relayer.dal.mapper.AuthMsgPoolMapper;
-import com.alipay.antchain.bridge.relayer.dal.mapper.SDPMsgPoolMapper;
-import com.alipay.antchain.bridge.relayer.dal.mapper.UCPPoolMapper;
+import com.alipay.antchain.bridge.relayer.dal.entities.*;
+import com.alipay.antchain.bridge.relayer.dal.mapper.*;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -68,6 +62,9 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
 
     @Resource
     private AuthMsgArchiveMapper authMsgArchiveMapper;
+
+    @Resource
+    private SDPMsgArchiveMapper sdpMsgArchiveMapper;
 
     @Resource
     private RedissonClient redisson;
@@ -346,6 +343,13 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                                     entity.setTxFailReason(result.getFailReasonTruncated());
                                     entity.setProcessState(result.getProcessState());
                                     entity.setTxHash(result.getTxHash());
+                                    if (ObjectUtil.isNotNull(result.getSdpMsgId())) {
+                                        return sdpMsgPoolMapper.update(
+                                                entity,
+                                                new LambdaUpdateWrapper<SDPMsgPoolEntity>()
+                                                        .eq(SDPMsgPoolEntity::getId, result.getSdpMsgId())
+                                        );
+                                    }
                                     return sdpMsgPoolMapper.update(
                                             entity,
                                             new LambdaUpdateWrapper<SDPMsgPoolEntity>()
@@ -487,6 +491,77 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                     processState.getCode(), domain
             );
         }
+    }
+
+    @Override
+    @Transactional
+    public SDPMsgWrapper querySDPMessage(String ucpId) {
+        try {
+            Long amId = getAuthMsgId(ucpId);
+            if (ObjectUtil.isNull(amId)) {
+                return null;
+            }
+
+            return getSDPMessageByAmId(amId);
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    e,
+                    "failed to get sdp message for chain for ucp id {}",
+                    ucpId
+            );
+        }
+    }
+
+    private Long getAuthMsgId(String ucpId) {
+        AuthMsgPoolEntity entity = authMsgPoolMapper.selectOne(
+                new LambdaQueryWrapper<AuthMsgPoolEntity>()
+                        .select(ListUtil.toList(AuthMsgPoolEntity::getId))
+                        .eq(AuthMsgPoolEntity::getUcpId, ucpId)
+        );
+        if (ObjectUtil.isNotNull(entity)) {
+            return entity.getId();
+        }
+
+        AuthMsgArchiveEntity authMsgArchiveEntity = authMsgArchiveMapper.selectOne(
+                new LambdaQueryWrapper<AuthMsgArchiveEntity>()
+                        .select(ListUtil.toList(AuthMsgArchiveEntity::getId))
+                        .eq(AuthMsgArchiveEntity::getUcpId, ucpId)
+        );
+        if (ObjectUtil.isNull(authMsgArchiveEntity)) {
+            return null;
+        }
+
+        return authMsgArchiveEntity.getId();
+    }
+
+    private SDPMsgWrapper getSDPMessageByAmId(Long amId) {
+        SDPMsgPoolEntity sdpMsgPoolEntity = sdpMsgPoolMapper.selectOne(
+                new LambdaQueryWrapper<SDPMsgPoolEntity>()
+                        .select(ListUtil.toList(
+                                SDPMsgPoolEntity::getTxHash,
+                                SDPMsgPoolEntity::getProcessState,
+                                SDPMsgPoolEntity::getTxSuccess,
+                                SDPMsgPoolEntity::getTxFailReason
+                        )).eq(SDPMsgPoolEntity::getAuthMsgId, amId)
+        );
+        if (ObjectUtil.isNotNull(sdpMsgPoolEntity)) {
+            return ConvertUtil.convertFromSDPMsgPoolEntity(sdpMsgPoolEntity);
+        }
+
+        SDPMsgArchiveEntity sdpMsgArchiveEntity = sdpMsgArchiveMapper.selectOne(
+                new LambdaQueryWrapper<SDPMsgArchiveEntity>()
+                        .select(ListUtil.toList(
+                                SDPMsgArchiveEntity::getTxHash,
+                                SDPMsgArchiveEntity::getProcessState,
+                                SDPMsgArchiveEntity::getTxSuccess,
+                                SDPMsgArchiveEntity::getTxFailReason
+                        )).eq(SDPMsgArchiveEntity::getAuthMsgId, amId)
+        );
+        if (ObjectUtil.isNull(sdpMsgArchiveEntity)) {
+            return null;
+        }
+        return ConvertUtil.convertFromSDPMsgPoolEntity(BeanUtil.copyProperties(sdpMsgArchiveEntity, SDPMsgPoolEntity.class));
     }
 
     @Override

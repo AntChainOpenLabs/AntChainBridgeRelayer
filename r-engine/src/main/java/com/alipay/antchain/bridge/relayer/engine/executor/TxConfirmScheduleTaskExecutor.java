@@ -30,6 +30,10 @@ public class TxConfirmScheduleTaskExecutor extends BaseScheduleTaskExecutor {
                             ((BlockchainDistributedTask) task).getBlockchainProduct(),
                             ((BlockchainDistributedTask) task).getBlockchainId()
                     );
+                    amConfirmService.processSentToRemoteRelayer(
+                            ((BlockchainDistributedTask) task).getBlockchainProduct(),
+                            ((BlockchainDistributedTask) task).getBlockchainId()
+                    );
                 } catch (Exception e) {
                     log.error(
                             "failed to process am confirm task for ( product: {}, bid: {} )",

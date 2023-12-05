@@ -46,7 +46,7 @@ public interface RelayerClient {
      */
     void amRequest(String domainName, String ucpId, String authMsg, String udagProof, String ledgerInfo);
 
-    List<CrossChainMessageReceipt> queryCrossChainMessageReceipts(List<String> ucpIds);
+    Map<String, CrossChainMessageReceipt> queryCrossChainMessageReceipts(List<String> ucpIds);
 
     /**
      * @param nodeInfo

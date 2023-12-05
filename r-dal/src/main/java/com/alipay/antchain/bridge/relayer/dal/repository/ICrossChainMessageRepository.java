@@ -71,6 +71,8 @@ public interface ICrossChainMessageRepository {
 
     boolean hasNotReadyAuthMessages(String domain);
 
+    SDPMsgWrapper querySDPMessage(String ucpId);
+
     List<SDPMsgWrapper> peekSDPMessages(String receiverBlockchainProduct, String receiverBlockchainId, SDPMsgProcessStateEnum processState, int limit);
 
     List<SDPMsgWrapper> peekSDPMessagesSent(String senderBlockchainProduct, String senderBlockchainId, SDPMsgProcessStateEnum processState, int limit);
