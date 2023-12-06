@@ -22,14 +22,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.thread.lock.LockUtil;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alipay.antchain.bridge.bcdns.impl.BlockChainDomainNameServiceFactory;
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
 import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
@@ -57,6 +58,7 @@ import com.alipay.antchain.bridge.relayer.dal.repository.IBCDNSRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,11 +67,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class BCDNSManager implements IBCDNSManager {
 
+    private static final String BCDNS_CALLING_LOCK_PREFIX = "BCDNS_CALLING_LOCK_";
+
     @Resource
     private IBCDNSRepository bcdnsRepository;
 
     @Resource
     private IBlockchainRepository blockchainRepository;
+
+    @Resource
+    private RedissonClient redisson;
 
     @Value("#{relayerCoreConfig.localRelayerCrossChainCertificate}")
     private AbstractCrossChainCertificate localRelayerCertificate;
@@ -160,9 +167,9 @@ public class BCDNSManager implements IBCDNSManager {
         log.info("starting the bcdns service ( type: {}, domain_space: {} )",
                 bcdnsServiceDO.getType().getCode(), bcdnsServiceDO.getDomainSpace());
         try {
-            IBlockChainDomainNameService service = BlockChainDomainNameServiceFactory.create(
-                    bcdnsServiceDO.getType(),
-                    bcdnsServiceDO.getProperties()
+            IBlockChainDomainNameService service = new BCDNSWrapper(
+                    bcdnsServiceDO,
+                    getBCDNSCallingLock(bcdnsServiceDO.getDomainSpace(), bcdnsServiceDO.getType())
             );
             if (ObjectUtil.isNull(service)) {
                 throw new AntChainBridgeRelayerException(
@@ -218,9 +225,9 @@ public class BCDNSManager implements IBCDNSManager {
             if (bcdnsServiceDO.getState() != BCDNSStateEnum.FROZEN) {
                 throw new RuntimeException(StrUtil.format("bcdns {} already in state {}", domainSpace, bcdnsServiceDO.getState().getCode()));
             }
-            IBlockChainDomainNameService service = BlockChainDomainNameServiceFactory.create(
-                    bcdnsServiceDO.getType(),
-                    bcdnsServiceDO.getProperties()
+            IBlockChainDomainNameService service = new BCDNSWrapper(
+                    bcdnsServiceDO,
+                    getBCDNSCallingLock(bcdnsServiceDO.getDomainSpace(), bcdnsServiceDO.getType())
             );
             if (ObjectUtil.isNull(service)) {
                 throw new AntChainBridgeRelayerException(
@@ -660,5 +667,12 @@ public class BCDNSManager implements IBCDNSManager {
         }
 
         verifyCertPath(certPath, currIndex + 1);
+    }
+
+    private Lock getBCDNSCallingLock(String domainSpace, BCDNSTypeEnum bcdnsType) {
+        if (BCDNSTypeEnum.BIF == bcdnsType) {
+            return redisson.getLock(BCDNS_CALLING_LOCK_PREFIX + domainSpace);
+        }
+        return LockUtil.getNoLock();
     }
 }

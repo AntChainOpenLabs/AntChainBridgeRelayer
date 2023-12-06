@@ -206,7 +206,7 @@ CREATE TABLE IF NOT EXISTS `relayer_network`
     UNIQUE KEY `uk_item` (`network_id`, `domain`, `node_id`)
 );
 
-CREATE TABLE `crosschain_channel`
+CREATE TABLE IF NOT EXISTS `crosschain_channel`
 (
     `id`              INT(11) NOT NULL AUTO_INCREMENT,
     `local_domain`    VARCHAR(128) DEFAULT NULL,
@@ -301,7 +301,7 @@ CREATE TABLE IF NOT EXISTS `blockchain_dt_task`
 );
 
 drop table if exists biz_dt_task;
-CREATE TABLE `biz_dt_task`
+CREATE TABLE IF NOT EXISTS `biz_dt_task`
 (
     `id`           int(11) NOT NULL AUTO_INCREMENT,
     `node_id`      varchar(64)  DEFAULT NULL,
