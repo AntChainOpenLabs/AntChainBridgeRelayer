@@ -142,6 +142,7 @@ public class BCDNSManager implements IBCDNSManager {
                     bcdnsServiceDO.setDomainSpaceCertWrapper(
                             new DomainSpaceCertWrapper(certificate)
                     );
+                    bcdnsServiceDO.setOwnerOid(certificate.getCredentialSubjectInstance().getApplicant());
                 } catch (Exception e) {
                     throw new RuntimeException("failed to read bcdns cert from file " + bcdnsCertPath, e);
                 }
@@ -179,8 +180,8 @@ public class BCDNSManager implements IBCDNSManager {
                 );
             }
             if (
-                    ObjectUtil.isNotNull(bcdnsServiceDO.getDomainSpaceCertWrapper())
-                            && ObjectUtil.isNotNull(bcdnsServiceDO.getDomainSpaceCertWrapper().getDomainSpaceCert())
+                    ObjectUtil.isNull(bcdnsServiceDO.getDomainSpaceCertWrapper())
+                            || ObjectUtil.isNull(bcdnsServiceDO.getDomainSpaceCertWrapper().getDomainSpaceCert())
             ) {
                 QueryBCDNSTrustRootCertificateResponse response = service.queryBCDNSTrustRootCertificate();
                 if (ObjectUtil.isNull(response) || ObjectUtil.isNull(response.getBcdnsTrustRootCertificate())) {
@@ -190,13 +191,12 @@ public class BCDNSManager implements IBCDNSManager {
                             bcdnsServiceDO.getDomainSpace()
                     );
                 }
-                bcdnsServiceDO.setState(BCDNSStateEnum.WORKING);
                 bcdnsServiceDO.setOwnerOid(response.getBcdnsTrustRootCertificate().getCredentialSubjectInstance().getApplicant());
                 bcdnsServiceDO.setDomainSpaceCertWrapper(
                         new DomainSpaceCertWrapper(response.getBcdnsTrustRootCertificate())
                 );
             }
-
+            bcdnsServiceDO.setState(BCDNSStateEnum.WORKING);
             bcdnsClientMap.put(bcdnsServiceDO.getDomainSpace(), service);
 
             return service;
@@ -623,6 +623,9 @@ public class BCDNSManager implements IBCDNSManager {
     @Override
     public DomainRouter getDomainRouter(String destDomain) {
         for (String domainSpace : ListUtil.sort(getAllBCDNSDomainSpace(), String::compareTo)) {
+            if (!hasBCDNSServiceData(domainSpace)) {
+                continue;
+            }
             if (!CrossChainDomain.isDerivedFrom(destDomain, domainSpace)) {
                 continue;
             }

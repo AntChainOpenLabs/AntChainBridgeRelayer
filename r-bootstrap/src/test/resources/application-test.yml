@@ -35,4 +35,4 @@ relayer:
   engine:
     schedule:
       duty:
-        period: 3000
+        period: 5000

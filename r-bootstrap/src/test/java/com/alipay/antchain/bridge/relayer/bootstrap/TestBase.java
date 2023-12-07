@@ -87,6 +87,10 @@ public abstract class TestBase {
             FileUtil.readBytes("cc_certs/x.com.crt")
     );
 
+    public static AbstractCrossChainCertificate dotComDomainSpaceCertWrongIssuer = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+            FileUtil.readBytes("cc_certs/x.com_wrong_issuer.crt")
+    );
+
     public static String dotComDomainSpace = ".com";
 
     public static AbstractCrossChainCertificate relayerCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
@@ -95,6 +99,10 @@ public abstract class TestBase {
 
     public static AbstractCrossChainCertificate trustRootCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
             FileUtil.readBytes("cc_certs/trust_root.crt")
+    );
+
+    public static AbstractCrossChainCertificate relayerCertWrongIssuer = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+            FileUtil.readBytes("cc_certs/relayer_wrong_issuer.crt")
     );
 
     public static PrivateKey privateKey;
@@ -107,8 +115,8 @@ public abstract class TestBase {
         // try to use local redis server binary to start it.
         redisServer = new MyRedisServer(
                 RedisExecProvider.defaultProvider()
-                        .override(OS.MAC_OS_X, Architecture.x86_64, "/usr/local/bin/redis-server")
-                        .override(OS.MAC_OS_X, Architecture.x86, "/usr/local/bin/redis-server"),
+                        .override(OS.MAC_OS_X, Architecture.x86_64, "src/test/resources/bins/redis-server")
+                        .override(OS.MAC_OS_X, Architecture.x86, "src/test/resources/bins/redis-server"),
                 6379
         );
         redisServer.start();
