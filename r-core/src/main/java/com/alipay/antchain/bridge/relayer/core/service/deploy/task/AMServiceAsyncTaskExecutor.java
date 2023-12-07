@@ -39,9 +39,6 @@ public class AMServiceAsyncTaskExecutor extends AbstractAsyncTaskExecutor {
         return false;
     }
 
-    /**
-     * [部署am合约] --> [保存am合约地址] --> [修改状态为finish_deploy_am_contract] --> [落库]
-     */
     public boolean processInitStatus(BlockchainMeta blockchainMeta) {
 
         log.info("processInitStatus {}-{}", blockchainMeta.getProduct(), blockchainMeta.getBlockchainId());

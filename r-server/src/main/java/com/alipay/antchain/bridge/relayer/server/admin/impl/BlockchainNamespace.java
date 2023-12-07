@@ -132,6 +132,7 @@ public class BlockchainNamespace extends AbstractNamespace {
                     new TransactionCallbackWithoutResult() {
                         @Override
                         protected void doInTransactionWithoutResult(TransactionStatus status) {
+                            bcdnsManager.bindDomainCertWithBlockchain(domain, product, blockchainId);
                             blockchainManager.addBlockchain(
                                     product,
                                     blockchainId,
@@ -140,7 +141,6 @@ public class BlockchainNamespace extends AbstractNamespace {
                                     desc,
                                     clientConfig
                             );
-                            bcdnsManager.bindDomainCertWithBlockchain(domain, product, blockchainId);
                         }
                     }
             );

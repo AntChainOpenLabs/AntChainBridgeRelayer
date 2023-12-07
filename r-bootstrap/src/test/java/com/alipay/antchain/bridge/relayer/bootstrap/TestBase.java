@@ -59,11 +59,19 @@ public abstract class TestBase {
 
     public static String antChainDotComDomain = "antchain.com";
 
+    public static String antChainDotComProduct = "mychain";
+
+    public static String antChainDotComBlockchainId = antChainDotComDomain + ".id";
+
     public static AbstractCrossChainCertificate catchainDotCommCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
             FileUtil.readBytes("cc_certs/catchain.com.crt")
     );
 
+    public static String catChainDotComProduct = "ethereum";
+
     public static String catChainDotComDomain = "catchain.com";
+
+    public static String catChainDotComBlockchainId = catChainDotComDomain + ".id";
 
     public static AbstractCrossChainCertificate dogchainDotCommCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
             FileUtil.readBytes("cc_certs/dogchain.com.crt")

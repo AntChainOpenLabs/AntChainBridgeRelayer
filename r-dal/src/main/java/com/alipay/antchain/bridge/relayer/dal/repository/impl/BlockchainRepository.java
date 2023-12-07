@@ -252,7 +252,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     public BlockchainMeta getBlockchainMetaByDomain(String domain) {
         try {
             if (blockchainMetaCache.containsKey(getDomainBlockchainMetaCacheKey(domain))) {
-                return blockchainMetaCache.get(getDomainBlockchainMetaCacheKey(domain));
+                return blockchainMetaCache.get(getDomainBlockchainMetaCacheKey(domain), false);
             }
 
             BlockchainEntity blockchainEntity = blockchainService.getBaseMapper().queryBlockchainByDomain(domain);
@@ -329,7 +329,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     @Override
     public BlockchainMeta getBlockchainMeta(String product, String blockchainId) {
         if (blockchainMetaCache.containsKey(blockchainId)) {
-            return blockchainMetaCache.get(blockchainId);
+            return blockchainMetaCache.get(blockchainId, false);
         }
 
         BlockchainEntity blockchainEntity = blockchainService.lambdaQuery()

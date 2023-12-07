@@ -67,6 +67,11 @@ public class BlockchainManager implements IBlockchainManager {
             BlockchainMeta.BlockchainProperties blockchainProperties = BlockchainMeta.BlockchainProperties.decode(
                     JSON.toJSONBytes(clientConfig)
             );
+            if (ObjectUtil.isNull(blockchainProperties)) {
+                throw new RuntimeException(
+                        StrUtil.format("null blockchain properties from client config : {}", JSON.toJSONString(clientConfig))
+                );
+            }
             if (ObjectUtil.isNotNull(blockchainProperties.getAnchorRuntimeStatus())) {
                 log.warn(
                         "add blockChain information (id : {}) contains anchor runtime status : {} and it will be removed",
