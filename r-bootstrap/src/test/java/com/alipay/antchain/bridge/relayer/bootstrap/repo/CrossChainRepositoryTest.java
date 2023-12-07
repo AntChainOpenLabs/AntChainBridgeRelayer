@@ -64,7 +64,23 @@ public class CrossChainRepositoryTest extends TestBase {
         authMessageV2.setUpperProtocol(UpperProtocolTypeBeyondAMEnum.SDP.ordinal());
         authMessageV2.setPayload("".getBytes());
 
-        authMessage = authMessageV2;
+        authMessagePositiveTrust = authMessageV2;
+
+        AuthMessageV2 authMessageV2Neg = new AuthMessageV2();
+        authMessageV2Neg.setIdentity(CrossChainIdentity.fromHexStr(DigestUtil.sha256Hex("01")));
+        authMessageV2Neg.setTrustLevel(AuthMessageTrustLevelEnum.NEGATIVE_TRUST);
+        authMessageV2Neg.setUpperProtocol(UpperProtocolTypeBeyondAMEnum.SDP.ordinal());
+        authMessageV2Neg.setPayload("".getBytes());
+
+        authMessageNegativeTrust = authMessageV2Neg;
+
+        AuthMessageV2 authMessageV2Zero = new AuthMessageV2();
+        authMessageV2Zero.setIdentity(CrossChainIdentity.fromHexStr(DigestUtil.sha256Hex("01")));
+        authMessageV2Zero.setTrustLevel(AuthMessageTrustLevelEnum.ZERO_TRUST);
+        authMessageV2Zero.setUpperProtocol(UpperProtocolTypeBeyondAMEnum.SDP.ordinal());
+        authMessageV2Zero.setPayload("".getBytes());
+
+        authMessageZeroTrust = authMessageV2Zero;
 
         SDPMessageV2 sdpMessageV2 = new SDPMessageV2();
         sdpMessageV2.setAtomic(true);
@@ -76,7 +92,11 @@ public class CrossChainRepositoryTest extends TestBase {
         sdpMessage = sdpMessageV2;
     }
 
-    private static IAuthMessage authMessage;
+    private static IAuthMessage authMessagePositiveTrust;
+
+    private static IAuthMessage authMessageNegativeTrust;
+
+    private static IAuthMessage authMessageZeroTrust;
 
     private static AbstractSDPMessage sdpMessage;
 
@@ -113,6 +133,31 @@ public class CrossChainRepositoryTest extends TestBase {
     }
 
     @Test
+    public void testPeekAuthMessagesWithDifferentTrustLevel() {
+        saveElevenAM(getAMCurrentId());
+        saveElevenNegativeTrustAM(getAMCurrentId());
+        saveElevenZeroTrustAM(getAMCurrentId());
+
+        List<AuthMsgWrapper> authMsgWrappers = crossChainMessageRepository.peekAuthMessages("test", 33, 10);
+        Assert.assertEquals(32, authMsgWrappers.size());
+    }
+
+    @Test
+    public void testPeekAuthMessagesOutOfRetryTimes() {
+        saveElevenAM(getAMCurrentId());
+        saveElevenNegativeTrustAM(getAMCurrentId());
+        saveElevenZeroTrustAM(getAMCurrentId());
+
+        AuthMsgPoolEntity entity = new AuthMsgPoolEntity();
+        entity.setId(1L);
+        entity.setFailCount(10);
+        authMsgPoolMapper.updateById(entity);
+
+        List<AuthMsgWrapper> authMsgWrappers = crossChainMessageRepository.peekAuthMessages("test", 33, 10);
+        Assert.assertEquals(31, authMsgWrappers.size());
+    }
+
+    @Test
     public void testArchiveAuthMessages() {
         saveElevenAM(getAMCurrentId());
 
@@ -144,7 +189,7 @@ public class CrossChainRepositoryTest extends TestBase {
                             HexUtil.encodeHexStr(ByteUtil.intToBytes(i)),
                             "am",
                             AuthMsgProcessStateEnum.PROCESSED, 0,
-                            authMessage)
+                            authMessagePositiveTrust)
             );
         }
 
@@ -197,7 +242,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         0,
-                                        authMessage
+                                        authMessagePositiveTrust
                                 ),
                                 "eth",
                                 "ethid",
@@ -268,7 +313,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         0,
-                                        authMessage
+                                        authMessagePositiveTrust
                                 ),
                                 "eth",
                                 "ethid",
@@ -295,7 +340,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         0,
-                                        authMessage
+                                        authMessagePositiveTrust
                                 ),
                                 "eth",
                                 "ethid",
@@ -336,7 +381,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         0,
-                                        authMessage
+                                        authMessagePositiveTrust
                                 ),
                                 "eth",
                                 "ethid",
@@ -388,10 +433,50 @@ public class CrossChainRepositoryTest extends TestBase {
                                     "test",
                                     "test",
                                     "test",
-                                    HexUtil.encodeHexStr(ByteUtil.intToBytes(i)),
+                                    HexUtil.encodeHexStr(ByteUtil.longToBytes(startId + i + 1)),
                                     "am",
                                     AuthMsgProcessStateEnum.PENDING, 0,
-                                    authMessage)
+                                    authMessagePositiveTrust)
+                    )
+            );
+        }
+    }
+
+    private void saveElevenNegativeTrustAM(long startId) {
+
+        for (int i = 0; i < 11; i++) {
+            Assert.assertEquals(
+                    startId + i + 1,
+                    crossChainMessageRepository.putAuthMessageWithIdReturned(
+                            new AuthMsgWrapper(
+                                    "test",
+                                    "test",
+                                    "test",
+                                    HexUtil.encodeHexStr(ByteUtil.longToBytes(startId + i + 1)),
+                                    "am",
+                                    i == 10 ? AuthMsgProcessStateEnum.PENDING : AuthMsgProcessStateEnum.PROVED,
+                                    0,
+                                    authMessageNegativeTrust)
+                    )
+            );
+        }
+    }
+
+    private void saveElevenZeroTrustAM(long startId) {
+
+        for (int i = 0; i < 11; i++) {
+            Assert.assertEquals(
+                    startId + i + 1,
+                    crossChainMessageRepository.putAuthMessageWithIdReturned(
+                            new AuthMsgWrapper(
+                                    "test",
+                                    "test",
+                                    "test",
+                                    HexUtil.encodeHexStr(ByteUtil.longToBytes(startId + i + 1)),
+                                    "am",
+                                    AuthMsgProcessStateEnum.PROVED,
+                                    0,
+                                    authMessageNegativeTrust)
                     )
             );
         }
@@ -427,7 +512,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                     "am",
                                     AuthMsgProcessStateEnum.PENDING,
                                     0,
-                                    authMessage
+                                    authMessagePositiveTrust
                             ),
                             sdpMessage
                     )

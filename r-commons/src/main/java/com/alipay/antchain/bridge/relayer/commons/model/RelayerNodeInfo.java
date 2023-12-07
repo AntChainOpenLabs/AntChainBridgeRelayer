@@ -223,6 +223,7 @@ public class RelayerNodeInfo {
         this.sigAlgo = sigAlgo;
         this.endpoints = endpoints;
         this.domains = domains;
+        this.properties = new RelayerNodeProperties();
     }
 
     public RelayerNodeInfo(
@@ -240,6 +241,7 @@ public class RelayerNodeInfo {
         this.sigAlgo = sigAlgo;
         this.endpoints = endpoints;
         this.domains = domains;
+        this.properties = new RelayerNodeProperties();
     }
 
     public RelayerNodeInfo(
@@ -257,6 +259,7 @@ public class RelayerNodeInfo {
         this.sigAlgo = sigAlgo;
         this.endpoints = endpoints;
         this.domains = domains;
+        this.properties = new RelayerNodeProperties();
     }
 
     /**

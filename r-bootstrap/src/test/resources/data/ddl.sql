@@ -81,10 +81,10 @@ CREATE TABLE IF NOT EXISTS `domain_cert_application`
 
 CREATE TABLE IF NOT EXISTS `domain_space_cert`
 (
-    `id`                int(11) NOT NULL AUTO_INCREMENT,
+    `id`                int(11)      NOT NULL AUTO_INCREMENT,
     `domain_space`      varchar(128) DEFAULT NULL,
     `parent_space`      varchar(128) DEFAULT NULL,
-    `owner_oid_hex`     BINARY  NOT NULL,
+    `owner_oid_hex`     varchar(256) NOT NULL,
     `description`       varchar(128) DEFAULT NULL,
     `domain_space_cert` longblob,
     `gmt_create`        datetime     DEFAULT CURRENT_TIMESTAMP,
@@ -224,11 +224,11 @@ CREATE TABLE IF NOT EXISTS `relayer_node`
     `id`                   int(11) NOT NULL AUTO_INCREMENT,
     `node_id`              varchar(64)   DEFAULT NULL,
     `relayer_cert_id`      varchar(128)  DEFAULT NULL,
-    `node_crosschain_cert` binary        DEFAULT NULL,
+    `node_crosschain_cert` BLOB          DEFAULT NULL,
     `node_sig_algo`        varchar(255)  DEFAULT NULL,
     `domains`              varchar(2048) DEFAULT NULL,
     `endpoints`            varchar(1024) DEFAULT NULL,
-    `blockchain_content`   binary        DEFAULT NULL,
+    `blockchain_content`   BLOB          DEFAULT NULL,
     `properties`           longblob,
     `gmt_create`           datetime      DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`         datetime      DEFAULT CURRENT_TIMESTAMP,
@@ -358,7 +358,7 @@ CREATE TABLE IF NOT EXISTS `bcdns_service`
 (
     `id`           INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
     `domain_space` VARCHAR(128)        NOT NULL,
-    `owner_oid`    BINARY              NOT NULL,
+    `owner_oid`    VARCHAR(256)        NOT NULL,
     `type`         VARCHAR(32)         NOT NULL,
     `state`        INT                 NOT NULL,
     `properties`   BLOB,

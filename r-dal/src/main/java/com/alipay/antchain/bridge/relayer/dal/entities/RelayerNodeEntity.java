@@ -32,7 +32,7 @@ public class RelayerNodeEntity extends BaseEntity {
     private String relayerCertId;
 
     @TableField("node_crosschain_cert")
-    private String nodeCrossChainCert;
+    private byte[] nodeCrossChainCert;
 
     @TableField("node_sig_algo")
     private String nodeSigAlgo;
@@ -44,7 +44,7 @@ public class RelayerNodeEntity extends BaseEntity {
     private String endpoints;
 
     @TableField("blockchain_content")
-    private String blockchainContent;
+    private byte[] blockchainContent;
 
     @TableField("properties")
     private byte[] properties;

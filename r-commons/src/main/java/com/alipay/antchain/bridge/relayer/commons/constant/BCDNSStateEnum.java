@@ -24,10 +24,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum BCDNSStateEnum {
 
-    WORKING("working"),
+    WORKING(0),
 
-    FROZEN("frozen");
+    FROZEN(1);
 
     @EnumValue
-    private final String code;
+    private final Integer code;
 }

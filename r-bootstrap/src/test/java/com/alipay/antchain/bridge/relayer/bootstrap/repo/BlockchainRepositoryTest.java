@@ -17,7 +17,6 @@
 package com.alipay.antchain.bridge.relayer.bootstrap.repo;
 
 import java.util.List;
-import java.util.concurrent.locks.Lock;
 import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
@@ -106,42 +105,6 @@ public class BlockchainRepositoryTest extends TestBase {
                         100L
                 )
         );
-    }
-
-    @Test
-    public void test3() throws Exception {
-        Lock myLock = redisson.getLock("testtest");
-        new Thread(
-                () -> {
-                    while (true) {
-                        myLock.lock();
-                        System.out.println("here aaa");
-                        try {
-                            Thread.sleep(1_000);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                        myLock.unlock();
-                    }
-                }
-        ).start();
-
-        new Thread(
-                () -> {
-                    while (true) {
-                        myLock.lock();
-                        System.out.println("here bbb");
-                        try {
-                            Thread.sleep(1_000);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                        myLock.unlock();
-                    }
-                }
-        ).start();
-
-        Thread.sleep(100_000);
     }
 
     @Test

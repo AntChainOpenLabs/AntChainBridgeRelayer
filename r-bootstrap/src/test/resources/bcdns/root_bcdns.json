@@ -9,9 +9,9 @@
     "url": "http://0.0.0.0:8112"
   },
   "chainConfig": {
-    "bifAddress": "",
+    "bifAddress": "did:bid:efNc8GGh3Yh2GkNJwBwHmKsqWPEayBtM",
     "bifChainRpcUrl": "",
-    "bifPrivateKey": "",
+    "bifPrivateKey": "priSPKq5XtWDeVp4nCiQZP39xkK9dUaT4mkRxBxTvVjKE7Fib4",
     "certificatesGovernContract": "",
     "domainGovernContract": "",
     "ptcGovernContract": "",

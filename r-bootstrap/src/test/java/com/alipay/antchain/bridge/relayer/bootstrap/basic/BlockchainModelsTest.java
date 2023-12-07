@@ -17,7 +17,11 @@
 package com.alipay.antchain.bridge.relayer.bootstrap.basic;
 
 import java.io.ByteArrayInputStream;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,10 +45,12 @@ import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+@SuppressWarnings("all")
 public class BlockchainModelsTest {
 
     private static final String BLOCKCHAIN_META_EXAMPLE = "{\n" +
@@ -128,25 +134,25 @@ public class BlockchainModelsTest {
             "    \"plugin_server_id\":\"p-QYj86x8Zd\"\n" +
             "}";
 
-    private static AbstractCrossChainCertificate antchainDotComDomainCert;
+    public static AbstractCrossChainCertificate antchainDotComDomainCert;
 
-    private static AbstractCrossChainCertificate catchainDotComDomainCert;
+    public static AbstractCrossChainCertificate catchainDotComDomainCert;
 
-    private static AbstractCrossChainCertificate dogchainDotComDomainCert;
+    public static AbstractCrossChainCertificate dogchainDotComDomainCert;
 
-    private static AbstractCrossChainCertificate birdchainDotComDomainCert;
+    public static AbstractCrossChainCertificate birdchainDotComDomainCert;
 
-    private static AbstractCrossChainCertificate dotComDomainSpaceCert;
+    public static AbstractCrossChainCertificate dotComDomainSpaceCert;
 
-    private static List<AbstractCrossChainCertificate> domainCertList = new ArrayList<>();
+    public static List<AbstractCrossChainCertificate> domainCertList = new ArrayList<>();
 
-    private static Map<String, AbstractCrossChainCertificate> trustRootMap = new HashMap<>();
+    public static Map<String, AbstractCrossChainCertificate> trustRootMap = new HashMap<>();
 
-    private static AbstractCrossChainCertificate relayerCert;
+    public static AbstractCrossChainCertificate relayerCert;
 
-    private static AbstractCrossChainCertificate trustRootCert;
+    public static AbstractCrossChainCertificate trustRootCert;
 
-    private static PrivateKey privateKey;
+    public static PrivateKey privateKey;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -177,15 +183,29 @@ public class BlockchainModelsTest {
         trustRootCert = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
                 FileUtil.readBytes("cc_certs/trust_root.crt")
         );
-        privateKey = PemUtil.readPemPrivateKey(
-                new ByteArrayInputStream(FileUtil.readBytes("cc_certs/private_key.pem"))
-        );
+        privateKey = getLocalPrivateKey("cc_certs/private_key.pem");
 
         trustRootMap.put(CrossChainDomain.ROOT_DOMAIN_SPACE, trustRootCert);
         trustRootMap.put(
                 CrossChainCertificateUtil.getCrossChainDomainSpace(dotComDomainSpaceCert).getDomain(),
                 dotComDomainSpaceCert
         );
+    }
+
+    public static PrivateKey getLocalPrivateKey(String path) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        try {
+            return PemUtil.readPemPrivateKey(new ByteArrayInputStream(FileUtil.readBytes(path)));
+        } catch (Exception e) {
+            byte[] rawPemOb = PemUtil.readPem(new ByteArrayInputStream(FileUtil.readBytes(path)));
+            KeyFactory keyFactory = KeyFactory.getInstance(
+                    PrivateKeyInfo.getInstance(rawPemOb).getPrivateKeyAlgorithm().getAlgorithm().getId()
+            );
+            return keyFactory.generatePrivate(
+                    new PKCS8EncodedKeySpec(
+                            rawPemOb
+                    )
+            );
+        }
     }
 
     @Test

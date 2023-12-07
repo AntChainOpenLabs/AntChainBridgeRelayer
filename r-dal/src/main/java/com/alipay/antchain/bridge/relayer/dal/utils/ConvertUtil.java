@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.codec.Base64;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -273,7 +272,7 @@ public class ConvertUtil {
         RelayerNodeInfo nodeInfo = new RelayerNodeInfo(
                 entity.getNodeId(),
                 CrossChainCertificateFactory.createCrossChainCertificate(
-                        Base64.decode(entity.getNodeCrossChainCert())
+                        entity.getNodeCrossChainCert()
                 ),
                 entity.getNodeSigAlgo(),
                 stringToList(entity.getEndpoints()),
@@ -281,7 +280,7 @@ public class ConvertUtil {
         );
         if (ObjectUtil.isNotEmpty(entity.getBlockchainContent())) {
             nodeInfo.setRelayerBlockchainContent(
-                    RelayerBlockchainContent.decodeFromJson(entity.getBlockchainContent())
+                    RelayerBlockchainContent.decodeFromJson(new String(entity.getBlockchainContent()))
             );
         }
         nodeInfo.setProperties(
@@ -299,14 +298,15 @@ public class ConvertUtil {
         entity.setDomains(
                 listToString(nodeInfo.getDomains())
         );
-        entity.setNodeCrossChainCert(Base64.encode(nodeInfo.getRelayerCrossChainCertificate().encode()));
+        entity.setNodeSigAlgo(nodeInfo.getSigAlgo());
+        entity.setNodeCrossChainCert(nodeInfo.getRelayerCrossChainCertificate().encode());
         entity.setEndpoints(
                 listToString(nodeInfo.getEndpoints())
         );
 
         entity.setBlockchainContent(
                 ObjectUtil.isNull(nodeInfo.getRelayerBlockchainContent()) ?
-                        StrUtil.EMPTY : nodeInfo.getRelayerBlockchainContent().encodeToJson()
+                        StrUtil.EMPTY.getBytes() : nodeInfo.getRelayerBlockchainContent().encodeToJson().getBytes()
         );
         entity.setProperties(nodeInfo.marshalProperties().getBytes());
 
