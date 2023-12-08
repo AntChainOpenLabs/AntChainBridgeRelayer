@@ -20,9 +20,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
 
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.HexUtil;
-import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
 import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
@@ -37,10 +35,6 @@ import org.junit.Test;
 
 public class BCDNSRepositoryTest extends TestBase {
 
-    public static BCDNSServiceDO rootBcdnsServiceDO;
-
-    public static BCDNSServiceDO dotComBcdnsServiceDO;
-
     public static DomainCertApplicationDO antchainDotComApplication = new DomainCertApplicationDO(
             antChainDotComDomain,
             dotComDomainSpace,
@@ -50,24 +44,6 @@ public class BCDNSRepositoryTest extends TestBase {
 
     @BeforeClass
     public static void setup() {
-
-        rootBcdnsServiceDO = new BCDNSServiceDO(
-                CrossChainDomain.ROOT_DOMAIN_SPACE,
-                trustRootCert.getCredentialSubjectInstance().getApplicant(),
-                new DomainSpaceCertWrapper(trustRootCert),
-                BCDNSTypeEnum.BIF,
-                BCDNSStateEnum.WORKING,
-                FileUtil.readBytes("bcdns/root_bcdns.json")
-        );
-
-        dotComBcdnsServiceDO = new BCDNSServiceDO(
-                dotComDomainSpace,
-                dotComDomainSpaceCert.getCredentialSubjectInstance().getApplicant(),
-                new DomainSpaceCertWrapper(dotComDomainSpaceCert),
-                BCDNSTypeEnum.BIF,
-                BCDNSStateEnum.WORKING,
-                FileUtil.readBytes("bcdns/root_bcdns.json")
-        );
     }
 
     @Resource

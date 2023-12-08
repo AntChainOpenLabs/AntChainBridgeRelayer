@@ -38,7 +38,6 @@ import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import org.redisson.api.RedissonClient;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class BlockchainRepositoryTest extends TestBase {
@@ -55,9 +54,6 @@ public class BlockchainRepositoryTest extends TestBase {
 
     @Resource
     private AnchorProcessMapper anchorProcessMapper;
-
-    @Resource
-    private RedissonClient redisson;
 
     private void saveSomeBlockchains() {
 
@@ -118,14 +114,14 @@ public class BlockchainRepositoryTest extends TestBase {
     public void testGetAllBlockchainMetaByState() {
         saveSomeBlockchains();
         List<BlockchainMeta> result = blockchainRepository.getBlockchainMetaByState(BlockchainStateEnum.RUNNING);
-        Assert.assertTrue(result.size() >= 1);
+        Assert.assertFalse(result.isEmpty());
 
         testchain1Meta.getProperties().setAnchorRuntimeStatus(BlockchainStateEnum.STOPPED);
         Assert.assertTrue(blockchainRepository.updateBlockchainMeta(testchain1Meta));
 
         result = blockchainRepository.getBlockchainMetaByState(BlockchainStateEnum.STOPPED);
 
-        Assert.assertTrue(result.size() >= 1);
+        Assert.assertFalse(result.isEmpty());
     }
 
     @Test

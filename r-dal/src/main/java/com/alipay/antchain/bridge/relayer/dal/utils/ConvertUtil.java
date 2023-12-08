@@ -254,7 +254,7 @@ public class ConvertUtil {
         return entity;
     }
 
-    public static RelayerNetworkEntity convertFromRelayerNetworkItem(String networkId, String domain, RelayerNetwork.Item relayerNetworkItem) {
+    public static RelayerNetworkEntity convertFromRelayerNetworkItem(String networkId, String domain, RelayerNetwork.DomainRouterItem relayerNetworkItem) {
         RelayerNetworkEntity entity = new RelayerNetworkEntity();
         entity.setNetworkId(networkId);
         entity.setDomain(domain);
@@ -264,8 +264,8 @@ public class ConvertUtil {
         return entity;
     }
 
-    public static RelayerNetwork.Item convertFromRelayerNetworkEntity(RelayerNetworkEntity entity) {
-        return new RelayerNetwork.Item(entity.getNodeId(), entity.getSyncState());
+    public static RelayerNetwork.DomainRouterItem convertFromRelayerNetworkEntity(RelayerNetworkEntity entity) {
+        return new RelayerNetwork.DomainRouterItem(entity.getNodeId(), entity.getSyncState());
     }
 
     public static RelayerNodeInfo convertFromRelayerNodeEntity(RelayerNodeEntity entity) {

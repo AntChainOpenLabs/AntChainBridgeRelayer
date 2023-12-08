@@ -13,12 +13,17 @@ import java.security.spec.PKCS8EncodedKeySpec;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.crypto.PemUtil;
+import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
 import com.alipay.antchain.bridge.commons.bcdns.DomainNameCredentialSubject;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.relayer.bootstrap.basic.BlockchainModelsTest;
 import com.alipay.antchain.bridge.relayer.bootstrap.utils.MyRedisServer;
+import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainSpaceCertWrapper;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -104,7 +109,7 @@ public abstract class TestBase {
     public static AbstractCrossChainCertificate relayerCertWrongIssuer = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
             FileUtil.readBytes("cc_certs/relayer_wrong_issuer.crt")
     );
-    
+
     public static byte[] rawBIDDocument = FileUtil.readBytes("cc_certs/bid_document.json");
 
     public static String bid = "did:bid:efbThy5sbG7P3mFUp2EWN5oQGX6LUGwg";
@@ -112,6 +117,24 @@ public abstract class TestBase {
     public static PrivateKey privateKey;
 
     public static MyRedisServer redisServer;
+
+    public static BCDNSServiceDO rootBcdnsServiceDO = new BCDNSServiceDO(
+            CrossChainDomain.ROOT_DOMAIN_SPACE,
+            trustRootCert.getCredentialSubjectInstance().getApplicant(),
+            new DomainSpaceCertWrapper(trustRootCert),
+            BCDNSTypeEnum.BIF,
+            BCDNSStateEnum.WORKING,
+            FileUtil.readBytes("bcdns/root_bcdns.json")
+    );
+
+    public static BCDNSServiceDO dotComBcdnsServiceDO = new BCDNSServiceDO(
+            dotComDomainSpace,
+            dotComDomainSpaceCert.getCredentialSubjectInstance().getApplicant(),
+            new DomainSpaceCertWrapper(dotComDomainSpaceCert),
+            BCDNSTypeEnum.BIF,
+            BCDNSStateEnum.WORKING,
+            FileUtil.readBytes("bcdns/root_bcdns.json")
+    );
 
     @BeforeClass
     public static void beforeTest() throws Exception {

@@ -25,7 +25,7 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public enum RelayerNodeSyncStateEnum {
+public enum DomainRouterSyncStateEnum {
 
     INIT("init"),
 
@@ -34,7 +34,7 @@ public enum RelayerNodeSyncStateEnum {
     @EnumValue
     private final String code;
 
-    public static RelayerNodeSyncStateEnum parseFromValue(String value) {
+    public static DomainRouterSyncStateEnum parseFromValue(String value) {
         if (StrUtil.equals(value, INIT.code)) {
             return INIT;
         } else if (StrUtil.equals(value, SYNC.code)) {
