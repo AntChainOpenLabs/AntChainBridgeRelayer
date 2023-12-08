@@ -1,0 +1,1 @@
+beforeScript: "sh .github/workflows/install_acbsdk.sh"
