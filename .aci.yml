@@ -1,5 +1,5 @@
 version: "2.0"
-beforeScript: "bash .github/workflows/install_acbsdk.sh"
+
 stages:
   - 代码检测
   - 安全扫描
@@ -24,6 +24,10 @@ jobs:
     stage: 单元测试
     component: linkq-ut
     inputs:
+      beforeScript:
+        |
+        echo "123abc!"
+        bash .github/workflows/install_acbsdk.sh
       accurate: true #是否启用精准测试
       #customBaselineBranch: xxx 自定义基线分支,必须和自定义基线commitId配合使用,与精准测试和变更覆盖率有关
       #customBaselineCommitId: xxx 自定义基线commitId,必须和自定义基线分支配合使用,与精准测试和变更覆盖率有关
@@ -41,6 +45,10 @@ jobs:
         coverageExclusions: "**/test/**,**/ibatis/**,**/mybatis/**,**/enums/**" #覆盖率排除路径，未指定则会使用覆盖率平台默认的排除路径
         autoPom: "true" #是否自动修改pom true false
     config:
+      beforeScript:
+        |
+        echo "1234abc!"
+        bash .github/workflows/install_acbsdk.sh
       afterExecute:
         checkRule: # 质量规则校验策略，outputs的数值在0-100之间
           - ${{outputs.casePassRate}} >= 90 #通过率
