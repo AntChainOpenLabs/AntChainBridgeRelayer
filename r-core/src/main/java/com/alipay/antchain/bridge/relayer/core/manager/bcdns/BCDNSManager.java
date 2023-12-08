@@ -447,8 +447,8 @@ public class BCDNSManager implements IBCDNSManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
                     e,
-                    "failed to stop bcdns service client for {}",
-                    domainSpace
+                    "failed to apply domain cert for {} to {}",
+                    domain, domainSpace
             );
         }
     }
@@ -477,11 +477,12 @@ public class BCDNSManager implements IBCDNSManager {
                                     + CrossChainCertificateUtil.formatCrossChainCertificateToPem(response.getCertificate())
                     );
                 }
-                if (StrUtil.equals(domain, CrossChainCertificateUtil.getCrossChainDomain(response.getCertificate()).getDomain())) {
+                if (!StrUtil.equals(domain, CrossChainCertificateUtil.getCrossChainDomain(response.getCertificate()).getDomain())) {
                     throw new RuntimeException(
                             StrUtil.format(
-                                    "unexpected domain {} in cert from BCDNS",
-                                    CrossChainCertificateUtil.getCrossChainDomain(response.getCertificate()).getDomain()
+                                    "unexpected domain {} in cert from BCDNS not equal to {}",
+                                    CrossChainCertificateUtil.getCrossChainDomain(response.getCertificate()).getDomain(),
+                                    domain
                             )
                     );
                 }
@@ -495,7 +496,8 @@ public class BCDNSManager implements IBCDNSManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
                     e,
-                    "failed to get all applying domain cert applications"
+                    "failed to query and save domain cert for {} from {}",
+                    domain, domainSpace
             );
         }
     }
@@ -560,7 +562,8 @@ public class BCDNSManager implements IBCDNSManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
                     e,
-                    "failed to get all applying domain cert applications"
+                    "failed to save domain cert application result for {}",
+                    domain
             );
         }
     }
@@ -579,7 +582,8 @@ public class BCDNSManager implements IBCDNSManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
                     e,
-                    "failed to get all applying domain cert applications"
+                    "failed to bind domain cert of {} with blockchain (product: {}, blockchain_id: {})",
+                    domain, product, blockchainId
             );
         }
     }
@@ -615,7 +619,8 @@ public class BCDNSManager implements IBCDNSManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
                     e,
-                    "failed to get all applying domain cert applications"
+                    "failed to register domain router for domain {}",
+                    domain
             );
         }
     }

@@ -47,7 +47,6 @@ import com.alipay.antchain.bridge.relayer.dal.repository.IBCDNSRepository;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class BCDNSRepository implements IBCDNSRepository {
@@ -224,7 +223,7 @@ public class BCDNSRepository implements IBCDNSRepository {
            }
 
            return domainSpaceCertEntities.stream().map(
-                   DomainSpaceCertEntity::getParentSpace
+                   DomainSpaceCertEntity::getDomainSpace
            ).collect(Collectors.toList());
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(

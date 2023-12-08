@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS `domain_cert_application`
     `id`            INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
     `domain`        VARCHAR(128) UNIQUE NOT NULL,
     `domain_space`  VARCHAR(128)        NOT NULL,
-    `apply_receipt` BINARY,
+    `apply_receipt` VARCHAR(128),
     `state`         VARCHAR(20),
     `gmt_create`    DATETIME DEFAULT CURRENT_TIMESTAMP,
     `gmt_modified`  DATETIME DEFAULT CURRENT_TIMESTAMP

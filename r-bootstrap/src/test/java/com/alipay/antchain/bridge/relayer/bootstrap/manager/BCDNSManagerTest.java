@@ -19,17 +19,30 @@ package com.alipay.antchain.bridge.relayer.bootstrap.manager;
 import java.util.List;
 import javax.annotation.Resource;
 
+import cn.hutool.cache.Cache;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.map.MapUtil;
 import com.alipay.antchain.bridge.bcdns.impl.BlockChainDomainNameServiceFactory;
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
+import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
+import com.alipay.antchain.bridge.bcdns.types.base.Relayer;
+import com.alipay.antchain.bridge.bcdns.types.resp.ApplyDomainNameCertificateResponse;
 import com.alipay.antchain.bridge.bcdns.types.resp.QueryBCDNSTrustRootCertificateResponse;
+import com.alipay.antchain.bridge.bcdns.types.resp.QueryDomainNameCertificateResponse;
+import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.core.base.BIDInfoObjectIdentity;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
 import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainCertApplicationStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertApplicationDO;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
+import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
+import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,14 +50,26 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class BCDNSManagerTest extends TestBase {
+
+    private static final String APPLICATION_RECEIPT = "0102";
 
     @Resource
     private IBCDNSManager bcdnsManager;
 
+    @Resource
+    private IBlockchainManager blockchainManager;
+
+    @Resource
+    private IBlockchainRepository blockchainRepository;
+
     @Mock
     private IBlockChainDomainNameService bcdnsService;
+
+    @MockBean
+    private Cache<String, DomainCertWrapper> domainCertWrapperCache;
 
     MockedStatic<BlockChainDomainNameServiceFactory> mockedStatic = Mockito.mockStatic(BlockChainDomainNameServiceFactory.class);
 
@@ -125,6 +150,117 @@ public class BCDNSManagerTest extends TestBase {
                                 .put(CrossChainDomain.ROOT_DOMAIN_SPACE, trustRootCert)
                                 .build()
                 )
+        );
+    }
+
+    @Test
+    public void testApplyDomainCertificate() {
+        initRootBCDNS();
+        Mockito.when(bcdnsService.applyDomainNameCertificate(Mockito.any())).thenReturn(
+                new ApplyDomainNameCertificateResponse(APPLICATION_RECEIPT)
+        );
+        Mockito.when(bcdnsService.queryDomainNameCertificate(Mockito.any())).thenReturn(
+                new QueryDomainNameCertificateResponse(false, null)
+        );
+
+        Assert.assertEquals(
+                APPLICATION_RECEIPT,
+                bcdnsManager.applyDomainCertificate(
+                        CrossChainDomain.ROOT_DOMAIN_SPACE,
+                        antChainDotComDomain,
+                        new BIDInfoObjectIdentity(bid),
+                        rawBIDDocument
+                )
+        );
+        Mockito.verify(bcdnsService).applyDomainNameCertificate(Mockito.any());
+    }
+
+    @Test
+    public void testQueryAndSaveDomainCertificateFromBCDNS() {
+        initRootBCDNS();
+        Mockito.when(bcdnsService.queryDomainNameCertificate(Mockito.any())).thenReturn(
+                new QueryDomainNameCertificateResponse(true, antchainDotCommCert)
+        );
+
+        AbstractCrossChainCertificate certificate = bcdnsManager.queryAndSaveDomainCertificateFromBCDNS(
+                antChainDotComDomain, CrossChainDomain.ROOT_DOMAIN_SPACE
+        );
+        Assert.assertNotNull(certificate);
+        Assert.assertEquals(
+                antchainDotCommCert.encodeToBase64(),
+                certificate.encodeToBase64()
+        );
+        Assert.assertNotNull(blockchainManager.getDomainCert(antChainDotComDomain));
+    }
+
+    @Test
+    public void testGetDomainCertApplication() {
+        initRootBCDNS();
+        Mockito.when(bcdnsService.applyDomainNameCertificate(Mockito.any())).thenReturn(
+                new ApplyDomainNameCertificateResponse(APPLICATION_RECEIPT)
+        );
+        Mockito.when(bcdnsService.queryDomainNameCertificate(Mockito.any())).thenReturn(
+                new QueryDomainNameCertificateResponse(false, null)
+        );
+        Mockito.when(domainCertWrapperCache.containsKey(Mockito.any())).thenReturn(false);
+
+        Assert.assertEquals(
+                APPLICATION_RECEIPT,
+                bcdnsManager.applyDomainCertificate(
+                        CrossChainDomain.ROOT_DOMAIN_SPACE,
+                        antChainDotComDomain,
+                        new BIDInfoObjectIdentity(bid),
+                        rawBIDDocument
+                )
+        );
+
+        DomainCertApplicationDO domainCertApplicationDO = bcdnsManager.getDomainCertApplication(antChainDotComDomain);
+        Assert.assertNotNull(domainCertApplicationDO);
+        Assert.assertEquals(
+                APPLICATION_RECEIPT,
+                domainCertApplicationDO.getApplyReceipt()
+        );
+        Assert.assertEquals(
+                antChainDotComDomain,
+                domainCertApplicationDO.getDomain()
+        );
+        Assert.assertEquals(
+                DomainCertApplicationStateEnum.APPLYING,
+                domainCertApplicationDO.getState()
+        );
+    }
+
+    @Test
+    public void testRegisterDomainRouter() {
+        initRootBCDNS();
+        Mockito.doNothing().when(bcdnsService).registerDomainRouter(Mockito.any());
+        blockchainRepository.saveDomainCert(new DomainCertWrapper(antchainDotCommCert));
+        bcdnsManager.registerBCDNSService(
+                dotComDomainSpace,
+                BCDNSTypeEnum.BIF,
+                "src/test/resources/bcdns/root_bcdns.json",
+                "src/test/resources/cc_certs/x.com.crt"
+        );
+
+        bcdnsManager.registerDomainRouter(antChainDotComDomain);
+    }
+
+    @Test
+    public void testGetDomainRouter() {
+        initRootBCDNS();
+        Mockito.when(bcdnsService.queryDomainRouter(Mockito.any())).thenReturn(
+                new DomainRouter(
+                        new CrossChainDomain(antChainDotComDomain),
+                        new Relayer(
+                                relayerCert.getId(),
+                                relayerCert,
+                                ListUtil.toList("https://0.0.0.0:8082")
+                        )
+                )
+        );
+
+        Assert.assertNotNull(
+                bcdnsManager.getDomainRouter(antChainDotComDomain)
         );
     }
 

@@ -146,7 +146,7 @@ public class DomainRouterQueryService {
                             DomainRouter domainRouter = getDomainRouterFromNetwork(senderDomain, destDomain);
                             if (relayerNetworkManager.hasRemoteRelayerNode(
                                     RelayerNodeInfo.calculateNodeId(
-                                            getDomainRouterFromNetwork(senderDomain, destDomain).getDestRelayer().getRelayerCert()
+                                            domainRouter.getDestRelayer().getRelayerCert()
                                     )
                             )) {
                                 processIfRelayerExistButNoLocalRouter(senderDomain, domainRouter);

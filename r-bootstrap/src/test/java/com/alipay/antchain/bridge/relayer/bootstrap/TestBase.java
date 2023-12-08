@@ -104,6 +104,10 @@ public abstract class TestBase {
     public static AbstractCrossChainCertificate relayerCertWrongIssuer = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
             FileUtil.readBytes("cc_certs/relayer_wrong_issuer.crt")
     );
+    
+    public static byte[] rawBIDDocument = FileUtil.readBytes("cc_certs/bid_document.json");
+
+    public static String bid = "did:bid:efbThy5sbG7P3mFUp2EWN5oQGX6LUGwg";
 
     public static PrivateKey privateKey;
 

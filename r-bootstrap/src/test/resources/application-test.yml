@@ -27,6 +27,7 @@ relayer:
         trust_ca_path: classpath:node_keys/relayer/node_tls.crt
       crosschain_cert_path: classpath:cc_certs/relayer.crt
       private_key_path: classpath:cc_certs/private_key.pem
+      local_endpoints: https://localhost:8082
   plugin_server_manager:
     grpc_auth:
       tls_client:
