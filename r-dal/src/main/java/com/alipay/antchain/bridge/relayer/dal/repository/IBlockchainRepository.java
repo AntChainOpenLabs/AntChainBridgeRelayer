@@ -54,4 +54,10 @@ public interface IBlockchainRepository {
     List<String> getBlockchainDomainsByState(BlockchainStateEnum state);
 
     DomainCertWrapper getDomainCert(String domain);
+
+    boolean hasDomainCert(String domain);
+
+    void saveDomainCert(DomainCertWrapper domainCertWrapper);
+
+    void updateBlockchainInfoOfDomainCert(String domain, String product, String blockchainId);
 }

@@ -19,14 +19,33 @@ package com.alipay.antchain.bridge.relayer.core.manager.bcdns;
 import java.util.List;
 import java.util.Map;
 
+import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
+import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
+import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
-import com.alipay.antchain.bridge.commons.bcdns.BCDNSTrustRootCredentialSubject;
+import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
+import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainCertApplicationDO;
 
 public interface IBCDNSManager {
 
-    Map<String, AbstractCrossChainCertificate> getAllTrustRootCerts();
+    IBlockChainDomainNameService getBCDNSService(String domainSpace);
 
-    AbstractCrossChainCertificate getTrustRootCert(String domainSpace);
+    void registerBCDNSService(String domainSpace, BCDNSTypeEnum bcdnsType, String propFilePath, String bcdnsCertPath);
+
+    IBlockChainDomainNameService startBCDNSService(BCDNSServiceDO bcdnsServiceDO);
+
+    void restartBCDNSService(String domainSpace);
+
+    void stopBCDNSService(String domainSpace);
+
+    void saveBCDNSServiceData(BCDNSServiceDO bcdnsServiceDO);
+
+    BCDNSServiceDO getBCDNSServiceData(String domainSpace);
+
+    List<String> getAllBCDNSDomainSpace();
+
+    boolean hasBCDNSServiceData(String domainSpace);
 
     Map<String, AbstractCrossChainCertificate> getTrustRootCertChain(String domainSpace);
 
@@ -34,13 +53,28 @@ public interface IBCDNSManager {
 
     AbstractCrossChainCertificate getTrustRootCertForRootDomain();
 
-    BCDNSTrustRootCredentialSubject getTrustRootCredentialSubject(String domainSpace);
-
-    BCDNSTrustRootCredentialSubject getTrustRootCredentialSubjectForRootDomain();
-
     boolean validateCrossChainCertificate(AbstractCrossChainCertificate certificate);
 
-    boolean validateDomainCertificate(AbstractCrossChainCertificate certificate, List<String> domainSpaceChain);
+    boolean validateCrossChainCertificate(
+            AbstractCrossChainCertificate certificate,
+            Map<String, AbstractCrossChainCertificate> domainSpaceCertPath
+    );
 
     void saveDomainSpaceCerts(Map<String, AbstractCrossChainCertificate> domainSpaceCerts);
+
+    String applyDomainCertificate(String domainSpace, String domain, ObjectIdentity applicantOid, byte[] rawSubject);
+
+    AbstractCrossChainCertificate queryAndSaveDomainCertificateFromBCDNS(String domain, String domainSpace);
+
+    List<DomainCertApplicationDO> getAllApplyingDomainCertApplications();
+
+    DomainCertApplicationDO getDomainCertApplication(String domain);
+
+    void saveDomainCertApplicationResult(String domain, AbstractCrossChainCertificate domainCert);
+
+    void bindDomainCertWithBlockchain(String domain, String product, String blockchainId);
+
+    void registerDomainRouter(String domain);
+
+    DomainRouter getDomainRouter(String destDomain);
 }

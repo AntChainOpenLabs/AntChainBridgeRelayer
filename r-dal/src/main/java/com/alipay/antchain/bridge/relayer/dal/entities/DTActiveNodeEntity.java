@@ -22,13 +22,13 @@ import com.alipay.antchain.bridge.relayer.commons.constant.DTActiveNodeStateEnum
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("dt_active_node")
 public class DTActiveNodeEntity extends BaseEntity {
 

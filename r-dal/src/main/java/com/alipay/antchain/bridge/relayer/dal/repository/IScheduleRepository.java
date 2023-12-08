@@ -19,22 +19,50 @@ package com.alipay.antchain.bridge.relayer.dal.repository;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.ActiveNode;
-import com.alipay.antchain.bridge.relayer.commons.model.DistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.BizDistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.BlockchainDistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.MarkDTTask;
 
 public interface IScheduleRepository {
 
     Lock getDispatchLock();
 
+    Lock getMarkLock();
+
     void activate(String nodeId, String nodeIp);
 
-    List<DistributedTask> getAllDistributedTasks();
+    List<BlockchainDistributedTask> getAllBlockchainDistributedTasks();
 
-    List<DistributedTask> getDistributedTasksByNodeId(String nodeId);
+    List<BizDistributedTask> getAllBizDistributedTasks();
+
+    List<BlockchainDistributedTask> getBlockchainDistributedTasksByNodeId(String nodeId);
+
+    List<BizDistributedTask> getBizDistributedTasksByNodeId(String nodeId);
 
     List<ActiveNode> getAllActiveNodes();
 
-    void batchInsertDTTasks(List<DistributedTask> tasks);
+    void batchInsertBlockchainDTTasks(List<BlockchainDistributedTask> tasks);
 
-    void batchUpdateDTTasks(List<DistributedTask> tasks);
+    void batchInsertBizDTTasks(List<BizDistributedTask> tasks);
+
+    void batchUpdateBlockchainDTTasks(List<BlockchainDistributedTask> tasks);
+
+    void batchUpdateBizDTTasks(List<BizDistributedTask> tasks);
+
+    void insertMarkDTTask(MarkDTTask markDTTask);
+
+    void markForDomainRouterQuery(String senderDomain, String receiverDomain);
+
+    boolean hasMarkDTTask(MarkDTTaskTypeEnum taskType, String uniqueKey);
+
+    List<MarkDTTask> peekInitOrTimeoutMarkDTTask(int limit);
+
+    void batchUpdateMarkDTTasks(List<MarkDTTask> tasks);
+
+    List<MarkDTTask> peekReadyMarkDTTask(MarkDTTaskTypeEnum type, String nodeId, int limit);
+
+    void updateMarkDTTaskState(MarkDTTaskTypeEnum type, String nodeId, String uniqueKey, MarkDTTaskStateEnum state);
 }

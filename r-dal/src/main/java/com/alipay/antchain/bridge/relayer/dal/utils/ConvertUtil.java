@@ -21,12 +21,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import cn.hutool.core.codec.Base64;
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
@@ -35,8 +36,10 @@ import com.alipay.antchain.bridge.commons.core.am.*;
 import com.alipay.antchain.bridge.commons.core.base.*;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV1;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV2;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.dal.entities.*;
+import lombok.NonNull;
 
 public class ConvertUtil {
 
@@ -136,6 +139,7 @@ public class ConvertUtil {
                 authMsgPoolEntity.getUcpId(),
                 authMsgPoolEntity.getAmClientContractAddress(),
                 authMsgPoolEntity.getProcessState(),
+                authMsgPoolEntity.getFailCount(),
                 authMessage
         );
     }
@@ -154,6 +158,7 @@ public class ConvertUtil {
         entity.setTrustLevel(authMsgWrapper.getTrustLevel());
         entity.setPayload(authMsgWrapper.getPayload());
         entity.setProcessState(authMsgWrapper.getProcessState());
+        entity.setFailCount(authMsgWrapper.getFailCount());
         entity.setExt(authMsgWrapper.getRawLedgerInfo());
 
         return entity;
@@ -267,15 +272,15 @@ public class ConvertUtil {
         RelayerNodeInfo nodeInfo = new RelayerNodeInfo(
                 entity.getNodeId(),
                 CrossChainCertificateFactory.createCrossChainCertificate(
-                        Base64.decode(entity.getNodeCrossChainCert())
+                        entity.getNodeCrossChainCert()
                 ),
                 entity.getNodeSigAlgo(),
-                StrUtil.split(entity.getEndpoints(), "^"),
-                StrUtil.split(entity.getDomains(), "^")
+                stringToList(entity.getEndpoints()),
+                stringToList(entity.getDomains())
         );
         if (ObjectUtil.isNotEmpty(entity.getBlockchainContent())) {
             nodeInfo.setRelayerBlockchainContent(
-                    RelayerBlockchainContent.decodeFromJson(entity.getBlockchainContent())
+                    RelayerBlockchainContent.decodeFromJson(new String(entity.getBlockchainContent()))
             );
         }
         nodeInfo.setProperties(
@@ -289,21 +294,31 @@ public class ConvertUtil {
     public static RelayerNodeEntity convertFromRelayerNodeInfo(RelayerNodeInfo nodeInfo) throws IOException {
         RelayerNodeEntity entity = new RelayerNodeEntity();
         entity.setNodeId(nodeInfo.getNodeId());
+        entity.setRelayerCertId(nodeInfo.getRelayerCertId());
         entity.setDomains(
-                nodeInfo.getDomains().stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("")
+                listToString(nodeInfo.getDomains())
         );
-        entity.setNodeCrossChainCert(Base64.encode(nodeInfo.getRelayerCrossChainCertificate().encode()));
+        entity.setNodeSigAlgo(nodeInfo.getSigAlgo());
+        entity.setNodeCrossChainCert(nodeInfo.getRelayerCrossChainCertificate().encode());
         entity.setEndpoints(
-                nodeInfo.getEndpoints().stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("")
+                listToString(nodeInfo.getEndpoints())
         );
 
         entity.setBlockchainContent(
                 ObjectUtil.isNull(nodeInfo.getRelayerBlockchainContent()) ?
-                        StrUtil.EMPTY : nodeInfo.getRelayerBlockchainContent().encodeToJson()
+                        StrUtil.EMPTY.getBytes() : nodeInfo.getRelayerBlockchainContent().encodeToJson().getBytes()
         );
         entity.setProperties(nodeInfo.marshalProperties().getBytes());
 
         return entity;
+    }
+
+    public static String listToString(List<String> list) {
+        return list.stream().reduce((s1, s2) -> StrUtil.join("^", s1, s2)).orElse("");
+    }
+
+    public static List<String> stringToList(String str) {
+        return StrUtil.split(str, "^");
     }
 
     public static RelayerHealthInfo convertFromDTActiveNodeEntity(int port, long activateLength, DTActiveNodeEntity entity) {
@@ -315,22 +330,42 @@ public class ConvertUtil {
         );
     }
 
-    public static DistributedTask convertFromDTTaskEntity(DTTaskEntity entity) {
-        DistributedTask distributedTask = new DistributedTask();
-        distributedTask.setNodeId(entity.getNodeId());
-        distributedTask.setTaskType(entity.getTaskType());
-        distributedTask.setBlockchainId(entity.getBlockchainId());
-        distributedTask.setBlockchainProduct(entity.getProduct());
-        distributedTask.setStartTime(entity.getTimeSlice().getTime());
-        distributedTask.setExt(entity.getExt());
-        return distributedTask;
+    public static BlockchainDistributedTask convertFromBlockchainDTTaskEntity(BlockchainDTTaskEntity entity) {
+        BlockchainDistributedTask blockchainDistributedTask = new BlockchainDistributedTask();
+        blockchainDistributedTask.setNodeId(entity.getNodeId());
+        blockchainDistributedTask.setTaskType(entity.getTaskType());
+        blockchainDistributedTask.setBlockchainId(entity.getBlockchainId());
+        blockchainDistributedTask.setBlockchainProduct(entity.getProduct());
+        blockchainDistributedTask.setStartTime(entity.getTimeSlice().getTime());
+        blockchainDistributedTask.setExt(entity.getExt());
+        return blockchainDistributedTask;
     }
 
-    public static DTTaskEntity convertFromDistributedTask(DistributedTask task) {
-        DTTaskEntity entity = new DTTaskEntity();
+    public static BlockchainDTTaskEntity convertFromBlockchainDistributedTask(BlockchainDistributedTask task) {
+        BlockchainDTTaskEntity entity = new BlockchainDTTaskEntity();
         entity.setTaskType(task.getTaskType());
         entity.setBlockchainId(task.getBlockchainId());
         entity.setProduct(task.getBlockchainProduct());
+        entity.setNodeId(task.getNodeId());
+        entity.setTimeSlice(new Date(task.getStartTime()));
+        entity.setExt(task.getExt());
+        return entity;
+    }
+
+    public static BizDistributedTask convertFromBizDTTaskEntity(BizDTTaskEntity entity) {
+        BizDistributedTask bizDistributedTask = new BizDistributedTask();
+        bizDistributedTask.setNodeId(entity.getNodeId());
+        bizDistributedTask.setTaskType(entity.getTaskType());
+        bizDistributedTask.setUniqueKey(entity.getUniqueKey());
+        bizDistributedTask.setStartTime(entity.getTimeSlice().getTime());
+        bizDistributedTask.setExt(entity.getExt());
+        return bizDistributedTask;
+    }
+
+    public static BizDTTaskEntity convertFromBizDistributedTask(BizDistributedTask task) {
+        BizDTTaskEntity entity = new BizDTTaskEntity();
+        entity.setTaskType(task.getTaskType());
+        entity.setUniqueKey(task.getUniqueKey());
         entity.setNodeId(task.getNodeId());
         entity.setTimeSlice(new Date(task.getStartTime()));
         entity.setExt(task.getExt());
@@ -422,8 +457,69 @@ public class ConvertUtil {
         DomainSpaceCertEntity entity = new DomainSpaceCertEntity();
         entity.setDomainSpace(wrapper.getDomainSpace());
         entity.setParentSpace(wrapper.getParentDomainSpace());
+        entity.setOwnerOidHex(HexUtil.encodeHexStr(wrapper.getOwnerOid().encode()));
         entity.setDesc(wrapper.getDesc());
         entity.setDomainSpaceCert(wrapper.getDomainSpaceCert().encode());
         return entity;
+    }
+
+    public static DomainSpaceCertWrapper convertFromDomainSpaceCertEntity(DomainSpaceCertEntity entity) {
+        AbstractCrossChainCertificate certificate = CrossChainCertificateFactory.createCrossChainCertificate(entity.getDomainSpaceCert());
+        DomainSpaceCertWrapper wrapper = new DomainSpaceCertWrapper(certificate);
+        wrapper.setDesc(entity.getDesc());
+        return wrapper;
+    }
+
+    public static BCDNSServiceDO convertFromBCDNSServiceEntity(@NonNull BCDNSServiceEntity entity, @NonNull DomainSpaceCertWrapper domainSpaceCertWrapper) {
+        return new BCDNSServiceDO(
+                entity.getDomainSpace(),
+                ObjectIdentity.decode(HexUtil.decodeHex(entity.getOwnerOid())),
+                domainSpaceCertWrapper,
+                BCDNSTypeEnum.parseFromValue(entity.getType()),
+                entity.getState(),
+                entity.getProperties()
+        );
+    }
+
+    public static BCDNSServiceEntity convertFromBCDNSServiceDO(BCDNSServiceDO bcdnsServiceDO) {
+        BCDNSServiceEntity entity = new BCDNSServiceEntity();
+        entity.setDomainSpace(bcdnsServiceDO.getDomainSpace());
+        entity.setOwnerOid(HexUtil.encodeHexStr(bcdnsServiceDO.getOwnerOid().encode()));
+        entity.setType(bcdnsServiceDO.getType().getCode());
+        entity.setState(bcdnsServiceDO.getState());
+        entity.setProperties(bcdnsServiceDO.getProperties());
+        return entity;
+    }
+
+    public static DomainCertApplicationDO convertFromDomainCertApplicationEntity(DomainCertApplicationEntity entity) {
+        return BeanUtil.copyProperties(entity, DomainCertApplicationDO.class);
+    }
+
+    public static DomainCertApplicationEntity convertFromDomainCertApplicationDO(DomainCertApplicationDO domainCertApplicationDO) {
+        return BeanUtil.copyProperties(domainCertApplicationDO, DomainCertApplicationEntity.class);
+    }
+
+    public static MarkDTTaskEntity convertFromMarkDTTask(MarkDTTask markDTTask) {
+        MarkDTTaskEntity entity = new MarkDTTaskEntity();
+        entity.setNodeId(StrUtil.emptyToDefault(markDTTask.getNodeId(), null));
+        entity.setUniqueKey(StrUtil.emptyToDefault(markDTTask.getUniqueKey(), null));
+        entity.setTaskType(markDTTask.getTaskType());
+        entity.setEndTime(ObjectUtil.isNotNull(markDTTask.getEndTime()) ? new Date(markDTTask.getEndTime()) : null);
+        entity.setState(markDTTask.getState());
+        return entity;
+    }
+
+    public static MarkDTTask convertFromMarkDTTaskEntity(MarkDTTaskEntity entity) {
+        MarkDTTask task = BeanUtil.copyProperties(entity, MarkDTTask.class, MarkDTTaskEntity.Fields.endTime);
+        task.setEndTime(entity.getEndTime().getTime());
+        return task;
+    }
+
+    public static CrossChainChannelDO convertFromCrossChainChannelEntity(CrossChainChannelEntity entity) {
+        return BeanUtil.copyProperties(entity, CrossChainChannelDO.class);
+    }
+
+    public static CrossChainChannelEntity convertFromCrossChainChannelDO(CrossChainChannelDO crossChainChannelDO) {
+        return BeanUtil.copyProperties(crossChainChannelDO, CrossChainChannelEntity.class);
     }
 }

@@ -7,7 +7,7 @@ import java.util.Map;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alipay.antchain.bridge.relayer.core.service.anchor.context.AnchorProcessContext;
-import com.alipay.antchain.bridge.relayer.core.service.anchor.workers.AuthMessageWorker;
+import com.alipay.antchain.bridge.relayer.core.service.anchor.workers.CrossChainMessageWorker;
 import com.alipay.antchain.bridge.relayer.core.service.anchor.workers.BlockWorker;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.AbstractBlock;
 import lombok.Getter;
@@ -55,7 +55,7 @@ public class BlockNotifyTask extends BlockBaseTask {
         workersByTask.put(
                 NotifyTaskTypeEnum.CROSSCHAIN_MSG_WORKER,
                 ListUtil.toList(
-                        new AuthMessageWorker(processContext)
+                        new CrossChainMessageWorker(processContext)
                 )
         );
     }
@@ -149,8 +149,9 @@ public class BlockNotifyTask extends BlockBaseTask {
                 for (BlockWorker worker : workersByTask.get(notifyTaskType)) {
                     if (!worker.process(block)) {
                         log.error(
-                                "worker process block failed: [ blockchain: {}, height: {} ]",
-                                getProcessContext().getBlockchainMeta().getMetaKey(), 
+                                "worker {} process block failed: [ blockchain: {}, height: {} ]",
+                                notifyTaskType,
+                                getProcessContext().getBlockchainMeta().getMetaKey(),
                                 currentHeight
                         );
                         processResult = false;

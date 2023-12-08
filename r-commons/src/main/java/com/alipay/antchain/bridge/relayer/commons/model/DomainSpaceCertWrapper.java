@@ -19,6 +19,8 @@ package com.alipay.antchain.bridge.relayer.commons.model;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
+import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,14 +30,19 @@ public class DomainSpaceCertWrapper {
 
     public DomainSpaceCertWrapper(AbstractCrossChainCertificate domainSpaceCert) {
         this.domainSpaceCert = domainSpaceCert;
-        this.domainSpace = CrossChainCertificateUtil.getCrossChainDomainSpace(domainSpaceCert).getDomain();
-        this.parentDomainSpace = CrossChainCertificateUtil.getParentDomainSpace(domainSpaceCert).getDomain();
+        this.domainSpace = CrossChainCertificateUtil.isBCDNSTrustRoot(domainSpaceCert) ?
+                CrossChainDomain.ROOT_DOMAIN_SPACE : CrossChainCertificateUtil.getCrossChainDomainSpace(domainSpaceCert).getDomain();
+        this.parentDomainSpace = CrossChainCertificateUtil.isBCDNSTrustRoot(domainSpaceCert) ?
+                null : CrossChainCertificateUtil.getParentDomainSpace(domainSpaceCert).getDomain();
+        this.ownerOid = domainSpaceCert.getCredentialSubjectInstance().getApplicant();
         this.desc = StrUtil.EMPTY;
     }
 
     private String domainSpace;
 
     private String parentDomainSpace;
+
+    private ObjectIdentity ownerOid;
 
     private String desc;
 

@@ -17,7 +17,7 @@
 package com.alipay.antchain.bridge.relayer.commons.model;
 
 import cn.hutool.core.util.StrUtil;
-import com.alipay.antchain.bridge.relayer.commons.constant.DistributedTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainDistributedTaskTypeEnum;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,11 +25,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class DistributedTask {
+public class BlockchainDistributedTask implements IDistributedTask {
 
     private String nodeId = StrUtil.EMPTY;
 
-    private DistributedTaskTypeEnum taskType;
+    private BlockchainDistributedTaskTypeEnum taskType;
 
     private String blockchainProduct;
 
@@ -41,15 +41,15 @@ public class DistributedTask {
 
     private long timeSliceLength = 0;
 
-    public DistributedTask(DistributedTaskTypeEnum taskType, String blockchainProduct, String blockchainId) {
+    public BlockchainDistributedTask(BlockchainDistributedTaskTypeEnum taskType, String blockchainProduct, String blockchainId) {
         this.taskType = taskType;
         this.blockchainProduct = blockchainProduct;
         this.blockchainId = blockchainId;
     }
 
-    public DistributedTask(
+    public BlockchainDistributedTask(
             String nodeId,
-            DistributedTaskTypeEnum taskType,
+            BlockchainDistributedTaskTypeEnum taskType,
             String blockchainProduct,
             String blockchainId,
             String ext,
@@ -61,10 +61,6 @@ public class DistributedTask {
         this.blockchainId = blockchainId;
         this.ext = ext;
         this.startTime = startTime;
-    }
-
-    public boolean ifFinish(long timeSliceLength) {
-        return (System.currentTimeMillis() - this.startTime) > timeSliceLength;
     }
 
     public boolean ifFinish() {

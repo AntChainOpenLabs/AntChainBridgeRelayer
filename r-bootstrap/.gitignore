@@ -39,4 +39,8 @@ build/
 
 src/main/resources/cc_certs/**
 
+src/main/resources/bcdns
+
 src/main/resources/node_keys/**
+
+src/test/resources/bins/dump.rdb

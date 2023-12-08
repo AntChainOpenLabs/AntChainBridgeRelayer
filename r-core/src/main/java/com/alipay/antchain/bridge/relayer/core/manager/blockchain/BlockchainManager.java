@@ -27,8 +27,8 @@ import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.commons.bbc.AbstractBBCContext;
 import com.alipay.antchain.bridge.commons.bbc.DefaultBBCContext;
 import com.alipay.antchain.bridge.commons.bbc.syscontract.ContractStatusEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.OnChainServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.OnChainServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
@@ -42,6 +42,7 @@ import com.alipay.antchain.bridge.relayer.core.types.blockchain.HeteroBlockchain
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Slf4j
@@ -66,6 +67,11 @@ public class BlockchainManager implements IBlockchainManager {
             BlockchainMeta.BlockchainProperties blockchainProperties = BlockchainMeta.BlockchainProperties.decode(
                     JSON.toJSONBytes(clientConfig)
             );
+            if (ObjectUtil.isNull(blockchainProperties)) {
+                throw new RuntimeException(
+                        StrUtil.format("null blockchain properties from client config : {}", JSON.toJSONString(clientConfig))
+                );
+            }
             if (ObjectUtil.isNotNull(blockchainProperties.getAnchorRuntimeStatus())) {
                 log.warn(
                         "add blockChain information (id : {}) contains anchor runtime status : {} and it will be removed",
@@ -234,6 +240,31 @@ public class BlockchainManager implements IBlockchainManager {
                     RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
                     e,
                     "failed to deploy am contract for blockchain {} - {}",
+                    product, blockchainId
+            );
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
+    public void deployBBCContractAsync(String product, String blockchainId) {
+        try {
+            BlockchainMeta blockchainMeta = getBlockchainMeta(product, blockchainId);
+            if (ObjectUtil.isNull(blockchainMeta)) {
+                throw new RuntimeException(StrUtil.format("blockchain not found : {}-{}", product, blockchainId));
+            }
+
+            if (ObjectUtil.isNull(blockchainMeta.getProperties().getAmServiceStatus())) {
+                blockchainMeta.getProperties().setAmServiceStatus(OnChainServiceStatusEnum.INIT);
+                updateBlockchainMeta(blockchainMeta);
+            }
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to mark am contract to deploy for blockchain {} - {}",
                     product, blockchainId
             );
         }

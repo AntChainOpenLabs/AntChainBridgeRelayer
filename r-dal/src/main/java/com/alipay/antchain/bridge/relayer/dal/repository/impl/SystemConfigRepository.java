@@ -59,6 +59,9 @@ public class SystemConfigRepository implements ISystemConfigRepository {
     @Resource(name = "systemConfigCache")
     private Cache<String, String> systemConfigCache;
 
+    @Value("${relayer.network.node.local_endpoints:}")
+    private String localEndpoints;
+
     @Override
     public String getSystemConfig(String key) {
         try {
@@ -159,10 +162,10 @@ public class SystemConfigRepository implements ISystemConfigRepository {
     @Override
     public List<String> getLocalEndpoints() {
         String val = getSystemConfig(LOCAL_ENDPOINTS_KEY);
-        if (StrUtil.isEmpty(val)) {
-            return ListUtil.empty();
+        if (StrUtil.isEmpty(val) && StrUtil.isEmpty(localEndpoints)) {
+            throw new RuntimeException("no local endpoints set");
         }
-        return StrUtil.split(val, "^");
+        return StrUtil.split(StrUtil.isNotEmpty(val) ? val : localEndpoints, "^");
     }
 
     @Override

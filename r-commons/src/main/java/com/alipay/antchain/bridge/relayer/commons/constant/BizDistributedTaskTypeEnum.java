@@ -14,10 +14,22 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.mapper;
+package com.alipay.antchain.bridge.relayer.commons.constant;
 
-import com.alipay.antchain.bridge.relayer.dal.entities.AnchorSystemConfigEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-public interface AnchorSystemConfigMapper extends BaseMapper<AnchorSystemConfigEntity> {
+@Getter
+@AllArgsConstructor
+public enum BizDistributedTaskTypeEnum {
+
+    DOMAIN_APPLICATION_QUERY("domain_application_query"),
+
+    PLUGIN_SERVER_HEARTBEAT("plugin_server_heartbeat"),
+
+    ;
+
+    @EnumValue
+    private final String code;
 }

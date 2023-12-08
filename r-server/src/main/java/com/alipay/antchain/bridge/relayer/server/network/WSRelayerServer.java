@@ -22,16 +22,19 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.xml.ws.Endpoint;
 
+import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
+import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
 import com.sun.net.httpserver.HttpsServer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RedissonClient;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
@@ -64,19 +67,24 @@ public class WSRelayerServer implements ApplicationRunner {
             ExecutorService wsRelayerServerExecutorService,
             WsSslFactory wsSslFactory,
             IRelayerNetworkManager relayerNetworkManager,
+            IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
             ReceiverService receiverService,
+            ICrossChainMessageRepository crossChainMessageRepository,
+            RedissonClient redisson,
             boolean isDiscoveryService
     ) {
         this.serverMode = serverMode;
         this.port = port;
         this.wsRelayerServerAPI = new WSRelayerServerAPImpl(
                 relayerNetworkManager,
+                bcdnsManager,
                 relayerCredentialManager,
                 receiverService,
+                crossChainMessageRepository,
+                redisson,
                 defaultNetworkId,
-                isDiscoveryService
-        );
+                isDiscoveryService);
         this.workers = wsRelayerServerExecutorService;
         this.wsSslFactory = wsSslFactory;
     }
@@ -110,9 +118,9 @@ public class WSRelayerServer implements ApplicationRunner {
                 new HttpsConfigurator(wsSslFactory.getSslContext()) {
                     public void configure(HttpsParameters params) {
                         SSLContext c = getSSLContext();
-                        SSLParameters sslparams = c.getDefaultSSLParameters();
-                        sslparams.setNeedClientAuth(needClientAuth);
-                        params.setSSLParameters(sslparams);
+                        SSLParameters sslParams = c.getDefaultSSLParameters();
+                        sslParams.setNeedClientAuth(needClientAuth);
+                        params.setSSLParameters(sslParams);
                     }
                 }
         );

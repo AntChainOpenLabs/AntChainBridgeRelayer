@@ -16,36 +16,26 @@
 
 package com.alipay.antchain.bridge.relayer.dal.entities;
 
-import java.util.Date;
-
-import com.alipay.antchain.bridge.relayer.commons.constant.DistributedTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
-@TableName("dt_task")
-@NoArgsConstructor
-@Builder
-@AllArgsConstructor
-public class DTTaskEntity extends BaseEntity {
+@TableName("crosschain_channel")
+public class CrossChainChannelEntity extends BaseEntity {
 
-    @TableField("node_id")
-    private String nodeId;
+    @TableField("local_domain")
+    private String localDomain;
 
-    @TableField("task_type")
-    private DistributedTaskTypeEnum taskType;
+    @TableField("remote_domain")
+    private String remoteDomain;
 
-    @TableField("blockchain_product")
-    private String product;
+    @TableField("relayer_node_id")
+    private String relayerNodeId;
 
-    @TableField("blockchain_id")
-    private String blockchainId;
-
-    @TableField("ext")
-    private String ext;
-
-    @TableField("timeslice")
-    private Date timeSlice;
+    @TableField("state")
+    private CrossChainChannelStateEnum state;
 }

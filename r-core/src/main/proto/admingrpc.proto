@@ -1,11 +1,11 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "com.alipay.mychain.oracle.servicemanager.grpcserver.grpc.admin";
-option java_outer_classname = "OSManagerGrpcServerOuter";
-option objc_class_prefix = "OSManagerGrpcServer";
+option java_package = "com.alipay.antchain.bridge.relayer.core.grpc.admin";
+option java_outer_classname = "AdminGrpcServerOuter";
+option objc_class_prefix = "AdminGrpcServer";
 
-package osmanagergrpcserver;
+package acb.relayer.admin;
 
 /**
 * 管控接口对象

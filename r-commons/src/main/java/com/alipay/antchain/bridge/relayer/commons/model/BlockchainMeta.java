@@ -28,6 +28,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.alipay.antchain.bridge.commons.bbc.DefaultBBCContext;
+import com.alipay.antchain.bridge.relayer.commons.constant.Constants;
 import com.alipay.antchain.bridge.relayer.commons.constant.OnChainServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.utils.HeteroBBCContextDeserializer;
@@ -45,8 +46,6 @@ public class BlockchainMeta {
     @Getter
     @Setter
     public static class BlockchainProperties {
-
-        public static final String AM_SERVICE_STATUS = "am_service_status";
 
         public static BlockchainProperties decode(byte[] rawData) {
             JSONObject jsonObject = JSON.parseObject(new String(rawData));
@@ -74,9 +73,9 @@ public class BlockchainMeta {
                 "anchor_runtime_status",
                 "init_block_height",
                 "is_domain_registered",
-                "heterogeneous_bbc_context",
+                Constants.HETEROGENEOUS_BBC_CONTEXT,
                 "plugin_server_id",
-                AM_SERVICE_STATUS,
+                Constants.AM_SERVICE_STATUS,
                 "extra_properties"
         );
 
@@ -95,13 +94,13 @@ public class BlockchainMeta {
         @JSONField(name = "is_domain_registered")
         private Boolean isDomainRegistered;
 
-        @JSONField(name = "heterogeneous_bbc_context", deserializeUsing = HeteroBBCContextDeserializer.class)
+        @JSONField(name = Constants.HETEROGENEOUS_BBC_CONTEXT, deserializeUsing = HeteroBBCContextDeserializer.class)
         private DefaultBBCContext bbcContext;
 
         @JSONField(name = "plugin_server_id")
         private String pluginServerId;
 
-        @JSONField(name = AM_SERVICE_STATUS)
+        @JSONField(name = Constants.AM_SERVICE_STATUS)
         private OnChainServiceStatusEnum amServiceStatus;
 
         @JSONField(name = "extra_properties")

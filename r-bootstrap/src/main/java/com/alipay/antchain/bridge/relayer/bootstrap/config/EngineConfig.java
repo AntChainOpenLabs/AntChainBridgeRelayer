@@ -19,7 +19,8 @@ package com.alipay.antchain.bridge.relayer.bootstrap.config;
 import java.util.Map;
 
 import cn.hutool.core.map.MapUtil;
-import com.alipay.antchain.bridge.relayer.commons.constant.DistributedTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.BizDistributedTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainDistributedTaskTypeEnum;
 import com.alipay.antchain.bridge.relayer.engine.core.ScheduleContext;
 import com.alipay.antchain.bridge.relayer.engine.executor.*;
 import lombok.Getter;
@@ -42,7 +43,7 @@ public class EngineConfig {
 
     @Bean
     @Autowired
-    public Map<DistributedTaskTypeEnum, BaseScheduleTaskExecutor> scheduleTaskExecutorMap(
+    public Map<BlockchainDistributedTaskTypeEnum, BaseScheduleTaskExecutor> scheduleTaskExecutorMap(
             AnchorScheduleTaskExecutor anchorScheduleTaskExecutor,
             CommitterScheduleTaskExecutor committerScheduleTaskExecutor,
             ProcessScheduleTaskExecutor processScheduleTaskExecutor,
@@ -50,13 +51,23 @@ public class EngineConfig {
             ArchiveScheduleTaskExecutor archiveScheduleTaskExecutor,
             AsyncDeployScheduleTaskExecutor asyncDeployScheduleTaskExecutor
     ) {
-        Map<DistributedTaskTypeEnum, BaseScheduleTaskExecutor> res = MapUtil.newHashMap();
-        res.put(DistributedTaskTypeEnum.ANCHOR_TASK, anchorScheduleTaskExecutor);
-        res.put(DistributedTaskTypeEnum.COMMIT_TASK, committerScheduleTaskExecutor);
-        res.put(DistributedTaskTypeEnum.PROCESS_TASK, processScheduleTaskExecutor);
-        res.put(DistributedTaskTypeEnum.AM_CONFIRM_TASK, txConfirmScheduleTaskExecutor);
-        res.put(DistributedTaskTypeEnum.ARCHIVE_TASK, archiveScheduleTaskExecutor);
-        res.put(DistributedTaskTypeEnum.DEPLOY_SERVICE_TASK, asyncDeployScheduleTaskExecutor);
+        Map<BlockchainDistributedTaskTypeEnum, BaseScheduleTaskExecutor> res = MapUtil.newHashMap();
+        res.put(BlockchainDistributedTaskTypeEnum.ANCHOR_TASK, anchorScheduleTaskExecutor);
+        res.put(BlockchainDistributedTaskTypeEnum.COMMIT_TASK, committerScheduleTaskExecutor);
+        res.put(BlockchainDistributedTaskTypeEnum.PROCESS_TASK, processScheduleTaskExecutor);
+        res.put(BlockchainDistributedTaskTypeEnum.AM_CONFIRM_TASK, txConfirmScheduleTaskExecutor);
+        res.put(BlockchainDistributedTaskTypeEnum.ARCHIVE_TASK, archiveScheduleTaskExecutor);
+        res.put(BlockchainDistributedTaskTypeEnum.DEPLOY_SERVICE_TASK, asyncDeployScheduleTaskExecutor);
+        return res;
+    }
+
+    @Bean
+    @Autowired
+    public Map<BizDistributedTaskTypeEnum, BaseScheduleTaskExecutor> scheduleBizTaskExecutorMap(
+            QueryDomainCertApplicationScheduleTaskExecutor queryDomainCertApplicationScheduleTaskExecutor
+    ) {
+        Map<BizDistributedTaskTypeEnum, BaseScheduleTaskExecutor> res = MapUtil.newHashMap();
+        res.put(BizDistributedTaskTypeEnum.DOMAIN_APPLICATION_QUERY, queryDomainCertApplicationScheduleTaskExecutor);
         return res;
     }
 }

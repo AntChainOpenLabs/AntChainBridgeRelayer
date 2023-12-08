@@ -14,28 +14,20 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.commons.constant;
+package com.alipay.antchain.bridge.relayer.core.types.exception;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
-import lombok.AllArgsConstructor;
+import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
+import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor
-public enum DistributedTaskTypeEnum {
+public class CrossChainChannelNotExistException extends AntChainBridgeRelayerException {
 
-    ANCHOR_TASK("anchor"),
+    private String senderDomain;
 
-    PROCESS_TASK("process"),
+    private String receiverDomain;
 
-    COMMIT_TASK("committer"),
-
-    DEPLOY_SERVICE_TASK("deployService"),
-
-    ARCHIVE_TASK("archive"),
-
-    AM_CONFIRM_TASK("amConfirm");
-
-    @EnumValue
-    private final String code;
+    public CrossChainChannelNotExistException(String senderDomain, String receiverDomain, String message) {
+        super(RelayerErrorCodeEnum.CORE_UNKNOWN_RELAYER_FOR_DEST_DOMAIN, message);
+    }
 }

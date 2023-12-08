@@ -38,9 +38,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * @TODO Need update
- */
 @NoArgsConstructor
 @Getter
 @Setter
@@ -55,7 +52,7 @@ public class RelayerNodeInfo {
         return DigestUtil.sha256Hex(
                 RelayerCredentialSubject.decode(
                         crossChainCertificate.getCredentialSubject()
-                ).getApplicant().getRawId()
+                ).getApplicant().encode()
         );
     }
 
@@ -123,6 +120,7 @@ public class RelayerNodeInfo {
                             Base64.decode(stream.readUTF())
                     )
             );
+            info.setRelayerCertId(info.getRelayerCrossChainCertificate().getId());
             Assert.equals(
                     CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
                     info.getRelayerCrossChainCertificate().getType()
@@ -132,6 +130,8 @@ public class RelayerNodeInfo {
                             info.getRelayerCrossChainCertificate().getCredentialSubject()
                     )
             );
+
+            info.setSigAlgo(stream.readUTF());
 
             int endpointSize = stream.readInt();
 
@@ -176,6 +176,8 @@ public class RelayerNodeInfo {
      */
     private String nodeId;
 
+    private String relayerCertId;
+
     private AbstractCrossChainCertificate relayerCrossChainCertificate;
 
     private RelayerCredentialSubject relayerCredentialSubject;
@@ -215,11 +217,13 @@ public class RelayerNodeInfo {
     ) {
         Assert.equals(CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE, relayerCrossChainCertificate.getType());
         this.nodeId = RelayerNodeInfo.calculateNodeId(relayerCrossChainCertificate);
+        this.relayerCertId = relayerCrossChainCertificate.getId();
         this.relayerCrossChainCertificate = relayerCrossChainCertificate;
         this.relayerCredentialSubject = RelayerCredentialSubject.decode(relayerCrossChainCertificate.getCredentialSubject());
         this.sigAlgo = sigAlgo;
         this.endpoints = endpoints;
         this.domains = domains;
+        this.properties = new RelayerNodeProperties();
     }
 
     public RelayerNodeInfo(
@@ -231,11 +235,13 @@ public class RelayerNodeInfo {
     ) {
         Assert.equals(CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE, relayerCrossChainCertificate.getType());
         this.nodeId = nodeId;
+        this.relayerCertId = relayerCrossChainCertificate.getId();
         this.relayerCrossChainCertificate = relayerCrossChainCertificate;
         this.relayerCredentialSubject = RelayerCredentialSubject.decode(relayerCrossChainCertificate.getCredentialSubject());
         this.sigAlgo = sigAlgo;
         this.endpoints = endpoints;
         this.domains = domains;
+        this.properties = new RelayerNodeProperties();
     }
 
     public RelayerNodeInfo(
@@ -247,11 +253,13 @@ public class RelayerNodeInfo {
             List<String> domains
     ) {
         this.nodeId = nodeId;
+        this.relayerCertId = relayerCrossChainCertificate.getId();
         this.relayerCrossChainCertificate = relayerCrossChainCertificate;
         this.relayerCredentialSubject = relayerCredentialSubject;
         this.sigAlgo = sigAlgo;
         this.endpoints = endpoints;
         this.domains = domains;
+        this.properties = new RelayerNodeProperties();
     }
 
     /**
@@ -285,6 +293,7 @@ public class RelayerNodeInfo {
             stream.writeUTF(
                     Base64.encode(relayerCrossChainCertificate.encode())
             );
+            stream.writeUTF(sigAlgo);
 
             stream.writeInt(endpoints.size());
             for (String endpoint : endpoints) {

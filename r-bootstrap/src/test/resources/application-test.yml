@@ -18,25 +18,22 @@ logging:
     app: INFO
 relayer:
   network:
-    id: 1
     node:
-      sig_algo: SM3WITHSM2
+      sig_algo: Ed25519
       server:
         mode: https
-        port: 8082
       tls:
-        private_key_path: node_keys/relayer/node_tls.key
-        trust_ca_path: node_keys/relayer/node_tls.crt
-      crosschain_cert_path: cc_certs/relayer.crt
-      private_key_path: cc_certs/private_key.pem
+        private_key_path: classpath:node_keys/relayer/node_tls.key
+        trust_ca_path: classpath:node_keys/relayer/node_tls.crt
+      crosschain_cert_path: classpath:cc_certs/relayer.crt
+      private_key_path: classpath:cc_certs/private_key.pem
+      local_endpoints: https://localhost:8082
   plugin_server_manager:
-    grpc:
-      auth:
-        tls:
-          client:
-            ca:
-              path: node_keys/ps/relayer.crt
-            key:
-              path: node_keys/ps/relayer.key
-server:
-  port: 8081
+    grpc_auth:
+      tls_client:
+        ca_path: classpath:node_keys/ps/relayer.crt
+        key_path: classpath:node_keys/ps/relayer.key
+  engine:
+    schedule:
+      duty:
+        period: 5000

@@ -252,7 +252,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     public BlockchainMeta getBlockchainMetaByDomain(String domain) {
         try {
             if (blockchainMetaCache.containsKey(getDomainBlockchainMetaCacheKey(domain))) {
-                return blockchainMetaCache.get(getDomainBlockchainMetaCacheKey(domain));
+                return blockchainMetaCache.get(getDomainBlockchainMetaCacheKey(domain), false);
             }
 
             BlockchainEntity blockchainEntity = blockchainService.getBaseMapper().queryBlockchainByDomain(domain);
@@ -329,7 +329,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     @Override
     public BlockchainMeta getBlockchainMeta(String product, String blockchainId) {
         if (blockchainMetaCache.containsKey(blockchainId)) {
-            return blockchainMetaCache.get(blockchainId);
+            return blockchainMetaCache.get(blockchainId, false);
         }
 
         BlockchainEntity blockchainEntity = blockchainService.lambdaQuery()
@@ -405,7 +405,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public List<String> getBlockchainDomainsByState(BlockchainStateEnum state) {
         try {
             List<BlockchainEntity> blockchainEntities = blockchainService.lambdaQuery()
@@ -467,6 +467,59 @@ public class BlockchainRepository implements IBlockchainRepository {
                     RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
                     e,
                     "failed to query domain cert from DB for domain {}",
+                    domain
+            );
+        }
+    }
+
+    @Override
+    public boolean hasDomainCert(String domain) {
+        if (domainCertWrapperCache.containsKey(domain)) {
+            return true;
+        }
+        return domainCertMapper.exists(new LambdaQueryWrapper<DomainCertEntity>().eq(DomainCertEntity::getDomain, domain));
+    }
+
+    @Override
+    public void saveDomainCert(DomainCertWrapper domainCertWrapper) {
+        try {
+            if (hasDomainCert(domainCertWrapper.getDomain())) {
+                throw new RuntimeException(StrUtil.format("domain cert for {} already exist", domainCertWrapper.getDomain()));
+            }
+            domainCertMapper.insert(ConvertUtil.convertFromDomainCertWrapper(domainCertWrapper));
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to save domain cert to DB for domain {}",
+                    domainCertWrapper.getDomain()
+            );
+        }
+    }
+
+    @Override
+    public void updateBlockchainInfoOfDomainCert(String domain, String product, String blockchainId) {
+        try {
+            if (!hasDomainCert(domain)) {
+                throw new RuntimeException(StrUtil.format("domain cert for {} not found", domain));
+            }
+            if (
+                    domainCertMapper.update(
+                            DomainCertEntity.builder()
+                                    .product(product)
+                                    .blockchainId(blockchainId)
+                                    .build(),
+                            new LambdaUpdateWrapper<DomainCertEntity>()
+                                    .eq(DomainCertEntity::getDomain, domain)
+                    ) != 1
+            ) {
+                throw new RuntimeException("failed to update the domain cert in DB");
+            }
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to update domain cert to DB for domain {}",
                     domain
             );
         }

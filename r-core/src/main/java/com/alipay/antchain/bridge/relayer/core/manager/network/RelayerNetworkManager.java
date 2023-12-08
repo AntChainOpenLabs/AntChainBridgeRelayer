@@ -24,11 +24,15 @@ import javax.annotation.Resource;
 import cn.hutool.cache.Cache;
 import cn.hutool.cache.CacheUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
@@ -48,7 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Getter
 @Component
-public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
+public class RelayerNetworkManager implements IRelayerNetworkManager {
 
     @Value("${relayer.network.node.crosschain_cert_path:null}")
     private String relayerCrossChainCertPath;
@@ -107,7 +111,7 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public RelayerNodeInfo getRelayerNodeInfoWithContent() {
         RelayerNodeInfo nodeInfo = getRelayerNodeInfo();
 
@@ -190,7 +194,7 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
 
             // 如果公钥以及domain信息没设置，则远程请求补充
             if (ObjectUtil.isNull(nodeInfo.getRelayerCrossChainCertificate())) {
-                RelayerClient relayerClient = relayerClientPool.getRelayerClient(nodeInfo);
+                RelayerClient relayerClient = relayerClientPool.getRelayerClient(nodeInfo, null);
                 if (ObjectUtil.isNull(relayerClient)) {
                     throw new AntChainBridgeRelayerException(
                             RelayerErrorCodeEnum.CORE_RELAYER_NETWORK_ERROR,
@@ -275,52 +279,33 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     }
 
     @Override
-    public RelayerNodeInfo getRelayerNode(String nodeId) {
-        return relayerNetworkRepository.getRelayerNode(nodeId);
+    public RelayerNodeInfo getRelayerNode(String nodeId, boolean lock) {
+        return relayerNetworkRepository.getRelayerNode(nodeId, lock);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public void syncRelayerNode(String networkId, String nodeId) {
         log.info("begin sync relayer node {} in network {}", nodeId, networkId);
 
         try {
-            RelayerNodeInfo relayerNode = relayerNetworkRepository.getRelayerNode(nodeId);
+            RelayerNodeInfo relayerNode = relayerNetworkRepository.getRelayerNode(nodeId, true);
             if (null == relayerNode) {
                 throw new RuntimeException(StrUtil.format("relayer {} not exist", nodeId));
             }
 
             log.info("relayer node {} has {} domain", nodeId, relayerNode.getDomains().size());
 
-            RelayerBlockchainContent relayerBlockchainContent = relayerClientPool.getRelayerClient(relayerNode).getRelayerBlockchainContent();
-            RelayerBlockchainContent.ValidationResult validationResult = relayerBlockchainContent.validate(
-                    bcdnsManager.getTrustRootCertForRootDomain()
+            validateAndSaveBlockchainContent(
+                    networkId,
+                    relayerNode,
+                    Assert.notNull(
+                            relayerClientPool.getRelayerClient(relayerNode, null).getRelayerBlockchainContent(),
+                            "null blockchain content from relayer {}",
+                            nodeId
+                    ),
+                    true
             );
-
-            validationResult.getBlockchainInfoMapValidated().forEach(
-                    (key, value) -> {
-                        try {
-                            processRelayerBlockchainInfo(
-                                    networkId,
-                                    key,
-                                    relayerNode,
-                                    value
-                            );
-                        } catch (Exception e) {
-                            log.error("failed process blockchain info for {} from relayer {}", key, nodeId, e);
-                        }
-                        log.info("sync domain {} success from relayer {}", key, nodeId);
-                    }
-            );
-
-            relayerNode.setRelayerBlockchainContent(relayerBlockchainContent);
-            if (!relayerNetworkRepository.updateRelayerNode(relayerNode)) {
-                throw new RuntimeException(
-                        StrUtil.format("update relayer info fail {} ", relayerNode.getNodeId())
-                );
-            }
-
-            bcdnsManager.saveDomainSpaceCerts(validationResult.getDomainSpaceValidated());
         } catch (AntChainBridgeRelayerException e) {
             throw e;
         } catch (Exception e) {
@@ -334,6 +319,40 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     }
 
     @Override
+    public void validateAndSaveBlockchainContent(
+            String networkId,
+            RelayerNodeInfo relayerNodeInfo,
+            RelayerBlockchainContent relayerBlockchainContent,
+            boolean ifNewContent
+    ) {
+        RelayerBlockchainContent.ValidationResult validationResult = relayerBlockchainContent.validate(
+                bcdnsManager.getTrustRootCertForRootDomain()
+        );
+        validationResult.getBlockchainInfoMapValidated().forEach(
+                (key, value) -> {
+                    try {
+                        processRelayerBlockchainInfo(
+                                networkId,
+                                key,
+                                relayerNodeInfo,
+                                value
+                        );
+                    } catch (Exception e) {
+                        log.error("failed process blockchain info for {} from relayer {}", key, relayerNodeInfo.getNodeId(), e);
+                    }
+                    log.info("sync domain {} success from relayer {}", key, relayerNodeInfo.getNodeId());
+                }
+        );
+        if (ifNewContent || ObjectUtil.isNull(relayerNodeInfo.getRelayerBlockchainContent())) {
+            relayerNodeInfo.setRelayerBlockchainContent(relayerBlockchainContent);
+        } else {
+            relayerNodeInfo.getRelayerBlockchainContent().addRelayerBlockchainContent(relayerBlockchainContent);
+        }
+        relayerNetworkRepository.updateRelayerNode(relayerNodeInfo);
+        bcdnsManager.saveDomainSpaceCerts(validationResult.getDomainSpaceValidated());
+    }
+
+    @Override
     public RelayerNetwork findNetworkByDomainName(String domainName) {
         return relayerNetworkRepository.getRelayerNetworkByDomain(domainName);
     }
@@ -341,6 +360,20 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     @Override
     public RelayerNetwork.Item findNetworkItemByDomainName(String domainName) {
         return relayerNetworkRepository.getNetworkItem(domainName);
+    }
+
+    @Override
+    public String findRemoteRelayer(String receiverDomain) {
+        RelayerNetwork.Item relayerNetworkItem = findNetworkItemByDomainName(receiverDomain);
+        if (ObjectUtil.isNull(relayerNetworkItem)) {
+            log.info("can't find receiver domain {} in all network from local data", receiverDomain);
+            return null;
+        }
+        if (relayerNetworkItem.getSyncState() != RelayerNodeSyncStateEnum.SYNC) {
+            log.warn("receiver domain {} router existed but not on state SYNC.", receiverDomain);
+            return null;
+        }
+        return relayerNetworkItem.getNodeId();
     }
 
     @Override
@@ -390,11 +423,10 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     }
 
     @Override
-    @Transactional
     public RelayerNodeInfo getRelayerNodeInfoForDomain(String domain) {
         String remoteNodeId = relayerNetworkRepository.getRelayerNodeIdForDomain(domain);
         if (StrUtil.isEmpty(remoteNodeId)) {
-            return relayerNetworkRepository.getRelayerNode(remoteNodeId);
+            return relayerNetworkRepository.getRelayerNode(remoteNodeId, false);
         }
 
         RelayerNodeInfo localRelayerNodeInfo = getRelayerNodeInfo();
@@ -404,6 +436,21 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     @Override
     public RelayerNodeInfo getRemoteRelayerNodeInfo(String domain) {
         return null;
+    }
+
+    @Override
+    public boolean hasRemoteRelayerNodeInfoByCertId(String relayerCertId) {
+        return relayerNetworkRepository.hasRelayerNodeByCertId(relayerCertId);
+    }
+
+    @Override
+    public boolean hasRemoteRelayerNode(String relayerNodeId) {
+        return relayerNetworkRepository.hasRelayerNode(relayerNodeId);
+    }
+
+    @Override
+    public RelayerNodeInfo getRemoteRelayerNodeInfoByCertId(String relayerCertId) {
+        return relayerNetworkRepository.getRelayerNodeByCertId(relayerCertId, true);
     }
 
     @Override
@@ -422,18 +469,75 @@ public class RelayerNetworkManagerImpl implements IRelayerNetworkManager {
     }
 
     @Override
-    public boolean tryHandshake(String domainName, RelayerNodeInfo remoteNodeInfo) {
-        return false;
+    public void tryHandshake(DomainRouter domainRouter) {
+        try {
+            RelayerClient relayerClient = relayerClientPool.createRelayerClient(domainRouter.getDestRelayer());
+            if (ObjectUtil.isNull(relayerClient)) {
+                throw new RuntimeException(
+                        StrUtil.format(
+                                "none relayer client for domain router ( domain: {}, node_id: {}, endpoints: {} )",
+                                domainRouter.getDestDomain().getDomain(),
+                                RelayerNodeInfo.calculateNodeId(domainRouter.getDestRelayer().getRelayerCert()),
+                                StrUtil.join(",", domainRouter.getDestRelayer().getNetAddressList())
+                        )
+                );
+            }
+
+
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_RELAYER_HANDSHAKE_FAILED,
+                    e,
+                    "failed to handshake with relayer with node id {} and net addresses {}",
+                    RelayerNodeInfo.calculateNodeId(domainRouter.getDestRelayer().getRelayerCert()),
+                    StrUtil.join(",", domainRouter.getDestRelayer().getNetAddressList())
+            );
+        }
     }
 
     @Override
-    public boolean updateRelayerNode(RelayerNodeInfo nodeInfo) {
-        return false;
+    public void updateRelayerNode(RelayerNodeInfo nodeInfo) {
+        relayerNetworkRepository.updateRelayerNode(nodeInfo);
     }
 
     @Override
     public List<RelayerHealthInfo> healthCheckRelayers() {
         return relayerNetworkRepository.getAllRelayerHealthInfo();
+    }
+
+    @Override
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
+    public void createNewCrossChainChannel(String localDomain, String remoteDomain, String relayerNodeId) {
+        try {
+            if (relayerNetworkRepository.hasCrossChainChannel(localDomain, remoteDomain)) {
+                relayerNetworkRepository.updateCrossChainChannel(
+                        new CrossChainChannelDO(localDomain, remoteDomain, relayerNodeId, CrossChainChannelStateEnum.CONNECTED)
+                );
+            } else {
+                relayerNetworkRepository.addCrossChainChannel(
+                        new CrossChainChannelDO(localDomain, remoteDomain, relayerNodeId, CrossChainChannelStateEnum.CONNECTED)
+                );
+            }
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_CREATE_NEW_CROSSCHAIN_CHANNEL_FAILED,
+                    e,
+                    "failed to create new crosschain channel ( local: {}, remote: {}, relayer: {} )",
+                    localDomain, remoteDomain, relayerNodeId
+            );
+        }
+    }
+
+    @Override
+    public CrossChainChannelDO getCrossChainChannel(String localDomain, String remoteDomain) {
+        return relayerNetworkRepository.getCrossChainChannel(localDomain, remoteDomain);
+    }
+
+    @Override
+    public boolean hasCrossChainChannel(String localDomain, String remoteDomain) {
+        return relayerNetworkRepository.hasCrossChainChannel(localDomain, remoteDomain);
     }
 
     private void processRelayerBlockchainInfo(String networkId, String domain, RelayerNodeInfo relayerNode,

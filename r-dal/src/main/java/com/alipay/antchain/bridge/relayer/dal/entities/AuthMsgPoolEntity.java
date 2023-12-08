@@ -21,16 +21,18 @@ import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgTrustLevelEnum
 import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @TableName("auth_msg_pool")
 public class AuthMsgPoolEntity extends BaseEntity {
 
     @TableField("ucp_id")
-    private byte[] ucpId;
+    private String ucpId;
 
     @TableField("blockchain_product")
     private String product;
@@ -61,6 +63,9 @@ public class AuthMsgPoolEntity extends BaseEntity {
 
     @TableField("process_state")
     private AuthMsgProcessStateEnum processState;
+
+    @TableField("fail_count")
+    private Integer failCount;
 
     @TableField("ext")
     private byte[] ext;

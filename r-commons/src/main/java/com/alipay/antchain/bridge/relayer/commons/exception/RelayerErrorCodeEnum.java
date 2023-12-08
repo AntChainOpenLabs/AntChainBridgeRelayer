@@ -59,6 +59,8 @@ public enum RelayerErrorCodeEnum {
 
     DAL_DOMAIN_SPACE_ERROR("010b", "domain space cert data error"),
 
+    DAL_BCDNS_ERROR("010c", "bcdns data error"),
+
     CORE_BLOCKCHAIN_ERROR("0201", "blockchain error"),
 
     CORE_BLOCKCHAIN_CLIENT_INIT_ERROR("0202", "blockchain client init error"),
@@ -68,6 +70,18 @@ public enum RelayerErrorCodeEnum {
     CORE_BBC_CALL_ERROR("0204", "call bbc error"),
 
     CORE_RELAYER_NETWORK_ERROR("0205", "relayer network error"),
+
+    CORE_BCDNS_MANAGER_ERROR("0206", "bcdns manager error"),
+
+    CORE_UNKNOWN_RELAYER_FOR_DEST_DOMAIN("0207", "unknown relayer for dest domain error"),
+
+    CORE_RELAYER_HANDSHAKE_FAILED("0208", "relayer handshake failed"),
+
+    CORE_SEND_AM_TO_REMOTE_RELAYER_FAILED("0209", "send am to relayer failed"),
+
+    CORE_CREATE_NEW_CROSSCHAIN_CHANNEL_FAILED("0210", "create new crosschain channel failed"),
+
+    CORE_CROSSCHAIN_CHANNEL_NOT_EXIST_DOMAIN("0211", "crosschain channel not exist"),
 
     SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED("0301", "process auth msg failed"),
 
@@ -88,6 +102,12 @@ public enum RelayerErrorCodeEnum {
     SERVICE_ARCHIVE_PRECESS_FAILED("0309", "archive process failed"),
 
     SERVER_REQUEST_FROM_RELAYER_REJECT("0401", "relayer request rejected"),
+
+    SERVER_ADMIN_COMMAND_NOT_EXIST("0402", "command not exist"),
+
+    SERVER_ADMIN_UNEXPECTED_ERROR("0403", "unexpected error"),
+
+    SERVER_RELAYER_HELLO_ERROR("0404", "relayer hello error"),
 
     /**
      *

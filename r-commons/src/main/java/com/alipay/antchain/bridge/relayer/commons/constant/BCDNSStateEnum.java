@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.dal.entities;
+package com.alipay.antchain.bridge.relayer.commons.constant;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
-@Setter
-@TableName("anchor_system_config")
-public class AnchorSystemConfigEntity extends BaseEntity {
+@AllArgsConstructor
+public enum BCDNSStateEnum {
 
-    @TableField("conf_key")
-    private String confKey;
+    WORKING(0),
 
-    @TableField("conf_value")
-    private String confValue;
+    FROZEN(1);
+
+    @EnumValue
+    private final Integer code;
 }

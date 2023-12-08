@@ -16,43 +16,53 @@
 
 package com.alipay.antchain.bridge.relayer.bootstrap.config;
 
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.security.KeyFactory;
 import java.security.PrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.concurrent.*;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.PemUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
-import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
+import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.GRpcBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
+import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
+import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository;
 import com.alipay.antchain.bridge.relayer.server.network.WSRelayerServer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import lombok.SneakyThrows;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Configuration
 public class RelayerCoreConfig {
 
-    @Value("${relayer.plugin_server_manager.grpc.auth.tls.client.key.path:config/relayer.key}")
-    private String clientKeyPath;
+    @Value("${relayer.plugin_server_manager.grpc_auth.tls_client.key_path:config/relayer.key}")
+    private Resource clientKeyPath;
 
-    @Value("${relayer.plugin_server_manager.grpc.auth.tls.client.ca.path:config/relayer.crt}")
-    private String clientCaPath;
+    @Value("${relayer.plugin_server_manager.grpc_auth.tls_client.ca_path:config/relayer.crt}")
+    private Resource clientCaPath;
 
     @Value("${relayer.plugin_server_manager.grpc.thread.num:32}")
     private int clientThreadNum;
@@ -67,10 +77,13 @@ public class RelayerCoreConfig {
     private int errorLimitForHeartbeat;
 
     @Value("${relayer.network.node.crosschain_cert_path:null}")
-    private String relayerCrossChainCertPath;
+    private Resource relayerCrossChainCert;
 
     @Value("${relayer.network.node.private_key_path}")
-    private String relayerPrivateKeyPath;
+    private Resource relayerPrivateKeyPath;
+
+    @Value("${relayer.network.node.issue_domain_space:}")
+    private String relayerIssuerDomainSpace;
 
     @Value("${relayer.network.node.server.mode:https}")
     private String localNodeServerMode;
@@ -85,13 +98,15 @@ public class RelayerCoreConfig {
     private boolean isDiscoveryService;
 
     public AbstractCrossChainCertificate getLocalRelayerCrossChainCertificate() {
-        AbstractCrossChainCertificate relayerCertificate = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
-                FileUtil.readBytes(relayerCrossChainCertPath)
-        );
-        Assert.equals(
-                CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
-                relayerCertificate.getType()
-        );
+        AbstractCrossChainCertificate relayerCertificate = null;
+        try {
+            relayerCertificate = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
+                    FileUtil.readBytes(relayerCrossChainCert.getFile())
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        Assert.isTrue(CrossChainCertificateUtil.isRelayerCert(relayerCertificate));
         return relayerCertificate;
     }
 
@@ -99,8 +114,25 @@ public class RelayerCoreConfig {
         return RelayerCredentialSubject.decode(getLocalRelayerCrossChainCertificate().getCredentialSubject());
     }
 
+    public String getLocalRelayerIssuerDomainSpace() {
+        return ObjectUtil.isNull(relayerIssuerDomainSpace) ? CrossChainDomain.ROOT_DOMAIN_SPACE : relayerIssuerDomainSpace;
+    }
+
+    @SneakyThrows
     public PrivateKey getLocalPrivateKey() {
-        return PemUtil.readPemPrivateKey(new ByteArrayInputStream(FileUtil.readBytes(relayerPrivateKeyPath)));
+        try {
+            return PemUtil.readPemPrivateKey(relayerPrivateKeyPath.getInputStream());
+        } catch (Exception e) {
+            byte[] rawPemOb = PemUtil.readPem(relayerPrivateKeyPath.getInputStream());
+            KeyFactory keyFactory = KeyFactory.getInstance(
+                    PrivateKeyInfo.getInstance(rawPemOb).getPrivateKeyAlgorithm().getAlgorithm().getId()
+            );
+            return keyFactory.generatePrivate(
+                    new PKCS8EncodedKeySpec(
+                            rawPemOb
+                    )
+            );
+        }
     }
 
     public String getLocalRelayerNodeId() {
@@ -142,8 +174,11 @@ public class RelayerCoreConfig {
             @Qualifier("wsRelayerServerExecutorService") ExecutorService wsRelayerServerExecutorService,
             WsSslFactory wsSslFactory,
             IRelayerNetworkManager relayerNetworkManager,
+            IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
-            ReceiverService receiverService
+            ReceiverService receiverService,
+            ICrossChainMessageRepository crossChainMessageRepository,
+            RedissonClient redisson
     ) {
         try {
             return new WSRelayerServer(
@@ -153,8 +188,11 @@ public class RelayerCoreConfig {
                     wsRelayerServerExecutorService,
                     wsSslFactory,
                     relayerNetworkManager,
+                    bcdnsManager,
                     relayerCredentialManager,
                     receiverService,
+                    crossChainMessageRepository,
+                    redisson,
                     isDiscoveryService
             );
         } catch (Exception e) {

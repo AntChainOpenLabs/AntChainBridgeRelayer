@@ -54,6 +54,7 @@ public class AuthMsgWrapper {
             String product,
             String blockchainId,
             String domain,
+            String ucpId,
             CrossChainMessage crossChainMessage
     ) {
         if (CrossChainMessage.CrossChainMessageType.AUTH_MSG != crossChainMessage.getType()) {
@@ -65,6 +66,7 @@ public class AuthMsgWrapper {
         IAuthMessage authMessage = AuthMessageFactory.createAuthMessage(crossChainMessage.getMessage());
 
         AuthMsgWrapper wrapper = new AuthMsgWrapper();
+        wrapper.setUcpId(ucpId);
         wrapper.setAuthMessage(authMessage);
         wrapper.setMsgSender(authMessage.getIdentity().toHex());
         wrapper.setProduct(product);
@@ -88,7 +90,7 @@ public class AuthMsgWrapper {
 
     private String domain;
 
-    private byte[] ucpId;
+    private String ucpId;
 
     private String amClientContractAddress;
 
@@ -102,6 +104,8 @@ public class AuthMsgWrapper {
 
     private AuthMsgProcessStateEnum processState;
 
+    private int failCount;
+
     private IAuthMessage authMessage;
 
     private Map<String, String> ledgerInfo = MapUtil.newHashMap();
@@ -112,12 +116,13 @@ public class AuthMsgWrapper {
             String product,
             String blockchainId,
             String domain,
-            byte[] ucpId,
+            String ucpId,
             String amClientContractAddress,
             AuthMsgProcessStateEnum processState,
+            int failCount,
             IAuthMessage authMessage
     ) {
-        this(0, product, blockchainId, domain, ucpId, amClientContractAddress, processState, authMessage);
+        this(0, product, blockchainId, domain, ucpId, amClientContractAddress, processState, failCount, authMessage);
     }
 
     public AuthMsgWrapper(
@@ -125,9 +130,10 @@ public class AuthMsgWrapper {
             String product,
             String blockchainId,
             String domain,
-            byte[] ucpId,
+            String ucpId,
             String amClientContractAddress,
             AuthMsgProcessStateEnum processState,
+            int failCount,
             IAuthMessage authMessage
     ) {
         this.authMsgId = authMsgId;
@@ -141,6 +147,7 @@ public class AuthMsgWrapper {
         this.msgSender = authMessage.getIdentity().toHex();
         this.protocolType = UpperProtocolTypeBeyondAMEnum.parseFromValue(authMessage.getUpperProtocol());
         this.processState = processState;
+        this.failCount = failCount;
         this.trustLevel = authMessage.getVersion() >= 2 ?
                 AuthMsgTrustLevelEnum.parseFromValue(((AuthMessageV2) authMessage).getTrustLevel().ordinal())
                 : AuthMsgTrustLevelEnum.NEGATIVE_TRUST;

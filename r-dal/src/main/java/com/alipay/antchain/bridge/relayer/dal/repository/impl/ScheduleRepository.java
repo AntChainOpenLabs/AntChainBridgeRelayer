@@ -22,29 +22,41 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.cache.Cache;
+import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.constant.DTActiveNodeStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
-import com.alipay.antchain.bridge.relayer.commons.model.ActiveNode;
-import com.alipay.antchain.bridge.relayer.commons.model.DistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.*;
+import com.alipay.antchain.bridge.relayer.dal.entities.BizDTTaskEntity;
+import com.alipay.antchain.bridge.relayer.dal.entities.BlockchainDTTaskEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.DTActiveNodeEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.DTTaskEntity;
+import com.alipay.antchain.bridge.relayer.dal.entities.MarkDTTaskEntity;
+import com.alipay.antchain.bridge.relayer.dal.mapper.BizDTTaskMapper;
+import com.alipay.antchain.bridge.relayer.dal.mapper.BlockchainDTTaskMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.DTActiveNodeMapper;
-import com.alipay.antchain.bridge.relayer.dal.mapper.DTTaskMapper;
+import com.alipay.antchain.bridge.relayer.dal.mapper.MarkDTTaskMapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.Synchronized;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@Slf4j
 public class ScheduleRepository implements IScheduleRepository {
 
     private static final String SCHEDULE_LOCK_KEY = "RELAYER_SCHEDULE_LOCK";
+
+    private static final String MARK_LOCK = "MARK_LOCK";
 
     @Resource
     private RedissonClient redisson;
@@ -53,11 +65,25 @@ public class ScheduleRepository implements IScheduleRepository {
     private DTActiveNodeMapper dtActiveNodeMapper;
 
     @Resource
-    private DTTaskMapper dtTaskMapper;
+    private BlockchainDTTaskMapper blockchainDtTaskMapper;
+
+    @Resource
+    private BizDTTaskMapper bizDTTaskMapper;
+
+    @Resource
+    private MarkDTTaskMapper markDTTaskMapper;
+
+    @Resource
+    private Cache<String, Boolean> markTaskCache;
 
     @Override
     public Lock getDispatchLock() {
         return redisson.getLock(SCHEDULE_LOCK_KEY);
+    }
+
+    @Override
+    public Lock getMarkLock() {
+        return redisson.getLock(MARK_LOCK);
     }
 
     @Override
@@ -93,10 +119,10 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     @Override
-    public List<DistributedTask> getAllDistributedTasks() {
+    public List<BlockchainDistributedTask> getAllBlockchainDistributedTasks() {
         try {
-            return dtTaskMapper.selectList(null).stream()
-                    .map(ConvertUtil::convertFromDTTaskEntity)
+            return blockchainDtTaskMapper.selectList(null).stream()
+                    .map(ConvertUtil::convertFromBlockchainDTTaskEntity)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
@@ -108,13 +134,13 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     @Override
-    public List<DistributedTask> getDistributedTasksByNodeId(String nodeId) {
+    public List<BlockchainDistributedTask> getBlockchainDistributedTasksByNodeId(String nodeId) {
         try {
-            return dtTaskMapper.selectList(
-                            new LambdaQueryWrapper<DTTaskEntity>()
-                                    .eq(DTTaskEntity::getNodeId, nodeId)
+            return blockchainDtTaskMapper.selectList(
+                            new LambdaQueryWrapper<BlockchainDTTaskEntity>()
+                                    .eq(BlockchainDTTaskEntity::getNodeId, nodeId)
                     ).stream()
-                    .map(ConvertUtil::convertFromDTTaskEntity)
+                    .map(ConvertUtil::convertFromBlockchainDTTaskEntity)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
@@ -141,15 +167,15 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     @Override
-    public void batchInsertDTTasks(List<DistributedTask> tasks) {
+    public void batchInsertBlockchainDTTasks(List<BlockchainDistributedTask> tasks) {
         try {
-            dtTaskMapper.saveDTTasks(tasks);
+            blockchainDtTaskMapper.saveDTTasks(tasks);
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
                     StrUtil.format(
                             "failed to save distributed tasks {}",
-                            tasks.stream().map(DistributedTask::getUniqueTaskKey)
+                            tasks.stream().map(BlockchainDistributedTask::getUniqueTaskKey)
                     ),
                     e
             );
@@ -157,19 +183,19 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     @Override
-    @Transactional
-    public void batchUpdateDTTasks(List<DistributedTask> tasks) {
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
+    public void batchUpdateBlockchainDTTasks(List<BlockchainDistributedTask> tasks) {
         try {
             tasks.forEach(
-                    task -> dtTaskMapper.update(
-                            DTTaskEntity.builder()
+                    task -> blockchainDtTaskMapper.update(
+                            BlockchainDTTaskEntity.builder()
                                     .nodeId(task.getNodeId())
                                     .timeSlice(new Date(task.getStartTime()))
                                     .build(),
-                            new LambdaUpdateWrapper<DTTaskEntity>()
-                                    .eq(DTTaskEntity::getTaskType, task.getTaskType())
-                                    .eq(DTTaskEntity::getProduct, task.getBlockchainProduct())
-                                    .eq(DTTaskEntity::getBlockchainId, task.getBlockchainId())
+                            new LambdaUpdateWrapper<BlockchainDTTaskEntity>()
+                                    .eq(BlockchainDTTaskEntity::getTaskType, task.getTaskType())
+                                    .eq(BlockchainDTTaskEntity::getProduct, task.getBlockchainProduct())
+                                    .eq(BlockchainDTTaskEntity::getBlockchainId, task.getBlockchainId())
                     )
             );
         } catch (Exception e) {
@@ -177,10 +203,239 @@ public class ScheduleRepository implements IScheduleRepository {
                     RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
                     StrUtil.format(
                             "failed to save distributed tasks {}",
-                            tasks.stream().map(DistributedTask::getUniqueTaskKey)
+                            tasks.stream().map(BlockchainDistributedTask::getUniqueTaskKey)
                     ),
                     e
             );
         }
+    }
+
+    @Override
+    public List<BizDistributedTask> getAllBizDistributedTasks() {
+        try {
+            return bizDTTaskMapper.selectList(null).stream()
+                    .map(ConvertUtil::convertFromBizDTTaskEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_TASK_ERROR,
+                    "failed to get all biz distributed tasks",
+                    e
+            );
+        }
+    }
+
+    @Override
+    public List<BizDistributedTask> getBizDistributedTasksByNodeId(String nodeId) {
+        try {
+            return bizDTTaskMapper.selectList(
+                            new LambdaQueryWrapper<BizDTTaskEntity>()
+                                    .eq(BizDTTaskEntity::getNodeId, nodeId)
+                    ).stream()
+                    .map(ConvertUtil::convertFromBizDTTaskEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_TASK_ERROR,
+                    "failed to get biz distributed tasks for node " + nodeId,
+                    e
+            );
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
+    public void batchInsertBizDTTasks(List<BizDistributedTask> tasks) {
+        try {
+            tasks.forEach(
+                    bizDistributedTask -> bizDTTaskMapper.insert(
+                            ConvertUtil.convertFromBizDistributedTask(
+                                    bizDistributedTask
+                            )
+                    )
+            );
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    StrUtil.format(
+                            "failed to save distributed tasks {}",
+                            tasks.stream().map(IDistributedTask::getUniqueTaskKey)
+                    ),
+                    e
+            );
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
+    public void batchUpdateBizDTTasks(List<BizDistributedTask> tasks) {
+        try {
+            tasks.forEach(
+                    task -> bizDTTaskMapper.update(
+                            BizDTTaskEntity.builder()
+                                    .nodeId(task.getNodeId())
+                                    .timeSlice(new Date(task.getStartTime()))
+                                    .build(),
+                            new LambdaUpdateWrapper<BizDTTaskEntity>()
+                                    .eq(BizDTTaskEntity::getTaskType, task.getTaskType())
+                                    .eq(BizDTTaskEntity::getUniqueKey, task.getUniqueKey())
+                    )
+            );
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    StrUtil.format(
+                            "failed to save distributed tasks {}",
+                            tasks.stream().map(IDistributedTask::getUniqueTaskKey)
+                    ),
+                    e
+            );
+        }
+    }
+
+    public void markForDomainRouterQuery(String senderDomain, String receiverDomain) {
+        String uniqueKey = DomainRouterQueryMarkDTTask.generateDomainRouterQueryTaskUniqueKey(senderDomain, receiverDomain);
+        log.info("try to start a mark task for domain router query: {} ", uniqueKey);
+        if (hasMarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, uniqueKey)) {
+            log.warn("mark task for domain router query already exist: {} ", uniqueKey);
+            return;
+        }
+        MarkDTTask task = new MarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, uniqueKey);
+        task.setState(MarkDTTaskStateEnum.INIT);
+        insertMarkDTTask(task);
+    }
+
+    @Override
+    public void insertMarkDTTask(MarkDTTask markDTTask) {
+        try {
+            markDTTaskMapper.insert(ConvertUtil.convertFromMarkDTTask(markDTTask));
+            markTaskCache.put(generateMarkTaskCacheKey(markDTTask.getTaskType(), markDTTask.getUniqueKey()), true);
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    StrUtil.format(
+                            "failed to save mark task {}-{}",
+                            markDTTask.getTaskType().name(), markDTTask.getUniqueKey()
+                    ),
+                    e
+            );
+        }
+    }
+
+    @Override
+    public boolean hasMarkDTTask(MarkDTTaskTypeEnum taskType, String uniqueKey) {
+        if (markTaskCache.containsKey(generateMarkTaskCacheKey(taskType, uniqueKey))) {
+            return true;
+        }
+        boolean res = markDTTaskMapper.exists(
+                new LambdaQueryWrapper<MarkDTTaskEntity>()
+                        .eq(MarkDTTaskEntity::getTaskType, taskType)
+                        .eq(MarkDTTaskEntity::getUniqueKey, uniqueKey)
+        );
+        if (res) {
+            markTaskCache.put(generateMarkTaskCacheKey(taskType, uniqueKey), true);
+        }
+        return res;
+    }
+
+    @Override
+    public List<MarkDTTask> peekInitOrTimeoutMarkDTTask(int limit) {
+        try {
+            List<MarkDTTaskEntity> entities = markDTTaskMapper.selectList(
+                    new LambdaQueryWrapper<MarkDTTaskEntity>()
+                            .eq(MarkDTTaskEntity::getState, MarkDTTaskStateEnum.INIT)
+                            .or(
+                                    wrapper -> wrapper.lt(MarkDTTaskEntity::getEndTime, new Date())
+                            )
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return ListUtil.empty();
+            }
+            return entities.stream().map(ConvertUtil::convertFromMarkDTTaskEntity).collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    "failed to peek init or timeout mark tasks",
+                    e
+            );
+        }
+    }
+
+    @Override
+    public void batchUpdateMarkDTTasks(List<MarkDTTask> tasks) {
+        try {
+            if (
+                    tasks.stream().map(
+                            task -> markDTTaskMapper.update(
+                                    ConvertUtil.convertFromMarkDTTask(task),
+                                    new LambdaUpdateWrapper<MarkDTTaskEntity>()
+                                            .eq(MarkDTTaskEntity::getTaskType, task.getTaskType())
+                                            .eq(MarkDTTaskEntity::getUniqueKey, task.getUniqueKey())
+                            )
+                    ).reduce(Integer::sum).orElse(0) != tasks.size()
+            ) {
+                throw new RuntimeException("failed to update multi mark tasks to DB");
+            }
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    "failed to batch update mark tasks",
+                    e
+            );
+        }
+    }
+
+    @Override
+    public List<MarkDTTask> peekReadyMarkDTTask(MarkDTTaskTypeEnum type, String nodeId, int limit) {
+        try {
+            List<MarkDTTaskEntity> entities = markDTTaskMapper.selectList(
+                    new LambdaQueryWrapper<MarkDTTaskEntity>()
+                            .eq(MarkDTTaskEntity::getState, MarkDTTaskStateEnum.READY)
+                            .eq(MarkDTTaskEntity::getTaskType, type)
+                            .eq(MarkDTTaskEntity::getNodeId, nodeId)
+                            .last("limit " + limit)
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return null;
+            }
+            return entities.stream().map(ConvertUtil::convertFromMarkDTTaskEntity).collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    e,
+                    "failed to peek ready mark tasks for (type: {}, node_id: {}, limit: {})",
+                    type.name(), nodeId, limit
+            );
+        }
+    }
+
+    @Override
+    public void updateMarkDTTaskState(MarkDTTaskTypeEnum type, String nodeId, String uniqueKey, MarkDTTaskStateEnum state) {
+        try {
+            MarkDTTaskEntity entity = new MarkDTTaskEntity();
+            entity.setState(state);
+            if (
+                    markDTTaskMapper.update(
+                            entity,
+                            new LambdaUpdateWrapper<MarkDTTaskEntity>()
+                                    .eq(MarkDTTaskEntity::getTaskType, type)
+                                    .eq(MarkDTTaskEntity::getUniqueKey, uniqueKey)
+                                    .eq(MarkDTTaskEntity::getNodeId, nodeId)
+                    ) != 1
+            ) {
+                throw new RuntimeException("update to DB failed");
+            }
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
+                    e,
+                    "failed to batch update mark task state to {} for (type: {}, node_id: {}, unique_key: {})",
+                    state.name(), type, nodeId, uniqueKey
+            );
+        }
+    }
+
+    private String generateMarkTaskCacheKey(MarkDTTaskTypeEnum taskType, String uniqueKey) {
+        return StrUtil.format("{}-{}", taskType.name(), uniqueKey);
     }
 }

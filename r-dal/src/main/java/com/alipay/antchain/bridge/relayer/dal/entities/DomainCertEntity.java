@@ -18,11 +18,13 @@ package com.alipay.antchain.bridge.relayer.dal.entities;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @TableName("domain_cert")
 public class DomainCertEntity extends BaseEntity {
 

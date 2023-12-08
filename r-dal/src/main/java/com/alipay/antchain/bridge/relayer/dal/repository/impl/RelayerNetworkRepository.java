@@ -22,19 +22,24 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.cache.Cache;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerHealthInfo;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNetwork;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
+import com.alipay.antchain.bridge.relayer.dal.entities.CrossChainChannelEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.DTActiveNodeEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.RelayerNetworkEntity;
 import com.alipay.antchain.bridge.relayer.dal.entities.RelayerNodeEntity;
+import com.alipay.antchain.bridge.relayer.dal.mapper.CrossChainChannelMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.DTActiveNodeMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.RelayerNetworkMapper;
 import com.alipay.antchain.bridge.relayer.dal.mapper.RelayerNodeMapper;
@@ -58,11 +63,17 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     @Resource
     private DTActiveNodeMapper dtActiveNodeMapper;
 
+    @Resource
+    private CrossChainChannelMapper crossChainChannelMapper;
+
     @Value("${os.grpc.port:8089}")
     private int grpcServerPort;
 
     @Value("${dt.node.activate.length:3000}")
     private long activateLength;
+
+    @Resource
+    private Cache<String, RelayerNetwork.Item> relayerNetworkItemCache;
 
     @Override
     public void addNetworkItems(String networkId, Map<String, RelayerNetwork.Item> relayerNetworkItems) {
@@ -123,12 +134,19 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     @Override
     public RelayerNetwork.Item getNetworkItem(String domain) {
         try {
-            return ConvertUtil.convertFromRelayerNetworkEntity(
-                    relayerNetworkMapper.selectOne(
-                            new LambdaQueryWrapper<RelayerNetworkEntity>()
-                                    .eq(RelayerNetworkEntity::getDomain, domain)
-                    )
+            if (relayerNetworkItemCache.containsKey(domain)) {
+                return relayerNetworkItemCache.get(domain);
+            }
+            RelayerNetworkEntity entity = relayerNetworkMapper.selectOne(
+                    new LambdaQueryWrapper<RelayerNetworkEntity>()
+                            .eq(RelayerNetworkEntity::getDomain, domain)
             );
+            if (ObjectUtil.isNull(entity)) {
+                return null;
+            }
+            RelayerNetwork.Item item = ConvertUtil.convertFromRelayerNetworkEntity(entity);
+            relayerNetworkItemCache.put(domain, item);
+            return item;
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_RELAYER_NETWORK_ERROR,
@@ -289,7 +307,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public RelayerNetwork getRelayerNetworkByDomain(String domain) {
         try {
             RelayerNetworkEntity entity = relayerNetworkMapper.selectOne(
@@ -364,13 +382,17 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    public boolean updateRelayerNode(RelayerNodeInfo nodeInfo) {
+    public void updateRelayerNode(RelayerNodeInfo nodeInfo) {
         try {
-            return 1 == relayerNodeMapper.update(
-                    ConvertUtil.convertFromRelayerNodeInfo(nodeInfo),
-                    new LambdaUpdateWrapper<RelayerNodeEntity>()
-                            .eq(RelayerNodeEntity::getNodeId, nodeInfo.getNodeId())
-            );
+            if (
+                    1 != relayerNodeMapper.update(
+                            ConvertUtil.convertFromRelayerNodeInfo(nodeInfo),
+                            new LambdaUpdateWrapper<RelayerNodeEntity>()
+                                    .eq(RelayerNodeEntity::getNodeId, nodeInfo.getNodeId())
+                    )
+            ) {
+                throw new RuntimeException("failed to update db");
+            }
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_RELAYER_NODE_ERROR,
@@ -381,10 +403,10 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public void updateRelayerNodeProperty(String nodeId, String key, String value) {
         try {
-            RelayerNodeInfo nodeInfo = getRelayerNode(nodeId);
+            RelayerNodeInfo nodeInfo = getRelayerNode(nodeId, true);
             if (ObjectUtil.isNull(nodeInfo)) {
                 throw new RuntimeException("node info not exist");
             }
@@ -416,11 +438,14 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    public RelayerNodeInfo getRelayerNode(String nodeId) {
+    public RelayerNodeInfo getRelayerNode(String nodeId, boolean lock) {
         try {
             RelayerNodeEntity entity = relayerNodeMapper.selectOne(
-                    new LambdaQueryWrapper<RelayerNodeEntity>()
-                            .eq(RelayerNodeEntity::getNodeId, nodeId)
+                    lock ? new LambdaQueryWrapper<RelayerNodeEntity>()
+                                    .eq(RelayerNodeEntity::getNodeId, nodeId)
+                                    .last("for update")
+                         : new LambdaQueryWrapper<RelayerNodeEntity>()
+                                    .eq(RelayerNodeEntity::getNodeId, nodeId)
             );
             if (ObjectUtil.isNull(entity)) {
                 return null;
@@ -434,6 +459,38 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
                     e
             );
         }
+    }
+
+    @Override
+    public RelayerNodeInfo getRelayerNodeByCertId(String relayerCertId, boolean lock) {
+        try {
+            RelayerNodeEntity entity = relayerNodeMapper.selectOne(
+                    lock ? new LambdaQueryWrapper<RelayerNodeEntity>()
+                                    .eq(RelayerNodeEntity::getRelayerCertId, relayerCertId)
+                                    .last("for update")
+                         : new LambdaQueryWrapper<RelayerNodeEntity>()
+                                    .eq(RelayerNodeEntity::getRelayerCertId, relayerCertId)
+            );
+            if (ObjectUtil.isNull(entity)) {
+                return null;
+            }
+
+            return ConvertUtil.convertFromRelayerNodeEntity(entity);
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_RELAYER_NODE_ERROR,
+                    "failed to get relayer node by cer id " + relayerCertId,
+                    e
+            );
+        }
+    }
+
+    @Override
+    public boolean hasRelayerNodeByCertId(String relayerCertId) {
+        return relayerNodeMapper.exists(
+                new LambdaQueryWrapper<RelayerNodeEntity>()
+                        .eq(RelayerNodeEntity::getRelayerCertId, relayerCertId)
+        );
     }
 
     @Override
@@ -452,6 +509,94 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
                     RelayerErrorCodeEnum.DAL_DT_ACTIVE_NODE_ERROR,
                     "failed to get all relayer health info from dtActiveNode",
                     e
+            );
+        }
+    }
+
+    @Override
+    public boolean hasCrossChainChannel(String localDomain, String remoteDomain) {
+        return crossChainChannelMapper.exists(
+                new LambdaQueryWrapper<CrossChainChannelEntity>()
+                        .eq(CrossChainChannelEntity::getLocalDomain, localDomain)
+                        .eq(CrossChainChannelEntity::getRemoteDomain, remoteDomain)
+        );
+    }
+
+    @Override
+    public void addCrossChainChannel(CrossChainChannelDO crossChainChannelDO) {
+        try {
+            crossChainChannelMapper.insert(ConvertUtil.convertFromCrossChainChannelDO(crossChainChannelDO));
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_RELAYER_NODE_ERROR,
+                    e,
+                    "failed to insert crosschain channel with relayer {} : {}-{}",
+                    crossChainChannelDO.getRelayerNodeId(),
+                    crossChainChannelDO.getLocalDomain(),
+                    crossChainChannelDO.getRemoteDomain()
+            );
+        }
+    }
+
+    @Override
+    public void updateCrossChainChannel(CrossChainChannelDO crossChainChannelDO) {
+        try {
+            if (
+                    crossChainChannelMapper.update(
+                            ConvertUtil.convertFromCrossChainChannelDO(crossChainChannelDO),
+                            new LambdaUpdateWrapper<CrossChainChannelEntity>()
+                                    .eq(CrossChainChannelEntity::getLocalDomain, crossChainChannelDO.getLocalDomain())
+                                    .eq(CrossChainChannelEntity::getRemoteDomain, crossChainChannelDO.getRemoteDomain())
+                    ) != 1
+            ) {
+                throw new RuntimeException("update db failed");
+            }
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_RELAYER_NODE_ERROR,
+                    e,
+                    "failed to update crosschain channel with relayer {} : {}-{}",
+                    crossChainChannelDO.getRelayerNodeId(),
+                    crossChainChannelDO.getLocalDomain(),
+                    crossChainChannelDO.getRemoteDomain()
+            );
+        }
+    }
+
+    @Override
+    public CrossChainChannelDO getCrossChainChannel(String localDomain, String remoteDomain) {
+        CrossChainChannelEntity crossChainChannelEntity = crossChainChannelMapper.selectOne(
+                new LambdaQueryWrapper<CrossChainChannelEntity>()
+                        .eq(CrossChainChannelEntity::getLocalDomain, localDomain)
+                        .eq(CrossChainChannelEntity::getRemoteDomain, remoteDomain)
+        );
+        if (ObjectUtil.isNull(crossChainChannelEntity)) {
+            return null;
+        }
+        return ConvertUtil.convertFromCrossChainChannelEntity(crossChainChannelEntity);
+    }
+
+    @Override
+    public void updateCrossChainChannelState(String localDomain, String remoteDomain, CrossChainChannelStateEnum state) {
+        try {
+            CrossChainChannelEntity entity = new CrossChainChannelEntity();
+            entity.setState(state);
+            if (
+                    crossChainChannelMapper.update(
+                            entity,
+                            new LambdaUpdateWrapper<CrossChainChannelEntity>()
+                                    .eq(CrossChainChannelEntity::getLocalDomain, localDomain)
+                                    .eq(CrossChainChannelEntity::getRemoteDomain, remoteDomain)
+                    ) != 1
+            ) {
+                throw new RuntimeException("update db failed");
+            }
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_RELAYER_NODE_ERROR,
+                    e,
+                    "failed to update state {} crosschain channel : {}-{}",
+                    state.getCode(), localDomain, remoteDomain
             );
         }
     }
