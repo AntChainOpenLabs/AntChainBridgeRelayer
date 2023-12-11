@@ -68,9 +68,6 @@ public class BCDNSManagerTest extends TestBase {
     @Mock
     private IBlockChainDomainNameService bcdnsService;
 
-    @MockBean
-    private Cache<String, DomainCertWrapper> domainCertWrapperCache;
-
     MockedStatic<BlockChainDomainNameServiceFactory> mockedStatic = Mockito.mockStatic(BlockChainDomainNameServiceFactory.class);
 
     @Test

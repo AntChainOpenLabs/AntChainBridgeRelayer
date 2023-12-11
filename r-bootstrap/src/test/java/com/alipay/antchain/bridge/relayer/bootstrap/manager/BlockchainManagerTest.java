@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
 
-import cn.hutool.cache.Cache;
 import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
@@ -29,7 +28,6 @@ import com.alipay.antchain.bridge.relayer.commons.constant.Constants;
 import com.alipay.antchain.bridge.relayer.commons.constant.OnChainServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
-import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.types.pluginserver.IBBCServiceClient;
@@ -38,7 +36,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class BlockchainManagerTest extends TestBase {
 
@@ -52,12 +49,6 @@ public class BlockchainManagerTest extends TestBase {
 
     @Resource
     private IBlockchainRepository blockchainRepository;
-
-    @MockBean
-    public IBBCPluginManager bbcPluginManager;
-
-    @MockBean
-    public Cache<String, BlockchainMeta> blockchainMetaCache;
 
     @Mock
     public IBBCServiceClient ibbcServiceClient;

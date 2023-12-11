@@ -12,13 +12,6 @@ import com.alipay.antchain.bridge.relayer.core.grpc.admin.AdministratorServiceGr
 import io.grpc.stub.StreamObserver;
 import org.springframework.stereotype.Service;
 
-/**
- * 交易处理服务端
- *
- * @author luzhonghao
- * @date 17/6/14
- */
-
 @Service
 public class AdminRpcServerImpl extends AdministratorServiceGrpc.AdministratorServiceImplBase {
 
