@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.alipay.mychain.oracle.anchor.cli.groovyshell.command.BCDNSManagerCmdNamespace;
 import com.alipay.mychain.oracle.anchor.cli.groovyshell.command.BlockchainManagerCmdNamespace;
+import com.alipay.mychain.oracle.anchor.cli.groovyshell.command.ServiceManagerCmdNamespace;
 
 
 /**
@@ -31,6 +32,7 @@ public class NamespaceManagerImpl implements NamespaceManager {
     private void init() {
         this.addNamespace(new BCDNSManagerCmdNamespace());
         this.addNamespace(new BlockchainManagerCmdNamespace());
+        this.addNamespace(new ServiceManagerCmdNamespace());
     }
 
     @Override
