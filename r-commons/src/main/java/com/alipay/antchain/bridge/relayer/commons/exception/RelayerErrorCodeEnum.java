@@ -85,6 +85,8 @@ public enum RelayerErrorCodeEnum {
 
     CORE_GOV_ACL_ERROR("0212", "acl error"),
 
+    CORE_ADD_DOMAIN_ROUTER_ERROR("0213", "add domain router error"),
+
     SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED("0301", "process auth msg failed"),
 
     SERVICE_CORE_PROCESS_PROCESS_CCMSG_FAILED("0302", "process ccmsg failed"),

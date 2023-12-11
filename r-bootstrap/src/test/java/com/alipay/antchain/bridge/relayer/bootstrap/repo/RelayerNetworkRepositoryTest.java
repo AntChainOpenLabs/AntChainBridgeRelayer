@@ -56,13 +56,11 @@ public class RelayerNetworkRepositoryTest extends TestBase {
     public void testUpdateNetworkItem() {
         relayerNetworkRepository.addNetworkItem("1", antChainDotComDomain, remoteNodeInfo.getNodeId(), DomainRouterSyncStateEnum.SYNC);
 
-        Assert.assertTrue(
-                relayerNetworkRepository.updateNetworkItem(
-                        "1",
-                        antChainDotComDomain,
-                        remoteNodeInfo.getNodeId(),
-                        DomainRouterSyncStateEnum.INIT
-                )
+        relayerNetworkRepository.updateNetworkItem(
+                "1",
+                antChainDotComDomain,
+                remoteNodeInfo.getNodeId(),
+                DomainRouterSyncStateEnum.INIT
         );
         RelayerNetwork.DomainRouterItem item = relayerNetworkRepository.getNetworkItem(antChainDotComDomain);
         Assert.assertEquals(DomainRouterSyncStateEnum.INIT, item.getSyncState());

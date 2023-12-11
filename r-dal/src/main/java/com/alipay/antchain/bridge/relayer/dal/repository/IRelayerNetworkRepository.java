@@ -38,7 +38,7 @@ public interface IRelayerNetworkRepository {
 
     void addNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState);
 
-    boolean updateNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState);
+    void updateNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState);
 
     Map<String, RelayerNetwork.DomainRouterItem> getNetworkItems(String networkId);
 

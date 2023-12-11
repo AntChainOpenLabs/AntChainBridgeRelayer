@@ -128,22 +128,13 @@ public interface IRelayerNetworkManager {
     /**
      * 往Relayer网络新增路由信息
      *
-     * @param domain
-     * @param nodeId
-     * @return
-     */
-    boolean addRelayerNetworkItem(String networkId, String domain, String nodeId);
-
-    /**
-     * 往Relayer网络新增路由信息
-     *
      * @param networkId
      * @param domain
      * @param nodeId
      * @param syncState
      * @return
      */
-    boolean addRelayerNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState);
+    void addRelayerNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState);
 
     /**
      * 删除对应的item
