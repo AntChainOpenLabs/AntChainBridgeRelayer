@@ -106,7 +106,7 @@ public class Shell {
 
                 loopRunning.set(true);
 
-                wellcome();
+                welcome();
 
                 new Thread(() -> {
                     // start loop
@@ -180,7 +180,7 @@ public class Shell {
         Runtime.getPrinter().print(namespaceManager.dump());
     }
 
-    protected void wellcome() {
+    protected void welcome() {
         Runtime.printer.println("------------------------------------------------------------");
         Runtime.printer.println("------------------------------------------------------------");
         Runtime.printer.println("----                                                   -----");
