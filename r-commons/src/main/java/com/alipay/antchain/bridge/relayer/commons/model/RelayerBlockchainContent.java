@@ -16,13 +16,13 @@
 
 package com.alipay.antchain.bridge.relayer.commons.model;
 
-import java.security.Signature;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -138,12 +138,12 @@ public class RelayerBlockchainContent {
         BCDNSTrustRootCredentialSubject validatorSubject = BCDNSTrustRootCredentialSubject.decode(trustRootCert.getCredentialSubject());
         BCDNSTrustRootCredentialSubject myRootSubject = BCDNSTrustRootCredentialSubject.decode(myRootCert.getCredentialSubject());
         if (
-                ObjectUtil.notEqual(
+                !ArrayUtil.equals(
                         validatorSubject.getBcdnsRootOwner().encode(),
                         myRootSubject.getBcdnsRootOwner().encode()
                 )
         ) {
-            throw new RuntimeException("root owner not equal");
+            throw new RuntimeException("owner of BCDNS root is not equal");
         }
 
         ValidationResult result = new ValidationResult();
@@ -154,7 +154,7 @@ public class RelayerBlockchainContent {
                             RelayerBlockchainInfo blockchainInfo = entry.getValue();
 
                             AbstractCrossChainCertificate parentCert = trustRootCert;
-                            for (String domainSpace : blockchainInfo.getDomainSpaceChain()) {
+                            for (String domainSpace : ListUtil.sort(blockchainInfo.getDomainSpaceChain(), String::compareTo)) {
                                 if (StrUtil.equals(domainSpace, CrossChainDomain.ROOT_DOMAIN_SPACE)) {
                                     continue;
                                 }
@@ -222,21 +222,24 @@ public class RelayerBlockchainContent {
             }
 
             if (
-                    ObjectUtil.notEqual(
+                    !ArrayUtil.equals(
                             domainOrSpaceCert.getIssuer().encode(),
-                            parent.getIssuer().encode()
+                            parent.getCredentialSubjectInstance().getApplicant().encode()
                     )
             ) {
                 log.error(
                         "issuer of domain or space cert {} not equal with {} in parent cert",
                         Base64.encode(domainOrSpaceCert.getIssuer().encode()),
-                        Base64.encode(parent.getIssuer().encode())
+                        Base64.encode(parent.getCredentialSubjectInstance().getApplicant().encode())
                 );
                 return false;
             }
 
-            if (!domainNameCredentialSubject.getParentDomainSpace().equals(
-                    DomainNameCredentialSubject.decode(parent.getCredentialSubject()).getDomainName())) {
+            if (
+                    !domainNameCredentialSubject.getParentDomainSpace().equals(
+                            CrossChainCertificateUtil.getCrossChainDomainSpace(parent)
+                    )
+            ) {
                 log.error(
                         "wrong parent of domain or space cert {}, expected is {}, but get {}",
                         Base64.encode(domainOrSpaceCert.getIssuer().encode()),
@@ -246,13 +249,10 @@ public class RelayerBlockchainContent {
                 return false;
             }
 
-            Signature verifier = Signature.getInstance(domainOrSpaceCert.getProof().getSigAlgo());
-            verifier.initVerify(
-                    CrossChainCertificateUtil.getPublicKeyFromCrossChainCertificate(parent)
+            return parent.getCredentialSubjectInstance().verifyIssueProof(
+                    domainOrSpaceCert.getEncodedToSign(),
+                    domainOrSpaceCert.getProof()
             );
-            verifier.update(domainOrSpaceCert.getEncodedToSign());
-
-            return verifier.verify(domainOrSpaceCert.getProof().getRawProof());
         } catch (Exception e) {
             log.error(
                     "Failed to validate crosschain cert {} with parent {} for domain or space {}",

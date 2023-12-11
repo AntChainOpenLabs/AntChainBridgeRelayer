@@ -66,7 +66,7 @@ public class SystemConfigRepository implements ISystemConfigRepository {
     public String getSystemConfig(String key) {
         try {
             if (systemConfigCache.containsKey(key)) {
-                return systemConfigCache.get(key);
+                return systemConfigCache.get(key, false);
             }
 
             SystemConfigEntity entity = systemConfigMapper.selectOne(

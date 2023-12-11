@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
-import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 
 /**
@@ -121,7 +121,7 @@ public interface IRelayerNetworkManager {
      * @param domainName
      * @return
      */
-    RelayerNetwork.Item findNetworkItemByDomainName(String domainName);
+    RelayerNetwork.DomainRouterItem findNetworkItemByDomainName(String domainName);
 
     String findRemoteRelayer(String receiverDomain);
 
@@ -143,7 +143,7 @@ public interface IRelayerNetworkManager {
      * @param syncState
      * @return
      */
-    boolean addRelayerNetworkItem(String networkId, String domain, String nodeId, RelayerNodeSyncStateEnum syncState);
+    boolean addRelayerNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState);
 
     /**
      * 删除对应的item
@@ -169,13 +169,6 @@ public interface IRelayerNetworkManager {
      * @return
      */
     RelayerNodeInfo getRelayerNodeInfoForDomain(String domain);
-
-    /**
-     * 从DiscoveryServer获取对应域名的relayer node info。
-     * @param domain
-     * @return
-     */
-    RelayerNodeInfo getRemoteRelayerNodeInfo(String domain);
 
     boolean hasRemoteRelayerNodeInfoByCertId(String relayerCertId);
 

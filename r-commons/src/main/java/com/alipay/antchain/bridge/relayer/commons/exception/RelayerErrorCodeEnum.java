@@ -83,6 +83,8 @@ public enum RelayerErrorCodeEnum {
 
     CORE_CROSSCHAIN_CHANNEL_NOT_EXIST_DOMAIN("0211", "crosschain channel not exist"),
 
+    CORE_GOV_ACL_ERROR("0212", "acl error"),
+
     SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED("0301", "process auth msg failed"),
 
     SERVICE_CORE_PROCESS_PROCESS_CCMSG_FAILED("0302", "process ccmsg failed"),

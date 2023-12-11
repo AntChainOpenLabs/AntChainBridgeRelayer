@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.cache.Cache;
-import cn.hutool.cache.CacheUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
@@ -33,7 +32,7 @@ import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
@@ -81,13 +80,14 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
     @Resource
     private IRelayerClientPool relayerClientPool;
 
-    private final Cache<String, RelayerNodeInfo> relayerNodeInfoCache = CacheUtil.newLRUCache(10, 3_000);
+    @Resource
+    private Cache<String, RelayerNodeInfo> relayerNodeInfoCache;
 
     @Override
     public RelayerNodeInfo getRelayerNodeInfo() {
         try {
             if (relayerNodeInfoCache.containsKey(relayerCredentialManager.getLocalNodeId())) {
-                return relayerNodeInfoCache.get(relayerCredentialManager.getLocalNodeId());
+                return relayerNodeInfoCache.get(relayerCredentialManager.getLocalNodeId(), false);
             }
             RelayerNodeInfo localNodeInfo = new RelayerNodeInfo(
                     relayerCredentialManager.getLocalNodeId(),
@@ -209,6 +209,7 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
                 }
 
                 nodeInfo.setRelayerCrossChainCertificate(relayerNodeInfo.getRelayerCrossChainCertificate());
+                nodeInfo.setRelayerCertId(relayerNodeInfo.getRelayerCrossChainCertificate().getId());
                 nodeInfo.setRelayerCredentialSubject(relayerNodeInfo.getRelayerCredentialSubject());
                 relayerNodeInfo.getDomains().forEach(
                         domain -> {
@@ -358,18 +359,18 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
     }
 
     @Override
-    public RelayerNetwork.Item findNetworkItemByDomainName(String domainName) {
+    public RelayerNetwork.DomainRouterItem findNetworkItemByDomainName(String domainName) {
         return relayerNetworkRepository.getNetworkItem(domainName);
     }
 
     @Override
     public String findRemoteRelayer(String receiverDomain) {
-        RelayerNetwork.Item relayerNetworkItem = findNetworkItemByDomainName(receiverDomain);
+        RelayerNetwork.DomainRouterItem relayerNetworkItem = findNetworkItemByDomainName(receiverDomain);
         if (ObjectUtil.isNull(relayerNetworkItem)) {
             log.info("can't find receiver domain {} in all network from local data", receiverDomain);
             return null;
         }
-        if (relayerNetworkItem.getSyncState() != RelayerNodeSyncStateEnum.SYNC) {
+        if (relayerNetworkItem.getSyncState() != DomainRouterSyncStateEnum.SYNC) {
             log.warn("receiver domain {} router existed but not on state SYNC.", receiverDomain);
             return null;
         }
@@ -382,12 +383,12 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
                 networkId,
                 domain,
                 nodeId,
-                RelayerNodeSyncStateEnum.INIT
+                DomainRouterSyncStateEnum.INIT
         );
     }
 
     @Override
-    public boolean addRelayerNetworkItem(String networkId, String domain, String nodeId, RelayerNodeSyncStateEnum syncState) {
+    public boolean addRelayerNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState) {
         try {
             relayerNetworkRepository.addNetworkItem(
                     networkId,
@@ -431,11 +432,6 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
 
         RelayerNodeInfo localRelayerNodeInfo = getRelayerNodeInfo();
         return localRelayerNodeInfo.getDomains().contains(domain) ? localRelayerNodeInfo : null;
-    }
-
-    @Override
-    public RelayerNodeInfo getRemoteRelayerNodeInfo(String domain) {
-        return null;
     }
 
     @Override
@@ -554,9 +550,9 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
         //TODO: validate domain tpbta
 
         if (relayerNetworkRepository.hasNetworkItem(networkId, domain, relayerNode.getNodeId())) {
-            relayerNetworkRepository.updateNetworkItem(networkId, domain, relayerNode.getNodeId(), RelayerNodeSyncStateEnum.SYNC);
+            relayerNetworkRepository.updateNetworkItem(networkId, domain, relayerNode.getNodeId(), DomainRouterSyncStateEnum.SYNC);
         } else {
-            addRelayerNetworkItem(networkId, domain, relayerNode.getNodeId(), RelayerNodeSyncStateEnum.SYNC);
+            addRelayerNetworkItem(networkId, domain, relayerNode.getNodeId(), DomainRouterSyncStateEnum.SYNC);
         }
         relayerNode.addDomainIfNotExist(domain);
     }

@@ -21,26 +21,26 @@ import java.util.Map;
 
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerHealthInfo;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNetwork;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 
 public interface IRelayerNetworkRepository {
 
-    void addNetworkItems(String networkId, Map<String, RelayerNetwork.Item> relayerNetworkItems);
+    void addNetworkItems(String networkId, Map<String, RelayerNetwork.DomainRouterItem> relayerNetworkItems);
 
     boolean deleteNetworkItem(String domain, String nodeId);
 
-    RelayerNetwork.Item getNetworkItem(String networkId, String domain, String nodeId);
+    RelayerNetwork.DomainRouterItem getNetworkItem(String networkId, String domain, String nodeId);
 
-    RelayerNetwork.Item getNetworkItem(String domain);
+    RelayerNetwork.DomainRouterItem getNetworkItem(String domain);
 
-    void addNetworkItem(String networkId, String domain, String nodeId, RelayerNodeSyncStateEnum syncState);
+    void addNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState);
 
-    boolean updateNetworkItem(String networkId, String domain, String nodeId, RelayerNodeSyncStateEnum syncState);
+    boolean updateNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState);
 
-    Map<String, RelayerNetwork.Item> getNetworkItems(String networkId);
+    Map<String, RelayerNetwork.DomainRouterItem> getNetworkItems(String networkId);
 
     boolean hasNetworkItem(String networkId, String domain, String nodeId);
 

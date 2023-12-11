@@ -65,7 +65,7 @@ public class CachedBlockQueue implements IBlockQueue {
 
     public AbstractBlock getBlockFromQueue(long height) {
         if (blockCache.containsKey(getMemCacheKey(height))) {
-            return blockCache.get(getMemCacheKey(height));
+            return blockCache.get(getMemCacheKey(height), false);
         }
 
         if (height <= latestBlockHeightFetched) {

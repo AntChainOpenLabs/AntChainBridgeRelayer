@@ -23,7 +23,7 @@ import cn.hutool.core.util.HexUtil;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNetwork;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.dal.repository.IRelayerNetworkRepository;
@@ -44,28 +44,28 @@ public class RelayerNetworkRepositoryTest extends TestBase {
 
     @Test
     public void testAddNetworkItem() {
-        relayerNetworkRepository.addNetworkItem("1", antChainDotComDomain, remoteNodeInfo.getNodeId(), RelayerNodeSyncStateEnum.SYNC);
+        relayerNetworkRepository.addNetworkItem("1", antChainDotComDomain, remoteNodeInfo.getNodeId(), DomainRouterSyncStateEnum.SYNC);
 
         Assert.assertTrue(relayerNetworkRepository.hasNetworkItem("1", antChainDotComDomain, remoteNodeInfo.getNodeId()));
-        RelayerNetwork.Item item = relayerNetworkRepository.getNetworkItem(antChainDotComDomain);
+        RelayerNetwork.DomainRouterItem item = relayerNetworkRepository.getNetworkItem(antChainDotComDomain);
         Assert.assertNotNull(item);
         Assert.assertEquals(remoteNodeInfo.getNodeId(), item.getNodeId());
     }
 
     @Test
     public void testUpdateNetworkItem() {
-        relayerNetworkRepository.addNetworkItem("1", antChainDotComDomain, remoteNodeInfo.getNodeId(), RelayerNodeSyncStateEnum.SYNC);
+        relayerNetworkRepository.addNetworkItem("1", antChainDotComDomain, remoteNodeInfo.getNodeId(), DomainRouterSyncStateEnum.SYNC);
 
         Assert.assertTrue(
                 relayerNetworkRepository.updateNetworkItem(
                         "1",
                         antChainDotComDomain,
                         remoteNodeInfo.getNodeId(),
-                        RelayerNodeSyncStateEnum.INIT
+                        DomainRouterSyncStateEnum.INIT
                 )
         );
-        RelayerNetwork.Item item = relayerNetworkRepository.getNetworkItem(antChainDotComDomain);
-        Assert.assertEquals(RelayerNodeSyncStateEnum.INIT, item.getSyncState());
+        RelayerNetwork.DomainRouterItem item = relayerNetworkRepository.getNetworkItem(antChainDotComDomain);
+        Assert.assertEquals(DomainRouterSyncStateEnum.INIT, item.getSyncState());
     }
 
     @Test

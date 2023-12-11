@@ -13,7 +13,7 @@ import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class AbstractNamespace implements Namespace {
+public abstract class AbstractNamespace implements Namespace {
 
     private final Map<String, CommandHandler> commands = new HashMap<>();
 

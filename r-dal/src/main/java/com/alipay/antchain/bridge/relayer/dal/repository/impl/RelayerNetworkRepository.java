@@ -29,7 +29,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerHealthInfo;
@@ -73,10 +73,10 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     private long activateLength;
 
     @Resource
-    private Cache<String, RelayerNetwork.Item> relayerNetworkItemCache;
+    private Cache<String, RelayerNetwork.DomainRouterItem> relayerNetworkItemCache;
 
     @Override
-    public void addNetworkItems(String networkId, Map<String, RelayerNetwork.Item> relayerNetworkItems) {
+    public void addNetworkItems(String networkId, Map<String, RelayerNetwork.DomainRouterItem> relayerNetworkItems) {
         try {
             relayerNetworkMapper.addNetworkItems(
                     relayerNetworkItems.entrySet().stream()
@@ -110,7 +110,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    public RelayerNetwork.Item getNetworkItem(String networkId, String domain, String nodeId) {
+    public RelayerNetwork.DomainRouterItem getNetworkItem(String networkId, String domain, String nodeId) {
         try {
             return ConvertUtil.convertFromRelayerNetworkEntity(
                     relayerNetworkMapper.selectOne(
@@ -132,7 +132,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    public RelayerNetwork.Item getNetworkItem(String domain) {
+    public RelayerNetwork.DomainRouterItem getNetworkItem(String domain) {
         try {
             if (relayerNetworkItemCache.containsKey(domain)) {
                 return relayerNetworkItemCache.get(domain);
@@ -144,7 +144,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
             if (ObjectUtil.isNull(entity)) {
                 return null;
             }
-            RelayerNetwork.Item item = ConvertUtil.convertFromRelayerNetworkEntity(entity);
+            RelayerNetwork.DomainRouterItem item = ConvertUtil.convertFromRelayerNetworkEntity(entity);
             relayerNetworkItemCache.put(domain, item);
             return item;
         } catch (Exception e) {
@@ -157,13 +157,13 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    public void addNetworkItem(String networkId, String domain, String nodeId, RelayerNodeSyncStateEnum syncState) {
+    public void addNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState) {
         try {
             relayerNetworkMapper.insert(
                     ConvertUtil.convertFromRelayerNetworkItem(
                             networkId,
                             domain,
-                            new RelayerNetwork.Item(nodeId, syncState)
+                            new RelayerNetwork.DomainRouterItem(nodeId, syncState)
                     )
             );
         } catch (Exception e) {
@@ -178,7 +178,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    public boolean updateNetworkItem(String networkId, String domain, String nodeId, RelayerNodeSyncStateEnum syncState) {
+    public boolean updateNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState) {
         try {
             RelayerNetworkEntity entity = new RelayerNetworkEntity();
             entity.setSyncState(syncState);
@@ -201,7 +201,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    public Map<String, RelayerNetwork.Item> getNetworkItems(String networkId) {
+    public Map<String, RelayerNetwork.DomainRouterItem> getNetworkItems(String networkId) {
         try {
             List<RelayerNetworkEntity> entities = relayerNetworkMapper.selectList(
                     new LambdaQueryWrapper<RelayerNetworkEntity>()
@@ -212,7 +212,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
             }
             return entities.stream().collect(Collectors.toMap(
                     RelayerNetworkEntity::getDomain,
-                    entity -> new RelayerNetwork.Item(entity.getNodeId(), entity.getSyncState())
+                    entity -> new RelayerNetwork.DomainRouterItem(entity.getNodeId(), entity.getSyncState())
             ));
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
@@ -259,7 +259,7 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
                                     HashMap::new,
                                     Collectors.toMap(
                                             RelayerNetworkEntity::getDomain,
-                                            entity -> new RelayerNetwork.Item(entity.getNodeId(), entity.getSyncState())
+                                            entity -> new RelayerNetwork.DomainRouterItem(entity.getNodeId(), entity.getSyncState())
                                     )
                             )
                     ).entrySet().stream()
