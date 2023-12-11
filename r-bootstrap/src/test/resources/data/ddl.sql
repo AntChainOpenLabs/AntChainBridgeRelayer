@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS `cross_chain_msg_acl`
     `gmt_modified`       datetime     DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `biz_id` (`biz_id`),
-    KEY `exact_valid_rules` (`owner_domain`, `owner_identity_hex`, `grant_domain`, `grant_identity_hex`)
+    KEY `exact_valid_rules` (`owner_domain`, `owner_identity_hex`, `grant_domain`, `grant_identity_hex`, `is_deleted`)
 );
 
 CREATE TABLE IF NOT EXISTS `relayer_network`

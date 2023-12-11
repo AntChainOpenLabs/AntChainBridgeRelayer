@@ -16,6 +16,9 @@
 
 package com.alipay.antchain.bridge.relayer.dal.repository.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
@@ -41,7 +44,7 @@ public class CrossChainMsgACLRepository implements ICrossChainMsgACLRepository {
     public void saveItem(CrossChainMsgACLItem item) {
         try {
             crossChainMsgACLMapper.insert(
-                    ConvertUtil.convertFromCrossChainMsgACLItem(item)
+                    ConvertUtil.convertFromCrossChainMsgACLEntity(item)
             );
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
@@ -76,7 +79,7 @@ public class CrossChainMsgACLRepository implements ICrossChainMsgACLRepository {
             if (ObjectUtil.isNull(entity)) {
                 return null;
             }
-            return ConvertUtil.convertFromCrossChainMsgACLItem(entity);
+            return ConvertUtil.convertFromCrossChainMsgACLEntity(entity);
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ACL_ERROR,
@@ -84,6 +87,15 @@ public class CrossChainMsgACLRepository implements ICrossChainMsgACLRepository {
                     e
             );
         }
+    }
+
+    @Override
+    public boolean hasItemByBizId(String bizId) {
+        return crossChainMsgACLMapper.exists(
+                new LambdaQueryWrapper<CrossChainMsgACLEntity>()
+                        .eq(CrossChainMsgACLEntity::getBizId, bizId)
+                        .eq(CrossChainMsgACLEntity::getIsDeleted, false)
+        );
     }
 
     @Override
@@ -96,11 +108,13 @@ public class CrossChainMsgACLRepository implements ICrossChainMsgACLRepository {
                             .eq(CrossChainMsgACLEntity::getOwnerIdHex, item.getOwnerIdentityHex().toLowerCase())
                             .eq(CrossChainMsgACLEntity::getGrantDomain, item.getGrantDomain())
                             .eq(CrossChainMsgACLEntity::getGrantIdHex, item.getGrantIdentityHex().toLowerCase())
+                            .eq(CrossChainMsgACLEntity::getIsDeleted, false)
                             .or(
                                     wrapper -> wrapper.eq(CrossChainMsgACLEntity::getOwnerDomain, item.getOwnerDomain())
-                                            .eq(CrossChainMsgACLEntity::getGrantDomain, item.getGrantDomain())
                                             .eq(CrossChainMsgACLEntity::getOwnerIdHex, null)
+                                            .eq(CrossChainMsgACLEntity::getGrantDomain, item.getGrantDomain())
                                             .eq(CrossChainMsgACLEntity::getGrantIdHex, null)
+                                            .eq(CrossChainMsgACLEntity::getIsDeleted, false)
                             )
             );
             if (ObjectUtil.isNull(entity)) {
@@ -112,6 +126,41 @@ public class CrossChainMsgACLRepository implements ICrossChainMsgACLRepository {
                     RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ACL_ERROR,
                     StrUtil.format(
                             "failed to check acl item: ( owner_domain: {}, owner_id_hex: {}, grant_domain: {}, grant_id_hex: {} )",
+                            item.getOwnerDomain(), item.getOwnerIdentityHex(), item.getGrantDomain(), item.getGrantIdentityHex()
+                    ),
+                    e
+            );
+        }
+    }
+
+    @Override
+    public List<CrossChainMsgACLItem> getMatchedItems(CrossChainMsgACLItem item) {
+        try {
+            List<CrossChainMsgACLEntity> entityList = crossChainMsgACLMapper.selectList(
+                    new LambdaQueryWrapper<CrossChainMsgACLEntity>()
+                            .select(ListUtil.of(CrossChainMsgACLEntity::getIsDeleted))
+                            .eq(CrossChainMsgACLEntity::getOwnerDomain, item.getOwnerDomain())
+                            .eq(CrossChainMsgACLEntity::getOwnerIdHex, item.getOwnerIdentityHex().toLowerCase())
+                            .eq(CrossChainMsgACLEntity::getGrantDomain, item.getGrantDomain())
+                            .eq(CrossChainMsgACLEntity::getGrantIdHex, item.getGrantIdentityHex().toLowerCase())
+                            .eq(CrossChainMsgACLEntity::getIsDeleted, false)
+                            .or(
+                                    wrapper -> wrapper.eq(CrossChainMsgACLEntity::getOwnerDomain, item.getOwnerDomain())
+                                            .eq(CrossChainMsgACLEntity::getOwnerIdHex, null)
+                                            .eq(CrossChainMsgACLEntity::getGrantDomain, item.getGrantDomain())
+                                            .eq(CrossChainMsgACLEntity::getGrantIdHex, null)
+                                            .eq(CrossChainMsgACLEntity::getIsDeleted, false)
+                            )
+            );
+            if (ObjectUtil.isEmpty(entityList)) {
+                return new ArrayList<>();
+            }
+            return entityList.stream().map(ConvertUtil::convertFromCrossChainMsgACLEntity).collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ACL_ERROR,
+                    StrUtil.format(
+                            "failed to get matched acl items: ( owner_domain: {}, owner_id_hex: {}, grant_domain: {}, grant_id_hex: {} )",
                             item.getOwnerDomain(), item.getOwnerIdentityHex(), item.getGrantDomain(), item.getGrantIdentityHex()
                     ),
                     e

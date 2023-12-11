@@ -16,6 +16,8 @@
 
 package com.alipay.antchain.bridge.relayer.core.manager.gov;
 
+import java.util.List;
+
 import com.alipay.antchain.bridge.relayer.commons.model.CrossChainMsgACLItem;
 
 public interface IGovernManager {
@@ -27,4 +29,8 @@ public interface IGovernManager {
     void delCrossChainMsgACL(String bizId);
 
     CrossChainMsgACLItem getCrossChainMsgACL(String bizId);
+
+    List<CrossChainMsgACLItem> getMatchedCrossChainACLItems(String ownerDomain, String ownerId, String grantDomain, String grantId);
+
+    boolean hasCrossChainMsgACL(String bizId);
 }

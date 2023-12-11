@@ -16,6 +16,8 @@
 
 package com.alipay.antchain.bridge.relayer.dal.repository;
 
+import java.util.List;
+
 import com.alipay.antchain.bridge.relayer.commons.model.CrossChainMsgACLItem;
 
 public interface ICrossChainMsgACLRepository {
@@ -26,5 +28,9 @@ public interface ICrossChainMsgACLRepository {
 
     CrossChainMsgACLItem getItemByBizId(String bizId);
 
+    boolean hasItemByBizId(String bizId);
+
     boolean checkItem(CrossChainMsgACLItem item);
+
+    List<CrossChainMsgACLItem> getMatchedItems(CrossChainMsgACLItem item);
 }

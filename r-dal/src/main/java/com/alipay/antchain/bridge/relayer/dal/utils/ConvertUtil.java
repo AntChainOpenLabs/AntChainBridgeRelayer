@@ -380,7 +380,7 @@ public class ConvertUtil {
         return node;
     }
 
-    public static CrossChainMsgACLEntity convertFromCrossChainMsgACLItem(CrossChainMsgACLItem item) {
+    public static CrossChainMsgACLEntity convertFromCrossChainMsgACLEntity(CrossChainMsgACLItem item) {
         CrossChainMsgACLEntity entity = new CrossChainMsgACLEntity();
         entity.setBizId(item.getBizId());
 
@@ -397,7 +397,7 @@ public class ConvertUtil {
         return entity;
     }
 
-    public static CrossChainMsgACLItem convertFromCrossChainMsgACLItem(CrossChainMsgACLEntity entity) {
+    public static CrossChainMsgACLItem convertFromCrossChainMsgACLEntity(CrossChainMsgACLEntity entity) {
         CrossChainMsgACLItem item = new CrossChainMsgACLItem();
 
         item.setBizId(entity.getBizId());
