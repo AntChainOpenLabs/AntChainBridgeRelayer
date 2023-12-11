@@ -18,7 +18,6 @@ package com.alipay.antchain.bridge.relayer.bootstrap.manager;
 
 import javax.annotation.Resource;
 
-import cn.hutool.cache.Cache;
 import cn.hutool.core.collection.ListUtil;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
 import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
@@ -34,7 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class RelayerNetworkManagerTest extends TestBase {
 
@@ -55,9 +53,6 @@ public class RelayerNetworkManagerTest extends TestBase {
 
     @Value("${relayer.network.node.local_endpoints:}")
     private String localEndpoints;
-
-    @MockBean
-    private Cache<String, RelayerNodeInfo> relayerNodeInfoCache;
 
     @Test
     public void testGetRelayerNodeInfo() {

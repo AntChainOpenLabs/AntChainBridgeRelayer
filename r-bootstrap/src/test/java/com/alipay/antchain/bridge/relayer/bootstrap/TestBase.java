@@ -11,6 +11,7 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
+import cn.hutool.cache.Cache;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.crypto.PemUtil;
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
@@ -21,14 +22,14 @@ import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.relayer.bootstrap.basic.BlockchainModelsTest;
 import com.alipay.antchain.bridge.relayer.bootstrap.utils.MyRedisServer;
 import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
-import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
-import com.alipay.antchain.bridge.relayer.commons.model.DomainSpaceCertWrapper;
+import com.alipay.antchain.bridge.relayer.commons.model.*;
+import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -38,7 +39,7 @@ import redis.embedded.util.OS;
 
 @ActiveProfiles("test")
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = AntChainBridgeRelayerApplication.class)
+@SpringBootTest(classes = AntChainBridgeRelayerApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Sql(scripts = {"classpath:data/ddl.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = "classpath:data/drop_all.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public abstract class TestBase {
@@ -135,6 +136,18 @@ public abstract class TestBase {
             BCDNSStateEnum.WORKING,
             FileUtil.readBytes("bcdns/root_bcdns.json")
     );
+
+    @MockBean
+    public Cache<String, RelayerNodeInfo> relayerNodeInfoCache;
+
+    @MockBean
+    public IBBCPluginManager bbcPluginManager;
+
+    @MockBean
+    public Cache<String, BlockchainMeta> blockchainMetaCache;
+
+    @MockBean
+    public Cache<String, DomainCertWrapper> domainCertWrapperCache;
 
     @BeforeClass
     public static void beforeTest() throws Exception {

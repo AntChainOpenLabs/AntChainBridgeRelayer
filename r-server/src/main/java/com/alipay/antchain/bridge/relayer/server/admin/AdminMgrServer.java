@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.bootstrap.config;
+package com.alipay.antchain.bridge.relayer.server.admin;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-import com.alipay.antchain.bridge.relayer.server.admin.AdminRpcServerImpl;
-import io.grpc.Server;
+import javax.annotation.Resource;
+
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Service;
 
-@Configuration
+@Service
 @Slf4j
-public class ServerConfig {
+@Order
+public class AdminMgrServer implements ApplicationRunner {
 
     @Value("${relayer.admin_server.host:127.0.0.1}")
     private String adminServerHost;
@@ -39,10 +40,13 @@ public class ServerConfig {
     @Value("${relayer.admin_server.port:8088}")
     private Integer adminServerPort;
 
-    @Bean
-    public Server adminMgrServer(@Autowired AdminRpcServerImpl adminRpcServer) throws IOException {
+    @Resource
+    private AdminRpcServerImpl adminRpcServer;
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
         log.info("Starting admin managing server on {}:{}", adminServerHost, adminServerPort);
-        return NettyServerBuilder.forAddress(
+        NettyServerBuilder.forAddress(
                         new InetSocketAddress(
                                 InetAddress.getByName(adminServerHost),
                                 adminServerPort
