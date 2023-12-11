@@ -6,14 +6,20 @@ import java.util.List;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.alipay.antchain.bridge.relayer.commons.constant.PluginServerStateEnum;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Setter
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class PluginServerDO {
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PluginServerProperties {
         public static PluginServerProperties decode(byte[] data) {
             return JSON.parseObject(data, PluginServerProperties.class);

@@ -21,6 +21,8 @@ import javax.annotation.Resource;
 import cn.hutool.core.collection.ListUtil;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNetwork;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
@@ -164,6 +166,30 @@ public class RelayerNetworkManagerTest extends TestBase {
                 DomainRouterSyncStateEnum.SYNC,
                 item.getSyncState()
         );
+    }
+
+    @Test
+    public void testCreateNewCrossChainChannel() {
+        relayerNetworkManager.createNewCrossChainChannel(antChainDotComDomain, catChainDotComDomain, "test");
+
+        CrossChainChannelDO crossChainChannelDO = relayerNetworkManager.getCrossChainChannel(antChainDotComDomain, catChainDotComDomain);
+        Assert.assertEquals(
+                "test",
+                crossChainChannelDO.getRelayerNodeId()
+        );
+        Assert.assertEquals(
+                CrossChainChannelStateEnum.CONNECTED,
+                crossChainChannelDO.getState()
+        );
+        Assert.assertEquals(
+                antChainDotComDomain,
+                crossChainChannelDO.getLocalDomain()
+        );
+        Assert.assertEquals(
+                catChainDotComDomain,
+                crossChainChannelDO.getRemoteDomain()
+        );
+        Assert.assertTrue(relayerNetworkManager.hasCrossChainChannel(antChainDotComDomain, catChainDotComDomain));
     }
 
     @Before

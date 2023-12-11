@@ -22,24 +22,27 @@ import java.util.Map;
 import javax.annotation.Resource;
 
 import com.alibaba.fastjson.JSON;
+import com.alipay.antchain.bridge.pluginserver.service.CrossChainServiceGrpc;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.Constants;
 import com.alipay.antchain.bridge.relayer.commons.constant.OnChainServiceStatusEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
+import com.alipay.antchain.bridge.relayer.commons.model.PluginServerDO;
+import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
-import com.alipay.antchain.bridge.relayer.core.types.pluginserver.IBBCServiceClient;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 public class BlockchainManagerTest extends TestBase {
-
-    public static String psId = "myps";
 
     @Resource
     private IBlockchainManager blockchainManager;
@@ -50,26 +53,29 @@ public class BlockchainManagerTest extends TestBase {
     @Resource
     private IBlockchainRepository blockchainRepository;
 
+    @Resource
+    private IBBCPluginManager bbcPluginManager;
+
     @Mock
-    public IBBCServiceClient ibbcServiceClient;
+    public CrossChainServiceGrpc.CrossChainServiceBlockingStub crossChainServiceBlockingStub;
+
+    public MockedStatic<CrossChainServiceGrpc> mockedStaticCrossChainServiceGrpc = Mockito.mockStatic(CrossChainServiceGrpc.class);
 
     @Test
     public void testAddBlockchain() {
-        initAntChainDotCom();
 
         Assert.assertTrue(blockchainManager.hasBlockchain(antChainDotComDomain));
 
         BlockchainMeta blockchainMeta = blockchainManager.getBlockchainMetaByDomain(antChainDotComDomain);
         Assert.assertEquals(antChainDotComProduct, blockchainMeta.getProduct());
         Assert.assertEquals(antChainDotComBlockchainId, blockchainMeta.getBlockchainId());
-        Assert.assertEquals(psId, blockchainMeta.getPluginServerId());
+        Assert.assertEquals(PS_ID, blockchainMeta.getPluginServerId());
 
         Assert.assertNotNull(blockchainManager.getBlockchainMeta(antChainDotComProduct, antChainDotComBlockchainId));
     }
 
     @Test
     public void testUpdateBlockchainProperty() {
-        initAntChainDotCom();
 
         blockchainManager.updateBlockchainProperty(
                 antChainDotComProduct,
@@ -84,7 +90,6 @@ public class BlockchainManagerTest extends TestBase {
 
     @Test
     public void testDeployAMClientContract() {
-        initAntChainDotCom();
         blockchainManager.deployAMClientContract(antChainDotComProduct, antChainDotComBlockchainId);
         BlockchainMeta blockchainMeta = blockchainManager.getBlockchainMeta(antChainDotComProduct, antChainDotComBlockchainId);
         Assert.assertEquals(
@@ -95,7 +100,6 @@ public class BlockchainManagerTest extends TestBase {
 
     @Test
     public void testStartBlockchainAnchor() {
-        initAntChainDotCom();
         blockchainManager.startBlockchainAnchor(antChainDotComProduct, antChainDotComBlockchainId);
         BlockchainMeta blockchainMeta = blockchainManager.getBlockchainMeta(antChainDotComProduct, antChainDotComBlockchainId);
         Assert.assertEquals(
@@ -106,7 +110,6 @@ public class BlockchainManagerTest extends TestBase {
 
     @Test
     public void testStopBlockchainAnchor() {
-        initAntChainDotCom();
         blockchainManager.stopBlockchainAnchor(antChainDotComProduct, antChainDotComBlockchainId);
         BlockchainMeta blockchainMeta = blockchainManager.getBlockchainMeta(antChainDotComProduct, antChainDotComBlockchainId);
         Assert.assertEquals(
@@ -117,7 +120,6 @@ public class BlockchainManagerTest extends TestBase {
 
     @Test
     public void testGetAllServingBlockchains() {
-        initAntChainDotCom();
         initCatChainDotCom();
         blockchainManager.startBlockchainAnchor(antChainDotComProduct, antChainDotComBlockchainId);
         blockchainManager.startBlockchainAnchor(catChainDotComProduct, catChainDotComBlockchainId);
@@ -133,7 +135,6 @@ public class BlockchainManagerTest extends TestBase {
 
     @Test
     public void testGetAllStoppedBlockchains() {
-        initAntChainDotCom();
         initCatChainDotCom();
         blockchainManager.startBlockchainAnchor(antChainDotComProduct, antChainDotComBlockchainId);
         blockchainManager.startBlockchainAnchor(catChainDotComProduct, catChainDotComBlockchainId);
@@ -151,20 +152,15 @@ public class BlockchainManagerTest extends TestBase {
         blockchainRepository.saveDomainCert(new DomainCertWrapper(antchainDotCommCert));
     }
 
-    private void initAntChainDotCom() {
+    @Before
+    public void initAntChainDotCom() {
         initDomain();
 
-        Mockito.when(
-                bbcPluginManager.createBBCClient(
-                        Mockito.anyString(), Mockito.anyString(), Mockito.anyString()
-                )
-        ).thenReturn(ibbcServiceClient);
-        Mockito.doNothing().when(ibbcServiceClient).startup(Mockito.any());
-        Mockito.doNothing().when(ibbcServiceClient).setupAuthMessageContract();
-        Mockito.doNothing().when(ibbcServiceClient).setupSDPMessageContract();
-        Mockito.doNothing().when(ibbcServiceClient).setProtocol(Mockito.anyString(), Mockito.anyString());
-        Mockito.doNothing().when(ibbcServiceClient).setAmContract(Mockito.anyString());
-        Mockito.when(ibbcServiceClient.getContext()).thenReturn(blockchainProperties1.getBbcContext());
+        initBaseBBCMock(crossChainServiceBlockingStub, mockedStaticCrossChainServiceGrpc);
+
+        PluginServerDO.PluginServerProperties properties = new PluginServerDO.PluginServerProperties();
+        properties.setPluginServerCert(psCert);
+        bbcPluginManager.registerPluginServer(PS_ID, PS_ADDR, properties.toString());
 
         Mockito.when(
                 blockchainMetaCache.containsKey(Mockito.anyString())
@@ -176,10 +172,15 @@ public class BlockchainManagerTest extends TestBase {
         blockchainManager.addBlockchain(
                 antChainDotComProduct,
                 antChainDotComBlockchainId,
-                psId,
+                PS_ID,
                 "", "",
                 clientConfig
         );
+    }
+
+    @After
+    public void clearMock() {
+        mockedStaticCrossChainServiceGrpc.close();
     }
 
     private void initCatChainDotCom() {
@@ -191,7 +192,7 @@ public class BlockchainManagerTest extends TestBase {
         blockchainManager.addBlockchain(
                 catChainDotComProduct,
                 catChainDotComBlockchainId,
-                psId,
+                PS_ID,
                 "", "",
                 clientConfig
         );

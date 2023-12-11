@@ -2,7 +2,6 @@ package com.alipay.antchain.bridge.relayer.core.manager.network;
 
 import java.util.List;
 
-import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
 import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
@@ -166,36 +165,6 @@ public interface IRelayerNetworkManager {
     boolean hasRemoteRelayerNode(String relayerNodeId);
 
     RelayerNodeInfo getRemoteRelayerNodeInfoByCertId(String relayerCertId);
-
-    /**
-     * 注册域名到DiscoveryServer
-     *
-     * @param nodeInfo
-     */
-    void registerDomainToDiscoveryServer(RelayerNodeInfo nodeInfo, String networkId) throws Exception;
-
-    /**
-     * 更新域名到DiscoveryServer
-     *
-     * @param nodeInfo
-     */
-    void updateDomainToDiscoveryServer(RelayerNodeInfo nodeInfo) throws Exception;
-
-    /**
-     * 删除域名到DiscoveryServer
-     *
-     * @param nodeInfo
-     */
-    void deleteDomainToDiscoveryServer(RelayerNodeInfo nodeInfo) throws Exception;
-
-    /**
-     * 在amRequest和udagRequest的时候，从发现中心获取域名对应的relayer信息，
-     * 尝试握手获取并验证对应的信息，存储域名到数据库。
-     *     TODO: <a href="https://crosschain.yuque.com/org-wiki-crosschain-zvbyzk/zg3xnv/pguzbyb4r4obpxfb#Da3Vt">Need to implement</a>
-     *
-     * @param domainRouter
-     */
-    void tryHandshake(DomainRouter domainRouter);
 
     /**
      * 更新relayerNodeInfo

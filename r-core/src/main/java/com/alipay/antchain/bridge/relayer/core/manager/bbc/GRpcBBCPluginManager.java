@@ -214,7 +214,7 @@ public class GRpcBBCPluginManager implements IBBCPluginManager {
             );
         }
 
-        Pair<String, Integer> addresPair = this.decodeAddress(pluginServerDO.getAddress());
+        Pair<String, Integer> addressPair = this.decodeAddress(pluginServerDO.getAddress());
 
         ManagedChannel channel;
         try {
@@ -223,7 +223,7 @@ public class GRpcBBCPluginManager implements IBBCPluginManager {
             tlsBuilder.trustManager(
                     new ByteArrayInputStream(pluginServerDO.getProperties().getPluginServerCert().getBytes())
             );
-            channel = NettyChannelBuilder.forAddress(addresPair.getKey(), addresPair.getValue(), tlsBuilder.build())
+            channel = NettyChannelBuilder.forAddress(addressPair.getKey(), addressPair.getValue(), tlsBuilder.build())
                     .executor(this.clientExecutorService)
                     .overrideAuthority(commonName)
                     .build();

@@ -5,29 +5,37 @@
 package com.alipay.antchain.bridge.relayer.bootstrap;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.Charset;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Date;
 
 import cn.hutool.cache.Cache;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.PemUtil;
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
 import com.alipay.antchain.bridge.commons.bcdns.DomainNameCredentialSubject;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
+import com.alipay.antchain.bridge.pluginserver.service.*;
 import com.alipay.antchain.bridge.relayer.bootstrap.basic.BlockchainModelsTest;
 import com.alipay.antchain.bridge.relayer.bootstrap.utils.MyRedisServer;
 import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.PluginServerStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
-import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
+import com.google.protobuf.ByteString;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
@@ -137,11 +145,26 @@ public abstract class TestBase {
             FileUtil.readBytes("bcdns/root_bcdns.json")
     );
 
-    @MockBean
-    public Cache<String, RelayerNodeInfo> relayerNodeInfoCache;
+    public static final String PS_ID = "p-QYj86x8Zd";
+
+    public static final String PS_ADDR = "localhost:9090";
+
+    public static String psCert = FileUtil.readString("node_keys/ps/relayer.crt", Charset.defaultCharset());
+
+    public static PluginServerDO pluginServerDO = new PluginServerDO(
+            0,
+            PS_ID,
+            PS_ADDR,
+            PluginServerStateEnum.INIT,
+            ListUtil.toList(antChainDotComProduct, catChainDotComProduct),
+            ListUtil.toList(antChainDotComDomain, catChainDotComDomain),
+            new PluginServerDO.PluginServerProperties(psCert),
+            new Date(),
+            new Date()
+    );
 
     @MockBean
-    public IBBCPluginManager bbcPluginManager;
+    public Cache<String, RelayerNodeInfo> relayerNodeInfoCache;
 
     @MockBean
     public Cache<String, BlockchainMeta> blockchainMetaCache;
@@ -151,6 +174,78 @@ public abstract class TestBase {
 
     @MockBean
     public Cache<String, RelayerNetwork.DomainRouterItem> relayerNetworkItemCache;
+
+    public void initBaseBBCMock(
+            CrossChainServiceGrpc.CrossChainServiceBlockingStub crossChainServiceBlockingStub,
+            MockedStatic<CrossChainServiceGrpc> mockedStaticCrossChainServiceGrpc
+    ) {
+        mockedStaticCrossChainServiceGrpc.when(
+                () -> CrossChainServiceGrpc.newBlockingStub(Mockito.any())
+        ).thenReturn(crossChainServiceBlockingStub);
+
+        Mockito.when(crossChainServiceBlockingStub.bbcCall(Mockito.argThat(
+                argument -> {
+                    if (ObjectUtil.isNull(argument)) {
+                        return false;
+                    }
+                    return argument.hasGetContextReq();
+                }
+        ))).thenReturn(Response.newBuilder().setCode(0).setBbcResp(
+                        CallBBCResponse.newBuilder().setGetContextResp(
+                                GetContextResponse.newBuilder().setRawContext(
+                                        ByteString.copyFrom(blockchainProperties1.getBbcContext().encodeToBytes())
+                                ).build()
+                        ).build()
+                ).build()
+        );
+        Mockito.when(crossChainServiceBlockingStub.bbcCall(Mockito.argThat(
+                argument -> {
+                    if (ObjectUtil.isNull(argument)) {
+                        return false;
+                    }
+                    return argument.hasQueryLatestHeightReq();
+                }
+        ))).thenReturn(Response.newBuilder().setCode(0).setBbcResp(
+                        CallBBCResponse.newBuilder().setQueryLatestHeightResponse(
+                                QueryLatestHeightResponse.newBuilder()
+                                        .setHeight(100L).build()
+                        ).build()
+                ).build()
+        );
+        Mockito.when(crossChainServiceBlockingStub.bbcCall(
+                Mockito.argThat(
+                        argument -> {
+                            if (ObjectUtil.isNull(argument)) {
+                                return false;
+                            }
+                            return argument.hasStartUpReq() || argument.hasSetupAuthMessageContractReq()
+                                    || argument.hasSetupSDPMessageContractReq() || argument.hasSetProtocolReq()
+                                    || argument.hasSetAmContractReq() || argument.hasSetLocalDomainReq();
+                        }
+                )
+        )).thenReturn(Response.newBuilder().setCode(0).build());
+        Mockito.when(crossChainServiceBlockingStub.heartbeat(Mockito.any())).thenReturn(
+                Response.newBuilder()
+                        .setCode(0)
+                        .setHeartbeatResp(
+                                HeartbeatResponse.newBuilder()
+                                        .addAllProducts(ListUtil.toList(antChainDotComProduct))
+                                        .addAllDomains(ListUtil.toList(antChainDotComDomain))
+                                        .build()
+                        ).build()
+        );
+
+        Mockito.when(crossChainServiceBlockingStub.ifProductSupport(Mockito.any())).thenReturn(
+                Response.newBuilder()
+                        .setCode(0)
+                        .setIfProductSupportResp(
+                                IfProductSupportResponse.newBuilder()
+                                        .putResults(antChainDotComProduct, true)
+                                        .putResults(catChainDotComProduct, true)
+                                        .build()
+                        ).build()
+        );
+    }
 
     @BeforeClass
     public static void beforeTest() throws Exception {

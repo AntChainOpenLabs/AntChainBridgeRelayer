@@ -27,7 +27,6 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
@@ -436,48 +435,6 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
     @Override
     public RelayerNodeInfo getRemoteRelayerNodeInfoByCertId(String relayerCertId) {
         return relayerNetworkRepository.getRelayerNodeByCertId(relayerCertId, true);
-    }
-
-    @Override
-    public void registerDomainToDiscoveryServer(RelayerNodeInfo nodeInfo, String networkId) throws Exception {
-        throw new RuntimeException("not implemented");
-    }
-
-    @Override
-    public void updateDomainToDiscoveryServer(RelayerNodeInfo nodeInfo) throws Exception {
-        throw new RuntimeException("not implemented");
-    }
-
-    @Override
-    public void deleteDomainToDiscoveryServer(RelayerNodeInfo nodeInfo) throws Exception {
-        throw new RuntimeException("not implemented");
-    }
-
-    @Override
-    public void tryHandshake(DomainRouter domainRouter) {
-        try {
-            RelayerClient relayerClient = relayerClientPool.createRelayerClient(domainRouter.getDestRelayer());
-            if (ObjectUtil.isNull(relayerClient)) {
-                throw new RuntimeException(
-                        StrUtil.format(
-                                "none relayer client for domain router ( domain: {}, node_id: {}, endpoints: {} )",
-                                domainRouter.getDestDomain().getDomain(),
-                                RelayerNodeInfo.calculateNodeId(domainRouter.getDestRelayer().getRelayerCert()),
-                                StrUtil.join(",", domainRouter.getDestRelayer().getNetAddressList())
-                        )
-                );
-            }
-
-
-        } catch (Exception e) {
-            throw new AntChainBridgeRelayerException(
-                    RelayerErrorCodeEnum.CORE_RELAYER_HANDSHAKE_FAILED,
-                    e,
-                    "failed to handshake with relayer with node id {} and net addresses {}",
-                    RelayerNodeInfo.calculateNodeId(domainRouter.getDestRelayer().getRelayerCert()),
-                    StrUtil.join(",", domainRouter.getDestRelayer().getNetAddressList())
-            );
-        }
     }
 
     @Override
