@@ -378,17 +378,7 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
     }
 
     @Override
-    public boolean addRelayerNetworkItem(String networkId, String domain, String nodeId) {
-        return addRelayerNetworkItem(
-                networkId,
-                domain,
-                nodeId,
-                DomainRouterSyncStateEnum.INIT
-        );
-    }
-
-    @Override
-    public boolean addRelayerNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState) {
+    public void addRelayerNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState) {
         try {
             relayerNetworkRepository.addNetworkItem(
                     networkId,
@@ -397,14 +387,13 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
                     syncState
             );
         } catch (Exception e) {
-            log.error(
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_ADD_DOMAIN_ROUTER_ERROR,
+                    e,
                     "failed to add network item (network_id: {}, domain: {}, node_id: {}, state: {})",
-                    networkId, domain, nodeId, syncState.getCode(),
-                    e
+                    networkId, domain, nodeId, syncState.getCode()
             );
-            return false;
         }
-        return true;
     }
 
     @Override

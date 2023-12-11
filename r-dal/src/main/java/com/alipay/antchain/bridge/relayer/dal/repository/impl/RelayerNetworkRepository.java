@@ -178,17 +178,21 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
     }
 
     @Override
-    public boolean updateNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState) {
+    public void updateNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState) {
         try {
             RelayerNetworkEntity entity = new RelayerNetworkEntity();
             entity.setSyncState(syncState);
-            return 1 == relayerNetworkMapper.update(
-                    entity,
-                    new LambdaUpdateWrapper<RelayerNetworkEntity>()
-                            .eq(RelayerNetworkEntity::getNetworkId, networkId)
-                            .eq(RelayerNetworkEntity::getDomain, domain)
-                            .eq(RelayerNetworkEntity::getNodeId, nodeId)
-            );
+            if(
+                    1 != relayerNetworkMapper.update(
+                            entity,
+                            new LambdaUpdateWrapper<RelayerNetworkEntity>()
+                                    .eq(RelayerNetworkEntity::getNetworkId, networkId)
+                                    .eq(RelayerNetworkEntity::getDomain, domain)
+                                    .eq(RelayerNetworkEntity::getNodeId, nodeId)
+                    )
+            ) {
+                throw new RuntimeException("failed to update DB");
+            }
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_RELAYER_NETWORK_ERROR,

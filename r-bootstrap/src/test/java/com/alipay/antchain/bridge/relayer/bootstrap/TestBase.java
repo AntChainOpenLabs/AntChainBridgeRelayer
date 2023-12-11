@@ -149,6 +149,9 @@ public abstract class TestBase {
     @MockBean
     public Cache<String, DomainCertWrapper> domainCertWrapperCache;
 
+    @MockBean
+    public Cache<String, RelayerNetwork.DomainRouterItem> relayerNetworkItemCache;
+
     @BeforeClass
     public static void beforeTest() throws Exception {
         // if the embedded redis can't start correctly,

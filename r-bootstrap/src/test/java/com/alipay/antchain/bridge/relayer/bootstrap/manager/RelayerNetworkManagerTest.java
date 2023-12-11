@@ -20,6 +20,7 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
+import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNetwork;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
@@ -134,6 +135,7 @@ public class RelayerNetworkManagerTest extends TestBase {
     @Test
     public void testValidateAndSaveBlockchainContent() {
         Mockito.when(relayerNodeInfoCache.containsKey(Mockito.any())).thenReturn(false);
+        Mockito.when(relayerNetworkItemCache.containsKey(Mockito.any())).thenReturn(false);
         RelayerNodeInfo remoteNodeInfo = relayerNetworkManager.getRelayerNodeInfoWithContent();
         relayerNetworkManager.addRelayerNode(remoteNodeInfo);
 
@@ -166,6 +168,7 @@ public class RelayerNetworkManagerTest extends TestBase {
 
     @Before
     public void initBlockchainData() {
+        testchain1Meta.getProperties().setAnchorRuntimeStatus(BlockchainStateEnum.RUNNING);
         blockchainRepository.saveBlockchainMeta(testchain1Meta);
 
         DomainCertEntity entity = new DomainCertEntity();

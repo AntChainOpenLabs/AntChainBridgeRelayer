@@ -122,6 +122,7 @@ public class BlockchainRepositoryTest extends TestBase {
         result = blockchainRepository.getBlockchainMetaByState(BlockchainStateEnum.STOPPED);
 
         Assert.assertFalse(result.isEmpty());
+        testchain1Meta.getProperties().setAnchorRuntimeStatus(BlockchainStateEnum.RUNNING);
     }
 
     @Test
@@ -239,9 +240,7 @@ public class BlockchainRepositoryTest extends TestBase {
     public void testGetBlockchainMetaByPluginServerId() {
         saveSomeBlockchains();
 
-        Assert.assertTrue(
-                1 <= blockchainRepository.getBlockchainMetaByPluginServerId("p-QYj86x8Zd").size()
-        );
+        Assert.assertFalse(blockchainRepository.getBlockchainMetaByPluginServerId("p-QYj86x8Zd").isEmpty());
     }
     
     @Test
