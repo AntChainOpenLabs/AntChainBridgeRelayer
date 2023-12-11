@@ -16,6 +16,8 @@
 
 package com.alipay.antchain.bridge.relayer.server.admin.impl;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,6 +28,8 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.relayer.commons.model.CrossChainMsgACLItem;
+import com.alipay.antchain.bridge.relayer.commons.model.PluginServerDO;
+import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.gov.IGovernManager;
 import com.alipay.antchain.bridge.relayer.server.admin.AbstractNamespace;
 import lombok.extern.slf4j.Slf4j;
@@ -38,10 +42,17 @@ public class ServiceNamespace extends AbstractNamespace {
     @Resource
     private IGovernManager governManager;
 
+    @Resource
+    private IBBCPluginManager bbcPluginManager;
+
     public ServiceNamespace() {
         addCommand("addCrossChainMsgACL", this::addCrossChainMsgACL);
         addCommand("getCrossChainMsgACL", this::getCrossChainMsgACL);
         addCommand("deleteCrossChainMsgACL", this::deleteCrossChainMsgACL);
+
+        addCommand("registerPluginServer", this::registerPluginServer);
+        addCommand("stopPluginServer", this::stopPluginServer);
+        addCommand("startPluginServer", this::startPluginServer);
     }
 
     Object addCrossChainMsgACL(String... args) {
@@ -121,5 +132,60 @@ public class ServiceNamespace extends AbstractNamespace {
             log.error("failed to get crosschain ACL item with args {}", ArrayUtil.join(args, ","), e);
             return "unexpected error : " + e.getMessage();
         }
+    }
+
+    Object registerPluginServer(String... args) {
+        if (args.length != 3) {
+            return "wrong number of arguments";
+        }
+
+        String pluginServerId = args[0];
+        String address = args[1];
+        String pluginServerCAPath = args[2];
+        try {
+            byte[] caFile = Files.readAllBytes(Paths.get(pluginServerCAPath));
+            PluginServerDO.PluginServerProperties properties = new PluginServerDO.PluginServerProperties();
+            properties.setPluginServerCert(new String(caFile));
+            bbcPluginManager.registerPluginServer(pluginServerId, address, properties.toString());
+        } catch (Exception e) {
+            log.error("failed to register plugin server: ", e);
+            return "get some exception: " + e.getMessage();
+        }
+
+        return "success";
+    }
+
+    Object stopPluginServer(String... args) {
+        if (args.length != 1) {
+            return "wrong number of arguments";
+        }
+
+        String pluginServerId = args[0];
+
+        try {
+            bbcPluginManager.stopPluginServer(pluginServerId);
+        } catch (Exception e) {
+            log.error("failed to register plugin server: ", e);
+            return "get some exception: " + e.getMessage();
+        }
+
+        return "success";
+    }
+
+    Object startPluginServer(String... args) {
+        if (args.length != 1) {
+            return "wrong number of arguments";
+        }
+
+        String pluginServerId = args[0];
+
+        try {
+            bbcPluginManager.startPluginServer(pluginServerId);
+        } catch (Exception e) {
+            log.error("failed to register plugin server: ", e);
+            return "get some exception: " + e.getMessage();
+        }
+
+        return "success";
     }
 }
