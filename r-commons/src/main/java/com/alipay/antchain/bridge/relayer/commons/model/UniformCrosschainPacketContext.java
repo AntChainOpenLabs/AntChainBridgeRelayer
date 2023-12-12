@@ -17,6 +17,7 @@
 package com.alipay.antchain.bridge.relayer.commons.model;
 
 import cn.hutool.core.util.HexUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
@@ -63,38 +64,47 @@ public class UniformCrosschainPacketContext {
                 : DigestUtil.sha256Hex(this.udagPath);
     }
 
+    @JSONField(serialize = false, deserialize = false)
     public int getVersion() {
         return this.ucp.getVersion();
     }
 
+    @JSONField(serialize = false, deserialize = false)
     public String getSrcDomain() {
         return this.ucp.getSrcDomain().getDomain();
     }
 
+    @JSONField(serialize = false, deserialize = false)
     public String getBlockHash() {
         return HexUtil.encodeHexStr(this.ucp.getSrcMessage().getProvableData().getBlockHash());
     }
 
+    @JSONField(serialize = false, deserialize = false)
     public String getTxHash() {
         return HexUtil.encodeHexStr(this.ucp.getSrcMessage().getProvableData().getTxHash());
     }
 
+    @JSONField(serialize = false, deserialize = false)
     public int getProtocolType() {
         return this.ucp.getSrcMessage().getType().ordinal();
     }
 
+    @JSONField(serialize = false, deserialize = false)
     public byte[] getSrcMessage() {
         return JSON.toJSONBytes(this.ucp.getSrcMessage());
     }
 
+    @JSONField(serialize = false, deserialize = false)
     public byte[] getPtcOid() {
-        return this.ucp.getPtcId().encode();
+        return ObjectUtil.isNull(this.ucp.getPtcId()) ? null : this.ucp.getPtcId().encode();
     }
 
+    @JSONField(serialize = false, deserialize = false)
     public byte[] getTpProof() {
         return this.ucp.getTpProof();
     }
 
+    @JSONField(serialize = false, deserialize = false)
     public long getLedgerTime() {
         return this.ucp.getSrcMessage().getProvableData().getTimestamp();
     }

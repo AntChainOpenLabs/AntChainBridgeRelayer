@@ -16,6 +16,8 @@
 
 package com.alipay.antchain.bridge.relayer.commons.model;
 
+import java.util.Date;
+
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainDistributedTaskTypeEnum;
 import lombok.Getter;
@@ -69,5 +71,9 @@ public class BlockchainDistributedTask implements IDistributedTask {
 
     public String getUniqueTaskKey() {
         return taskType.getCode() + "_" + blockchainId;
+    }
+
+    public Date getTimeSlice() {
+        return new Date(startTime);
     }
 }
