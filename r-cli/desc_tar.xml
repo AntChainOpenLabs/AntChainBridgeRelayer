@@ -11,7 +11,7 @@
             <directory>${project.build.directory}</directory>
             <outputDirectory>${file.separator}lib</outputDirectory>
             <includes>
-                <include>${artifactId}.jar</include>
+                <include>${artifactId}-release.jar</include>
             </includes>
         </fileSet>
         <fileSet>
