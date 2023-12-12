@@ -21,12 +21,12 @@ import java.util.Map;
 
 public class CommandNamespaceImpl implements CommandNamespace {
     /**
-     * 命令集合
+     * Command set.
      */
     private Map<String, Command> commands = new HashMap<>();
 
     /**
-     * 命名空间名称
+     * Namespace name.
      *
      * @return
      */
@@ -36,7 +36,7 @@ public class CommandNamespaceImpl implements CommandNamespace {
     }
 
     /**
-     * 往命名空间添加一个命令
+     * Add command to the namespace
      *
      * @param cmd
      */
@@ -45,7 +45,7 @@ public class CommandNamespaceImpl implements CommandNamespace {
     }
 
     /**
-     * 获取命名空间下所有命令
+     * Get all commands in the namespace.
      *
      * @return
      */
