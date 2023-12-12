@@ -148,7 +148,7 @@ public class BCDNSNamespace extends AbstractNamespace {
             );
             return "your receipt is " + receipt;
         } catch (Throwable e) {
-            log.error("failed to restart BCDNS for domain space {}", args[0], e);
+            log.error("failed to apply domain cert from domain space [{}]", args[0], e);
             return "failed to restart BCDNS: " + e.getMessage();
         }
     }
@@ -169,7 +169,7 @@ public class BCDNSNamespace extends AbstractNamespace {
             }
             return "your application not finished: " + domainCertApplicationDO.getState().getCode();
         } catch (Throwable e) {
-            log.error("failed to restart BCDNS for domain space {}", args[0], e);
+            log.error("failed to query domain cert from BCDNS with domain space [{}]", args[0], e);
             return "failed to restart BCDNS: " + e.getMessage();
         }
     }

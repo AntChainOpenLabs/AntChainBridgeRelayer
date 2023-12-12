@@ -205,7 +205,7 @@ public class BCDNSRepository implements IBCDNSRepository {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_BCDNS_ERROR,
                     e,
-                    "failed to get bcdns data for space {}",
+                    "failed to get bcdns data for space [{}]",
                     domainSpace
             );
         }
