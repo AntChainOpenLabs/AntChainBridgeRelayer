@@ -160,8 +160,9 @@ public class BlockchainRepository implements IBlockchainRepository {
                 AnchorProcessHeights heights = getAnchorProcessHeightsFromCache(product, blockchainId);
                 if (ObjectUtil.isNull(heights)) {
                     heights = new AnchorProcessHeights(product, blockchainId);
-                    heights.getProcessHeights().put(heightType, height);
                 }
+
+                heights.getProcessHeights().put(heightType, height);
 
                 long now = System.currentTimeMillis();
                 if (now - heights.getLastUpdateTime() > flushPeriodForHeightsCache) {
@@ -572,13 +573,17 @@ public class BlockchainRepository implements IBlockchainRepository {
     }
 
     private Long getAnchorProcessHeightFromDB(String product, String blockchainId, String heightType) {
-        return anchorProcessMapper.selectOne(
+        AnchorProcessEntity entity = anchorProcessMapper.selectOne(
                 new LambdaQueryWrapper<AnchorProcessEntity>()
                         .select(ListUtil.toList(AnchorProcessEntity::getBlockHeight))
                         .eq(AnchorProcessEntity::getProduct, product)
                         .eq(AnchorProcessEntity::getBlockchainId, blockchainId)
                         .eq(AnchorProcessEntity::getTask, heightType)
-        ).getBlockHeight();
+        );
+        if (ObjectUtil.isNull(entity)) {
+            return 0L;
+        }
+        return entity.getBlockHeight();
     }
 
     private Long getHeightFromCache(String product, String blockchainId, String heightKey) {

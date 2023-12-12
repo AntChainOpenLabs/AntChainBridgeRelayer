@@ -19,7 +19,7 @@ package com.alipay.antchain.bridge.relayer.dal.repository;
 import java.util.List;
 import java.util.Map;
 
-import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
+import com.alipay.antchain.bridge.relayer.commons.model.CrossChainChannelDO;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerHealthInfo;

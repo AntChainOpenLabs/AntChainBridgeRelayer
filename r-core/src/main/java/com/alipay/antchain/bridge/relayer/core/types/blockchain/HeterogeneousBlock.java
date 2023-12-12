@@ -23,9 +23,11 @@ import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.UniformCrosschainPacketContext;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Getter
+@Setter
 @Slf4j
 @NoArgsConstructor
 public class HeterogeneousBlock extends AbstractBlock {

@@ -16,8 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.commons.model;
 
-import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,22 +24,15 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-public class MarkDTTask {
+@NoArgsConstructor
+public class CrossChainChannelDO {
 
-    public MarkDTTask(MarkDTTaskTypeEnum taskType, String uniqueKey) {
-        this.taskType = taskType;
-        this.uniqueKey = uniqueKey;
-    }
+    private String localDomain;
 
-    private MarkDTTaskTypeEnum taskType;
+    private String remoteDomain;
 
-    private String uniqueKey;
+    private String relayerNodeId;
 
-    private String nodeId;
-
-    private MarkDTTaskStateEnum state;
-
-    private Long endTime;
+    private CrossChainChannelStateEnum state;
 }

@@ -21,7 +21,7 @@ import javax.annotation.Resource;
 import cn.hutool.core.collection.ListUtil;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
+import com.alipay.antchain.bridge.relayer.commons.model.CrossChainChannelDO;
 import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNetwork;
