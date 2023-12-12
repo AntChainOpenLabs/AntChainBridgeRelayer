@@ -92,7 +92,7 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>com.alipay.mychain.oracle.anchor.cli.groovyshell.Launcher</mainClass>
+                                    <mainClass>com.alipay.antchain.bridge.relayer.cli.groovyshell.Launcher</mainClass>
                                 </manifest>
                             </archive>
                             <descriptors>
