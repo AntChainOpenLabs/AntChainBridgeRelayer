@@ -458,7 +458,7 @@ public class ConvertUtil {
         entity.setDomainSpace(wrapper.getDomainSpace());
         entity.setParentSpace(wrapper.getParentDomainSpace());
         entity.setOwnerOidHex(HexUtil.encodeHexStr(wrapper.getOwnerOid().encode()));
-        entity.setDesc(wrapper.getDesc());
+        entity.setDescription(wrapper.getDesc());
         entity.setDomainSpaceCert(wrapper.getDomainSpaceCert().encode());
         return entity;
     }
@@ -466,7 +466,7 @@ public class ConvertUtil {
     public static DomainSpaceCertWrapper convertFromDomainSpaceCertEntity(DomainSpaceCertEntity entity) {
         AbstractCrossChainCertificate certificate = CrossChainCertificateFactory.createCrossChainCertificate(entity.getDomainSpaceCert());
         DomainSpaceCertWrapper wrapper = new DomainSpaceCertWrapper(certificate);
-        wrapper.setDesc(entity.getDesc());
+        wrapper.setDesc(entity.getDescription());
         return wrapper;
     }
 

@@ -36,7 +36,7 @@ public class DomainSpaceCertEntity extends BaseEntity {
     private String ownerOidHex;
 
     @TableField("description")
-    private String desc;
+    private String description;
 
     @TableField("domain_space_cert")
     private byte[] domainSpaceCert;

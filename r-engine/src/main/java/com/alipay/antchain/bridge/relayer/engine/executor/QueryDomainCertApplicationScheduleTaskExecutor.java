@@ -51,12 +51,20 @@ public class QueryDomainCertApplicationScheduleTaskExecutor extends BaseSchedule
                                             new TransactionCallbackWithoutResult() {
                                                 @Override
                                                 protected void doInTransactionWithoutResult(TransactionStatus status) {
-
+                                                    log.debug("querying result of domain cert application (domain: {}, receipt: {}) from BCDNS with domain space [{}]",
+                                                            domainCertApplicationDO.getDomain(), domainCertApplicationDO.getApplyReceipt(), domainCertApplicationDO.getDomainSpace());
                                                     ApplicationResult result = bcdnsManager.getBCDNSService(domainCertApplicationDO.getDomainSpace())
                                                             .queryDomainNameCertificateApplicationResult(domainCertApplicationDO.getApplyReceipt());
                                                     if (!result.isFinalResult()) {
                                                         return;
                                                     }
+                                                    log.info(
+                                                            "result of domain cert application (domain: {}, receipt: {}) from BCDNS with domain space [{}] is success: {}",
+                                                            domainCertApplicationDO.getDomain(),
+                                                            domainCertApplicationDO.getApplyReceipt(),
+                                                            domainCertApplicationDO.getDomainSpace(),
+                                                            ObjectUtil.isNull(result.getCertificate())
+                                                    );
                                                     bcdnsManager.saveDomainCertApplicationResult(
                                                             domainCertApplicationDO.getDomain(),
                                                             result.getCertificate()
