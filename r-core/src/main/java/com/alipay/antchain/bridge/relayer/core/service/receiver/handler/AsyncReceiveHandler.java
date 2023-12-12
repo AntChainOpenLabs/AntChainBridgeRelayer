@@ -51,7 +51,7 @@ public class AsyncReceiveHandler {
                     )
             );
         }
-        log.info("put PENDING UCP to pool success");
+        log.info("put PENDING UCPs [ {} ] to pool success", ucpContexts.stream().map(UniformCrosschainPacketContext::getUcpId).reduce((s, s2) -> s + ", " + s2).orElse(""));
     }
 
     public void receiveAuthMessages(List<AuthMsgWrapper> authMsgWrappers) {

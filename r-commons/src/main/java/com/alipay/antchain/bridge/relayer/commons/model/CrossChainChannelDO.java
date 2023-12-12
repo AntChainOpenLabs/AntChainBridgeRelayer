@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.commons.constant;
+package com.alipay.antchain.bridge.relayer.commons.model;
 
+import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelStateEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

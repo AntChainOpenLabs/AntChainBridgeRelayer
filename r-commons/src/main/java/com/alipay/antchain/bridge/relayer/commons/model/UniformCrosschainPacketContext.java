@@ -16,6 +16,8 @@
 
 package com.alipay.antchain.bridge.relayer.commons.model;
 
+import java.util.Date;
+
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
@@ -105,7 +107,7 @@ public class UniformCrosschainPacketContext {
     }
 
     @JSONField(serialize = false, deserialize = false)
-    public long getLedgerTime() {
-        return this.ucp.getSrcMessage().getProvableData().getTimestamp();
+    public Date getLedgerTime() {
+        return new Date(this.ucp.getSrcMessage().getProvableData().getTimestamp());
     }
 }

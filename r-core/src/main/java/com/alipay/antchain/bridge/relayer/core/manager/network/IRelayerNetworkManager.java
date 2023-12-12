@@ -2,7 +2,7 @@ package com.alipay.antchain.bridge.relayer.core.manager.network;
 
 import java.util.List;
 
-import com.alipay.antchain.bridge.relayer.commons.constant.CrossChainChannelDO;
+import com.alipay.antchain.bridge.relayer.commons.model.CrossChainChannelDO;
 import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 

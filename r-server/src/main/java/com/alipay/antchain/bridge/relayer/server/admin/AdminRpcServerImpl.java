@@ -39,7 +39,7 @@ public class AdminRpcServerImpl extends AdministratorServiceGrpc.AdministratorSe
         try {
             Object result = namespace.executeCommand(commandReq, argsReq);
 
-            if (ObjectUtil.isNull(result)) {
+            if (ObjectUtil.isNotNull(result)) {
                 String resultStr;
                 if (result instanceof String) {
                     resultStr = (String) result;

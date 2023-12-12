@@ -16,6 +16,8 @@
 
 package com.alipay.antchain.bridge.relayer.dal.entities;
 
+import java.util.Date;
+
 import com.alipay.antchain.bridge.relayer.commons.constant.UniformCrosschainPacketStateEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -51,7 +53,7 @@ public class UCPPoolEntity extends BaseEntity {
     private String txHash;
 
     @TableField("ledger_time")
-    private Long ledgerTime;
+    private Date ledgerTime;
 
     @TableField("udag_path")
     private String udagPath;

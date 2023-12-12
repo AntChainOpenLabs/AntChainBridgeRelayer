@@ -18,6 +18,7 @@ package com.alipay.antchain.bridge.relayer.commons.model;
 
 import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.MarkDTTaskTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,6 +26,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class MarkDTTask {
 
     public MarkDTTask(MarkDTTaskTypeEnum taskType, String uniqueKey) {

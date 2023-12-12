@@ -206,7 +206,7 @@ public class BCDNSManager implements IBCDNSManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
                     e,
-                    "failed to start bcdns service client for {}",
+                    "failed to start bcdns service client for [{}]",
                     bcdnsServiceDO.getDomainSpace()
             );
         }

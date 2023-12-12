@@ -6,28 +6,38 @@ package com.alipay.antchain.bridge.relayer.bootstrap;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicLong;
 
 import cn.hutool.cache.Cache;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.PemUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
 import com.alipay.antchain.bridge.commons.bcdns.DomainNameCredentialSubject;
+import com.alipay.antchain.bridge.commons.core.am.AuthMessageTrustLevelEnum;
+import com.alipay.antchain.bridge.commons.core.am.AuthMessageV2;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainIdentity;
+import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV2;
 import com.alipay.antchain.bridge.pluginserver.service.*;
 import com.alipay.antchain.bridge.relayer.bootstrap.basic.BlockchainModelsTest;
 import com.alipay.antchain.bridge.relayer.bootstrap.utils.MyRedisServer;
 import com.alipay.antchain.bridge.relayer.commons.constant.BCDNSStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.PluginServerStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.google.protobuf.ByteString;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -163,6 +173,10 @@ public abstract class TestBase {
             new Date()
     );
 
+    public static AuthMessageV2 authMessageV2 = new AuthMessageV2();
+
+    public static SDPMessageV2 sdpMessageV2 = new SDPMessageV2();
+
     @MockBean
     public Cache<String, RelayerNodeInfo> relayerNodeInfoCache;
 
@@ -174,6 +188,8 @@ public abstract class TestBase {
 
     @MockBean
     public Cache<String, RelayerNetwork.DomainRouterItem> relayerNetworkItemCache;
+
+    public AtomicLong currHeight = new AtomicLong(100L);
 
     public void initBaseBBCMock(
             CrossChainServiceGrpc.CrossChainServiceBlockingStub crossChainServiceBlockingStub,
@@ -208,7 +224,19 @@ public abstract class TestBase {
         ))).thenReturn(Response.newBuilder().setCode(0).setBbcResp(
                         CallBBCResponse.newBuilder().setQueryLatestHeightResponse(
                                 QueryLatestHeightResponse.newBuilder()
-                                        .setHeight(100L).build()
+                                        .setHeight(currHeight.incrementAndGet()).build()
+                        ).build()
+                ).build(),
+                Response.newBuilder().setCode(0).setBbcResp(
+                        CallBBCResponse.newBuilder().setQueryLatestHeightResponse(
+                                QueryLatestHeightResponse.newBuilder()
+                                        .setHeight(currHeight.incrementAndGet()).build()
+                        ).build()
+                ).build(),
+                Response.newBuilder().setCode(0).setBbcResp(
+                        CallBBCResponse.newBuilder().setQueryLatestHeightResponse(
+                                QueryLatestHeightResponse.newBuilder()
+                                        .setHeight(currHeight.incrementAndGet()).build()
                         ).build()
                 ).build()
         );
@@ -249,6 +277,18 @@ public abstract class TestBase {
 
     @BeforeClass
     public static void beforeTest() throws Exception {
+
+        sdpMessageV2.setAtomic(false);
+        sdpMessageV2.setSequence(-1);
+        sdpMessageV2.setSdpPayload("test"::getBytes);
+        sdpMessageV2.setTargetDomain(new CrossChainDomain(catChainDotComDomain));
+        sdpMessageV2.setTargetIdentity(new CrossChainIdentity(DigestUtil.sha256("receiver".getBytes())));
+
+        authMessageV2.setTrustLevel(AuthMessageTrustLevelEnum.NEGATIVE_TRUST);
+        authMessageV2.setIdentity(new CrossChainIdentity(DigestUtil.sha256("sender".getBytes())));
+        authMessageV2.setUpperProtocol(UpperProtocolTypeBeyondAMEnum.SDP.getCode());
+        authMessageV2.setPayload(sdpMessageV2.encode());
+
         // if the embedded redis can't start correctly,
         // try to use local redis server binary to start it.
         redisServer = new MyRedisServer(
@@ -264,6 +304,11 @@ public abstract class TestBase {
     @AfterClass
     public static void after() throws Exception {
         redisServer.stop();
+        Path dumpFile = Paths.get("src/test/resources/bins/dump.rdb");
+        if (Files.exists(dumpFile)) {
+            Files.delete(dumpFile);
+            System.out.println("try to delete redis dump file");
+        }
     }
 
     public static PrivateKey getLocalPrivateKey(String path) throws NoSuchAlgorithmException, InvalidKeySpecException {
