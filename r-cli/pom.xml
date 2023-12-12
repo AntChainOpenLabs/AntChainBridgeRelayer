@@ -58,7 +58,7 @@
             <version>1.4</version>
         </dependency>
 
-        <!-- 必须引入logback否则top会出现奇怪的报错 -->
+        <!-- You must introduce logback otherwise top will get strange errors. -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>

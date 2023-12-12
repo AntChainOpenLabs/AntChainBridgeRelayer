@@ -44,14 +44,14 @@ public class Command {
      * add args
      *
      * @param argName
-     * @param contraints: parameter value constraint
+     * @param constraints: parameter value constraint
      */
-    public void addArgs(String argName, String type, List<String> contraints) {
+    public void addArgs(String argName, String type, List<String> constraints) {
 
         Arg item = new Arg();
         item.name = argName;
         item.type = type;
-        item.contraints = contraints;
+        item.constraints = constraints;
 
         this.args.add(item);
     }
@@ -80,7 +80,7 @@ public class Command {
     public class Arg {
         private String name;
         private String type;
-        private List<String> contraints;
+        private List<String> constraints;
 
         /**
          * Getter method for property <tt>name.</tt>.
@@ -94,10 +94,10 @@ public class Command {
         /**
          * Getter method for property <tt>constraints.</tt>.
          *
-         * @return property value of contraints.
+         * @return property value of constraints.
          */
-        public List<String> getContraints() {
-            return contraints;
+        public List<String> getConstraints() {
+            return constraints;
         }
 
         /**

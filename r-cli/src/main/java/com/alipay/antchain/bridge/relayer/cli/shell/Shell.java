@@ -60,10 +60,10 @@ public class Shell {
     public Shell(ShellProvider shellProvider, PromptCompleter completer, GrpcClient grpcClient,
                  NamespaceManager namespaceManager) {
 
-        // 不可扩展参数初始化
+        // Non-extensible parameter initialization
         init();
 
-        // 扩展初始化
+        // Extended initialization
         this.shellProvider = shellProvider;
         this.namespaceManager = namespaceManager;
 
@@ -72,7 +72,7 @@ public class Shell {
 
         reader.setCompleter(completer);
 
-        // 运行时设置
+        // Run time Settings
         Runtime.setGrpcClient(grpcClient);
     }
 
@@ -89,7 +89,7 @@ public class Shell {
         // set printer
         Runtime.setPrinter(terminal.writer());
 
-        // init linereader
+        // init line reader
         reader = new GlLineReader(terminal, "mychain-gl", new HashMap<>());
 
         reader.setVariable(LineReader.HISTORY_FILE, Paths.get("./clihistory.tmp"));
@@ -132,10 +132,6 @@ public class Shell {
                                 reservedWord.get(cmd.trim()).execute();
                                 continue;
                             }
-
-                            // 取消CLI的反斜杠替换处理，取消后，嵌套的转义字符串在CLI需要4个反斜杠
-                            // cmd = cmd.replaceAll("\\\\","\\\\\\\\");
-
 
                             String result = this.shellProvider.execute(cmd);
 
