@@ -613,6 +613,8 @@ public class BCDNSManager implements IBCDNSManager {
                                     ).build()
                     );
 
+            log.info("successful to register domain router for {} to BCDNS with domain space [{}]",
+                    domainCertWrapper.getDomain(), domainCertWrapper.getDomainSpace());
         } catch (AntChainBridgeRelayerException e) {
             throw e;
         } catch (Exception e) {

@@ -65,11 +65,6 @@ public class AnchorProcess {
                 redisson,
                 blockSyncTaskThreadsPool,
                 receiverService,
-                new CachedBlockQueue(
-                        redisson,
-                        blockCacheCapacity,
-                        blockCacheTTL
-                ),
                 blockCacheCapacity,
                 blockCacheTTL,
                 syncBatchSize,
