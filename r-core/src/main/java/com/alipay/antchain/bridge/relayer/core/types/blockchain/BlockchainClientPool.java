@@ -101,6 +101,10 @@ public class BlockchainClientPool {
         return null;
     }
 
+    public void deleteClient(String product, String blockchainId) {
+        clients.remove(BlockchainMeta.createMetaKey(product, blockchainId));
+    }
+
     public synchronized List<String> getAllClient() {
         return ListUtil.toList(clients.keySet());
     }

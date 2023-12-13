@@ -243,7 +243,6 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
             RelayerBlockchainContent relayerBlockchainContent = nodeInfo.getRelayerBlockchainContent();
 
             nodeInfo.setDomains(ListUtil.toList());
-            ;
             nodeInfo.setRelayerBlockchainContent(null);
 
             relayerNetworkRepository.addRelayerNode(nodeInfo);

@@ -27,14 +27,14 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.KeyUtil;
 import cn.hutool.crypto.PemUtil;
+import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
+import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
+import com.alipay.antchain.bridge.bcdns.types.req.QueryDomainRouterRequest;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.utils.BIDHelper;
 import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
-import com.alipay.antchain.bridge.commons.core.base.BIDInfoObjectIdentity;
-import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
-import com.alipay.antchain.bridge.commons.core.base.ObjectIdentityType;
-import com.alipay.antchain.bridge.commons.core.base.X509PubkeyInfoObjectIdentity;
+import com.alipay.antchain.bridge.commons.core.base.*;
 import com.alipay.antchain.bridge.relayer.commons.constant.DomainCertApplicationStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainCertApplicationDO;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
@@ -60,6 +60,7 @@ public class BCDNSNamespace extends AbstractNamespace {
         addCommand("queryDomainCertApplicationState", this::queryDomainCertApplicationState);
         addCommand("fetchDomainNameCertFromBCDNS", this::fetchDomainNameCertFromBCDNS);
         addCommand("registerDomainRouter", this::registerDomainRouter);
+        addCommand("queryDomainRouter", this::queryDomainRouter);
         addCommand("addBlockchainTrustAnchor", this::addBlockchainTrustAnchor);
     }
 
@@ -203,6 +204,28 @@ public class BCDNSNamespace extends AbstractNamespace {
         try {
             bcdnsManager.registerDomainRouter(domain);
             return "success";
+        } catch (Throwable e) {
+            log.error("failed to register router for domain {} to BCDNS:", domain, e);
+            return "failed to register router: " + e.getMessage();
+        }
+    }
+
+    Object queryDomainRouter(String... args) {
+        if (args.length != 2) {
+            return "wrong number of arguments";
+        }
+
+        String domainSpace = args[0];
+        String domain = args[1];
+
+        try {
+            DomainRouter domainRouter = bcdnsManager.getBCDNSService(domainSpace).queryDomainRouter(
+                    QueryDomainRouterRequest.builder().destDomain(new CrossChainDomain(domain)).build()
+            );
+            if (ObjectUtil.isNull(domainRouter)) {
+                return "not found";
+            }
+            return JSON.toJSONString(domainRouter);
         } catch (Throwable e) {
             log.error("failed to register router for domain {} to BCDNS:", domain, e);
             return "failed to register router: " + e.getMessage();

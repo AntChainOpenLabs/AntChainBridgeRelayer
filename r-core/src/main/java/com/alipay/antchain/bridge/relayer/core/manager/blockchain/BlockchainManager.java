@@ -122,8 +122,10 @@ public class BlockchainManager implements IBlockchainManager {
             log.info("[BlockchainManager] add blockchain {} success", blockchainMeta.getMetaKey());
 
         } catch (AntChainBridgeRelayerException e) {
+            blockchainClientPool.deleteClient(blockchainMeta.getProduct(), blockchainMeta.getBlockchainId());
             throw e;
         } catch (Exception e) {
+            blockchainClientPool.deleteClient(blockchainMeta.getProduct(), blockchainMeta.getBlockchainId());
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
                     e,

@@ -19,6 +19,7 @@ package com.alipay.antchain.bridge.relayer.core.service.anchor.context;
 import java.util.concurrent.ExecutorService;
 
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
+import com.alipay.antchain.bridge.relayer.core.service.anchor.tasks.CachedBlockQueue;
 import com.alipay.antchain.bridge.relayer.core.service.anchor.tasks.IBlockQueue;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.AbstractBlockchainClient;
@@ -68,7 +69,6 @@ public class AnchorProcessContext {
             RedissonClient redisson,
             ExecutorService blockSyncTaskThreadsPool,
             ReceiverService receiverService,
-            IBlockQueue blockQueue,
             int blockCacheCapacity,
             int blockCacheTTL,
             int syncBatchSize,
@@ -79,7 +79,12 @@ public class AnchorProcessContext {
         this.blockchainClientPool = blockchainClientPool;
         this.anchorProduct = blockchainMeta.getProduct();
         this.anchorBlockchainId = blockchainMeta.getBlockchainId();
-        this.blockQueue = blockQueue;
+        this.blockQueue = new CachedBlockQueue(
+                this,
+                redisson,
+                blockCacheCapacity,
+                blockCacheTTL
+        );
         this.transactionTemplate = transactionTemplate;
         this.redisson = redisson;
         this.blockSyncTaskThreadsPool = blockSyncTaskThreadsPool;
