@@ -29,6 +29,7 @@
             <outputDirectory>${file.separator}</outputDirectory>
             <includes>
                 <include>com/**</include>
+                <include>VERSION</include>
             </includes>
         </fileSet>
     </fileSets>

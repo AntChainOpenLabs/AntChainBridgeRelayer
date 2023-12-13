@@ -17,7 +17,9 @@
 package com.alipay.antchain.bridge.relayer.cli.groovyshell;
 
 import java.io.*;
+import java.nio.charset.Charset;
 
+import cn.hutool.core.io.resource.ResourceUtil;
 import com.alipay.antchain.bridge.relayer.cli.command.NamespaceManager;
 import com.alipay.antchain.bridge.relayer.cli.command.NamespaceManagerImpl;
 import com.alipay.antchain.bridge.relayer.cli.glclient.GrpcClient;
@@ -149,5 +151,9 @@ public class  Launcher {
         shell.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(shell::stop));
+    }
+
+    public static String getVersion() {
+        return ResourceUtil.readStr("VERSION", Charset.defaultCharset());
     }
 }

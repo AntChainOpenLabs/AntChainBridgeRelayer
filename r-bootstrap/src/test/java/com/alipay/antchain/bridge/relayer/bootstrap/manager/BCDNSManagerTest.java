@@ -19,7 +19,6 @@ package com.alipay.antchain.bridge.relayer.bootstrap.manager;
 import java.util.List;
 import javax.annotation.Resource;
 
-import cn.hutool.cache.Cache;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.map.MapUtil;
 import com.alipay.antchain.bridge.bcdns.impl.BlockChainDomainNameServiceFactory;
@@ -50,7 +49,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class BCDNSManagerTest extends TestBase {
 
