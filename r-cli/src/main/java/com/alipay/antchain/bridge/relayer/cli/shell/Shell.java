@@ -26,7 +26,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.alipay.antchain.bridge.relayer.cli.command.NamespaceManager;
 import com.alipay.antchain.bridge.relayer.cli.glclient.GrpcClient;
+import com.alipay.antchain.bridge.relayer.cli.groovyshell.Launcher;
 import com.alipay.antchain.bridge.relayer.cli.util.JsonUtil;
+import lombok.Getter;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReader.Option;
 import org.jline.reader.impl.history.DefaultHistory;
@@ -39,7 +41,7 @@ import org.jline.terminal.TerminalBuilder;
  */
 public class Shell {
 
-    private static String PROMPT = "relayer>";
+    private static String PROMPT = "\033[0;37mrelayer> \033[0m";
 
     private NamespaceManager namespaceManager;
 
@@ -192,16 +194,18 @@ public class Shell {
     }
 
     protected void welcome() {
-        Runtime.printer.println("------------------------------------------------------------");
-        Runtime.printer.println("------------------------------------------------------------");
-        Runtime.printer.println("----                                                   -----");
-        Runtime.printer.println("----                  RELAYER CONSOLE                  -----");
-        Runtime.printer.println("----                                                   -----");
-        Runtime.printer.println("------------------------------------------------------------");
-        Runtime.printer.println("------------------------------------------------------------");
-        Runtime.printer.println("type help to see more...");
+        Runtime.printer.println(
+                "    ___    ______ ____     ____   ______ __     ___ __  __ ______ ____\n" +
+                "   /   |  / ____// __ )   / __ \\ / ____// /    /   |\\ \\/ // ____// __ \\\n" +
+                "  / /| | / /    / __  |  / /_/ // __/  / /    / /| | \\  // __/  / /_/ /\n" +
+                " / ___ |/ /___ / /_/ /  / _, _// /___ / /___ / ___ | / // /___ / _, _/\n" +
+                "/_/  |_|\\____//_____/  /_/ |_|/_____//_____//_/  |_|/_//_____//_/ |_|\n\n" +
+                "                               CLI " + Launcher.getVersion()
+        );
+        Runtime.printer.println("\n>>> type help to see all commands...\n");
     }
 
+    @Getter
     public static class Runtime {
 
         private PrintWriter printer;
@@ -215,14 +219,6 @@ public class Shell {
 
         void setGrpcClient(GrpcClient grpcClient) {
             this.grpcClient = grpcClient;
-        }
-
-        public PrintWriter getPrinter() {
-            return printer;
-        }
-
-        public GrpcClient getGrpcClient() {
-            return grpcClient;
         }
 
     }
