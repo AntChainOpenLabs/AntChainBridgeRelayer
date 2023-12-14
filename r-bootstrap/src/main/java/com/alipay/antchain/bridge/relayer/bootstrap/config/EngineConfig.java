@@ -46,6 +46,7 @@ public class EngineConfig {
     public Map<BlockchainDistributedTaskTypeEnum, BaseScheduleTaskExecutor> scheduleTaskExecutorMap(
             AnchorScheduleTaskExecutor anchorScheduleTaskExecutor,
             CommitterScheduleTaskExecutor committerScheduleTaskExecutor,
+            ValidationScheduleTaskExecutor validationScheduleTaskExecutor,
             ProcessScheduleTaskExecutor processScheduleTaskExecutor,
             TxConfirmScheduleTaskExecutor txConfirmScheduleTaskExecutor,
             ArchiveScheduleTaskExecutor archiveScheduleTaskExecutor,
@@ -54,6 +55,7 @@ public class EngineConfig {
         Map<BlockchainDistributedTaskTypeEnum, BaseScheduleTaskExecutor> res = MapUtil.newHashMap();
         res.put(BlockchainDistributedTaskTypeEnum.ANCHOR_TASK, anchorScheduleTaskExecutor);
         res.put(BlockchainDistributedTaskTypeEnum.COMMIT_TASK, committerScheduleTaskExecutor);
+        res.put(BlockchainDistributedTaskTypeEnum.VALIDATION_TASK, validationScheduleTaskExecutor);
         res.put(BlockchainDistributedTaskTypeEnum.PROCESS_TASK, processScheduleTaskExecutor);
         res.put(BlockchainDistributedTaskTypeEnum.AM_CONFIRM_TASK, txConfirmScheduleTaskExecutor);
         res.put(BlockchainDistributedTaskTypeEnum.ARCHIVE_TASK, archiveScheduleTaskExecutor);

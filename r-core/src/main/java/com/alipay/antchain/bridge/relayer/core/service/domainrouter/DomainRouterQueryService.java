@@ -262,7 +262,7 @@ public class DomainRouterQueryService {
         log.info("hello start with relayer {}-[{}]", remoteNodeInfo.getNodeId(), StrUtil.join(", ", domainRouter.getDestRelayer().getNetAddressList()));
 
         if (
-                bcdnsManager.validateCrossChainCertificate(
+                !bcdnsManager.validateCrossChainCertificate(
                         remoteNodeInfo.getRelayerCrossChainCertificate(),
                         respPayload.getDomainSpaceCertPath()
                 )

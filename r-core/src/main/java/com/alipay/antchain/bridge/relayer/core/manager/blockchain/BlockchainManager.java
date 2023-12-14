@@ -514,12 +514,9 @@ public class BlockchainManager implements IBlockchainManager {
                 blockchainMeta.getProduct(),
                 blockchainMeta.getBlockchainId()
         );
+
         if (ObjectUtil.isNull(blockchainClient)) {
-            throw new AntChainBridgeRelayerException(
-                    RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
-                    "failed to get blockchain client for blockchain ( product: {}, bcId: {}, pluginServerId: {} )",
-                    blockchainMeta.getProduct(), blockchainMeta.getBlockchainId(), blockchainMeta.getPluginServerId()
-            );
+            blockchainClient = blockchainClientPool.createClient(blockchainMeta);
         }
 
         if (!(blockchainClient instanceof HeteroBlockchainClient)) {

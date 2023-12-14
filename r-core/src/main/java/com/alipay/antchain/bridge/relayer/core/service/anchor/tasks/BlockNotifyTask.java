@@ -88,7 +88,7 @@ public class BlockNotifyTask extends BlockBaseTask {
             long notifyBlockHeaderHeight = notifyTaskType == NotifyTaskTypeEnum.SYSTEM_WORKER ?
                     getSystemNotifyBlockHeaderHeight(notifyTaskType.getCode()) :
                     getNotifyBlockHeaderHeight(notifyTaskType.getCode());
-            log.info(
+            log.debug(
                     "blockchain {} notify task {} has localBlockHeaderHeight {} and notifyBlockHeaderHeight {} now",
                     getProcessContext().getBlockchainMeta().getMetaKey(),
                     notifyTaskType.getCode(),
@@ -97,7 +97,7 @@ public class BlockNotifyTask extends BlockBaseTask {
             );
 
             if (notifyBlockHeaderHeight >= localBlockHeaderHeight) {
-                log.info(
+                log.debug(
                         "height {} of notify task {} equals to local height {} for blockchain {}",
                         notifyBlockHeaderHeight,
                         notifyTaskType.getCode(),

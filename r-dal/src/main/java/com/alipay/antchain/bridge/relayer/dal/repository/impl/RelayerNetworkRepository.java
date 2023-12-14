@@ -117,7 +117,8 @@ public class RelayerNetworkRepository implements IRelayerNetworkRepository {
                             new LambdaQueryWrapper<RelayerNetworkEntity>()
                                     .eq(RelayerNetworkEntity::getNetworkId, networkId)
                                     .eq(RelayerNetworkEntity::getDomain, domain)
-                                    .eq(RelayerNetworkEntity::getNodeId, nodeId)
+                                    .eq(RelayerNetworkEntity::getNodeId, nodeId),
+                            false
                     )
             );
         } catch (Exception e) {

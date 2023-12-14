@@ -46,7 +46,7 @@ public class BlockSyncTask extends BlockBaseTask {
         long remoteBlockHeaderHeight = getRemoteBlockHeaderHeight();
 
         if (localBlockHeaderHeight >= remoteBlockHeaderHeight) {
-            log.info(
+            log.debug(
                     "local block synced {} had equal to remote header {} for blockchain {}",
                     localBlockHeaderHeight,
                     remoteBlockHeaderHeight,
@@ -70,6 +70,13 @@ public class BlockSyncTask extends BlockBaseTask {
         // each process task will process the gap of local block header and remote header now.
         long endHeight = Math.min(remoteBlockHeaderHeight, localBlockHeaderHeight + getProcessContext().getSyncBatchSize());
         long currentHeight = localBlockHeaderHeight + 1;
+
+        log.info(
+                "block sync task for blockchain {} is processing from blockHeight {} to endHeight {}",
+                getProcessContext().getBlockchainMeta().getMetaKey(),
+                currentHeight,
+                endHeight
+        );
 
         while (currentHeight <= endHeight) {
 

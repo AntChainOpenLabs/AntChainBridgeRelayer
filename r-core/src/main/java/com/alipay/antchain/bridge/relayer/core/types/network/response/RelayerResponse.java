@@ -28,7 +28,9 @@ import com.alipay.antchain.bridge.commons.utils.codec.tlv.TLVUtils;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.annotation.TLVField;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,6 +39,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Slf4j
 public class RelayerResponse {
 

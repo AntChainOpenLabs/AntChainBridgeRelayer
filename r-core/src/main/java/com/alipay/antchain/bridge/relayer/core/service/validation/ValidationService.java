@@ -52,8 +52,8 @@ public class ValidationService {
     @Resource
     private ICrossChainMessageRepository crossChainMessageRepository;
 
-    @Resource(name = "validationScheduleTaskExecutorThreadsPool")
-    private ExecutorService validationScheduleTaskExecutorThreadsPool;
+    @Resource(name = "validationServiceThreadsPool")
+    private ExecutorService validationServiceThreadsPool;
 
     @Resource
     private UniformCrosschainPacketValidator uniformCrosschainPacketValidator;
@@ -72,7 +72,7 @@ public class ValidationService {
         String domainName = blockchainManager.getBlockchainDomain(blockchainProduct, blockchainId);
 
         if (this.blockchainIdleDCache.ifUCPProcessIdle(blockchainProduct, blockchainId)) {
-            log.info("validation process : blockchain is idle {}-{}.", blockchainProduct, blockchainId);
+            log.debug("validation process : blockchain is idle {}-{}.", blockchainProduct, blockchainId);
         } else if (StrUtil.isNotEmpty(domainName)) {
             ucpContexts = crossChainMessageRepository.peekUCPMessages(
                     domainName,
@@ -93,7 +93,7 @@ public class ValidationService {
                 blockchainProduct,
                 blockchainId,
                 ucpContexts.stream().map(
-                        ucpContext -> validationScheduleTaskExecutorThreadsPool.submit(
+                        ucpContext -> validationServiceThreadsPool.submit(
                                 wrapUCPTask(ucpContext.getUcpId())
                         )
                 ).collect(Collectors.toList()),

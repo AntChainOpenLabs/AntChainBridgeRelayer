@@ -38,7 +38,7 @@ public abstract class BaseScheduleTaskExecutor {
         // 该任务是否已经在执行
         if (currentTasks.containsKey(task.getUniqueTaskKey())) {
             if (!currentTasks.get(task.getUniqueTaskKey()).isDone()) {
-                log.info("task is running : {}", task.getUniqueTaskKey());
+                log.debug("task is running : {}", task.getUniqueTaskKey());
                 return;
             } else {
                 log.debug("task finish : {}", task.getUniqueTaskKey());
