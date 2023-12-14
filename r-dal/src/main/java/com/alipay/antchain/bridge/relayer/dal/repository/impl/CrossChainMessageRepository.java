@@ -640,8 +640,14 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
             }
 
             return entities.stream()
-                    .map(sdpMsgPoolEntity -> BeanUtil.copyProperties(sdpMsgPoolEntity, SDPMsgWrapper.class))
-                    .collect(Collectors.toList());
+                    .map(entity -> {
+                        SDPMsgWrapper sdpMsgWrapper = new SDPMsgWrapper();
+                        sdpMsgWrapper.setId(entity.getId());
+                        AuthMsgWrapper authMsgWrapper = new AuthMsgWrapper();
+                        authMsgWrapper.setAuthMsgId(entity.getAuthMsgId());
+                        sdpMsgWrapper.setAuthMsgWrapper(authMsgWrapper);
+                        return sdpMsgWrapper;
+                    }).collect(Collectors.toList());
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,

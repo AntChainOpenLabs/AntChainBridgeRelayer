@@ -38,6 +38,12 @@ public class ThreadsConfig {
     @Value("${relayer.network.node.client.threads.total_size:64}")
     private int wsRelayerClientTotalSize;
 
+    @Value("${relayer.service.validation.threads.core_size:32}")
+    private int validationServiceCoreSize;
+
+    @Value("${relayer.service.validation.threads.total_size:64}")
+    private int validationServiceTotalSize;
+
     @Value("${relayer.service.process.threads.core_size:32}")
     private int processServiceCoreSize;
 
@@ -138,6 +144,19 @@ public class ThreadsConfig {
                 TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(10000),
                 new ThreadFactoryBuilder().setNameFormat("ws-relayer-client-worker-%d").build(),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+    }
+
+    @Bean(name = "validationServiceThreadsPool")
+    public ExecutorService validationServiceThreadsPool() {
+        return new ThreadPoolExecutor(
+                validationServiceCoreSize,
+                validationServiceTotalSize,
+                1000,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(10000),
+                new ThreadFactoryBuilder().setNameFormat("Process-worker-%d").build(),
                 new ThreadPoolExecutor.AbortPolicy()
         );
     }

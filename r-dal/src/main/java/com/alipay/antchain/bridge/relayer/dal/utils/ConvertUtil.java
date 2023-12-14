@@ -166,7 +166,9 @@ public class ConvertUtil {
 
     public static UniformCrosschainPacketContext convertFromUCPPoolEntity(UCPPoolEntity ucpPoolEntity) {
         UniformCrosschainPacket packet = new UniformCrosschainPacket();
-        packet.setPtcId(ObjectIdentity.decode(ucpPoolEntity.getPtcOid()));
+        if (ObjectUtil.isNotEmpty(ucpPoolEntity.getPtcOid())) {
+            packet.setPtcId(ObjectIdentity.decode(ucpPoolEntity.getPtcOid()));
+        }
         packet.setSrcDomain(new CrossChainDomain(ucpPoolEntity.getSrcDomain()));
         packet.setVersion(ucpPoolEntity.getVersion());
         packet.setTpProof(ucpPoolEntity.getTpProof());
@@ -386,11 +388,17 @@ public class ConvertUtil {
 
         entity.setOwnerDomain(item.getOwnerDomain());
         entity.setOwnerId(item.getOwnerIdentity());
-        entity.setOwnerIdHex(item.getOwnerIdentityHex().toLowerCase());
+        entity.setOwnerIdHex(
+                ObjectUtil.isNull(item.getOwnerIdentityHex()) ?
+                        null : item.getOwnerIdentityHex().toLowerCase()
+        );
 
         entity.setGrantDomain(item.getGrantDomain());
         entity.setGrantId(item.getGrantIdentity());
-        entity.setGrantIdHex(item.getGrantIdentityHex().toLowerCase());
+        entity.setGrantIdHex(
+                ObjectUtil.isNull(item.getGrantIdentityHex()) ?
+                        null : item.getGrantIdentityHex().toLowerCase()
+        );
 
         entity.setIsDeleted(item.getIsDeleted());
 

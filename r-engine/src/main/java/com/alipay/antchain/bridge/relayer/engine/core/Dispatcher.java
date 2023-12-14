@@ -125,6 +125,11 @@ public class Dispatcher {
                                         blockchainMeta.getBlockchainId()
                                 ),
                                 new BlockchainDistributedTask(
+                                        BlockchainDistributedTaskTypeEnum.VALIDATION_TASK,
+                                        blockchainMeta.getProduct(),
+                                        blockchainMeta.getBlockchainId()
+                                ),
+                                new BlockchainDistributedTask(
                                         BlockchainDistributedTaskTypeEnum.PROCESS_TASK,
                                         blockchainMeta.getProduct(),
                                         blockchainMeta.getBlockchainId()

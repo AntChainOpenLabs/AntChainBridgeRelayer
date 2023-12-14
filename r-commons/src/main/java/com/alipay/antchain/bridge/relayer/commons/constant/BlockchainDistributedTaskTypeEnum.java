@@ -26,6 +26,8 @@ public enum BlockchainDistributedTaskTypeEnum {
 
     ANCHOR_TASK("anchor"),
 
+    VALIDATION_TASK("validation"),
+
     PROCESS_TASK("process"),
 
     COMMIT_TASK("committer"),
