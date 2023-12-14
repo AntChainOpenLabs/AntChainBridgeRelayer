@@ -27,6 +27,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
@@ -315,7 +316,7 @@ public class RelayerNodeInfo {
     }
 
     public String marshalProperties() {
-        return JSON.toJSONString(properties.getProperties());
+        return ObjectUtil.isNull(properties) ? null : JSON.toJSONString(properties.getProperties());
     }
 
     public void addProperty(String key, String value) {

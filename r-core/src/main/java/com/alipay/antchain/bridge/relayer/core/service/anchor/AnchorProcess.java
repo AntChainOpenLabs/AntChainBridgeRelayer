@@ -80,7 +80,7 @@ public class AnchorProcess {
     }
 
     public void run() {
-        log.info("start anchor process for {} ", processContext.getBlockchainMeta().getMetaKey());
+        log.debug("start anchor process for {} ", processContext.getBlockchainMeta().getMetaKey());
 
         try {
             // 同步最新高度
@@ -94,7 +94,7 @@ public class AnchorProcess {
             return;
         }
 
-        log.info("success to run anchor process for {} : ", processContext.getBlockchainMeta().getMetaKey());
+        log.debug("success to run anchor process for {} : ", processContext.getBlockchainMeta().getMetaKey());
     }
 
     public void updateBlockchainMetaIntoClient(BlockchainMeta blockchainMeta) {

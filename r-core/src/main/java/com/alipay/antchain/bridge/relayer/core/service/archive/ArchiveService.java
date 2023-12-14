@@ -79,7 +79,7 @@ public class ArchiveService {
             }
 
             if (blockchainIdleDCache.ifAMArchiveIdle(blockchainProduct, blockchainId)) {
-                log.info("archive process : blockchain is idle {}-{}.", blockchainProduct, blockchainId);
+                log.debug("archive process : blockchain is idle {}-{}.", blockchainProduct, blockchainId);
                 return;
             }
 

@@ -66,6 +66,8 @@ public class UniformCrosschainPacketValidator {
             );
         }
 
+        log.info("successful to process validation of ucp {} ", ucpContext.getUcpId());
+
         return true;
     }
 }

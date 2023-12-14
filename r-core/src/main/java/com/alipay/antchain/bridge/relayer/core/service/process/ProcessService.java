@@ -88,7 +88,7 @@ public class ProcessService {
         String domainName = blockchainManager.getBlockchainDomain(blockchainProduct, blockchainId);
 
         if (this.blockchainIdleDCache.ifAMProcessIdle(blockchainProduct, blockchainId)) {
-            log.info("am process : blockchain is idle {}-{}.", blockchainProduct, blockchainId);
+            log.debug("am process : blockchain is idle {}-{}.", blockchainProduct, blockchainId);
         } else if (StrUtil.isNotEmpty(domainName)) {
             authMsgWrapperList = crossChainMessageRepository.peekAuthMessages(
                     domainName,
@@ -105,7 +105,7 @@ public class ProcessService {
         }
 
         if (crossChainMessageRepository.hasNotReadyAuthMessages(domainName)) {
-            log.info("there is NOT_READY auth messages for domain {} in DB", domainName);
+            log.debug("there is NOT_READY auth messages for domain {} in DB", domainName);
             processServiceThreadsPool.execute(wrapNotReadyAMPorterTask(domainName));
         }
 
@@ -211,7 +211,9 @@ public class ProcessService {
                             }
                         }
                 ).filter(Objects::nonNull).reduce(Integer::sum).orElse(0);
-                log.info("successful to update {} not_ready auth messages for domain {}", cnt, domain);
+                if (cnt > 0) {
+                    log.info("successful to update {} not_ready auth messages for domain {}", cnt, domain);
+                }
             } finally {
                 notReadyMessageLock.unlock();
             }

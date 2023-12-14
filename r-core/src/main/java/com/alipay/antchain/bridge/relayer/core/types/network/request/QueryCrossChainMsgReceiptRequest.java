@@ -23,10 +23,12 @@ import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class QueryCrossChainMsgReceiptRequest extends RelayerRequest {
     public static QueryCrossChainMsgReceiptRequest createFrom(RelayerRequest relayerRequest) {
         QueryCrossChainMsgReceiptRequest request = JSON.parseObject(relayerRequest.getRequestPayload(), QueryCrossChainMsgReceiptRequest.class);

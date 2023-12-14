@@ -43,7 +43,7 @@ public class Dispatcher {
     @Value("${relayer.engine.schedule.duty.dt_task.time_slice:180000}")
     private long timeSliceLength;
 
-    @Value("${relayer.engine.schedule.activate.ttl:3000}")
+    @Value("${relayer.engine.schedule.activate.ttl:5000}")
     private long nodeTimeToLive;
 
 //    @Value("${relayer.engine.schedule.dispatcher.task_diff_map:{anchor:5, committer:3, process:2}}")
@@ -167,6 +167,7 @@ public class Dispatcher {
         List<BlockchainDistributedTask> timeSliceBlockchainTasks = scheduleRepository.getAllBlockchainDistributedTasks();
         Map<String, IDistributedTask> newTaskMap = Maps.newHashMap(allTasksMap);
         for (IDistributedTask existedTask : timeSliceBlockchainTasks) {
+            existedTask.setTimeSliceLength(timeSliceLength);
             newTaskMap.remove(existedTask.getUniqueTaskKey());
             if (!existedTask.ifFinish()) {
                 allTasksMap.remove(existedTask.getUniqueTaskKey());
@@ -175,6 +176,7 @@ public class Dispatcher {
 
         List<BizDistributedTask> bizDistributedTasks = scheduleRepository.getAllBizDistributedTasks();
         for (IDistributedTask existedTask : bizDistributedTasks) {
+            existedTask.setTimeSliceLength(timeSliceLength);
             newTaskMap.remove(existedTask.getUniqueTaskKey());
             if (!existedTask.ifFinish()) {
                 allTasksMap.remove(existedTask.getUniqueTaskKey());

@@ -217,7 +217,7 @@ public class BlockchainIdleDCache {
     }
 
     private void setIdleState(String product, String blockchainId, String type, long time) {
-        log.info("set idle state : {}-{}-{}-{} ", product, blockchainId, type, time);
+        log.debug("set idle state : {}-{}-{}-{} ", product, blockchainId, type, time);
         redisson.getBucket(genKey(product, blockchainId, type), StringCodec.INSTANCE)
                 .set(Long.valueOf(time).toString());
     }

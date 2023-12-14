@@ -71,7 +71,7 @@ public class CommitterService {
         List<SDPMsgWrapper> sdpMsgWrappers = new ArrayList<>();
 
         if (this.blockchainIdleDCache.ifAMCommitterIdle(blockchainProduct, blockchainId)) {
-            log.info("blockchain {}-{} has no messages processed recently, so skip it this committing process", blockchainProduct, blockchainId);
+            log.debug("blockchain {}-{} has no messages processed recently, so skip it this committing process", blockchainProduct, blockchainId);
         } else {
             sdpMsgWrappers = crossChainMessageRepository.peekSDPMessages(
                     blockchainProduct,

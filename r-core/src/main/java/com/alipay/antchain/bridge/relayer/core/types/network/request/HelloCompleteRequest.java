@@ -25,11 +25,15 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class HelloCompleteRequest extends RelayerRequest {
     public static HelloCompleteRequest createFrom(RelayerRequest relayerRequest) {
         HelloCompleteRequest request = JSON.parseObject(relayerRequest.getRequestPayload(), HelloCompleteRequest.class);

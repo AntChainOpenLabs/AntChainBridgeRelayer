@@ -20,11 +20,14 @@ package com.alipay.antchain.bridge.relayer.core.types.network.request;
 import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class HelloStartRequest extends RelayerRequest {
     public static HelloStartRequest createFrom(RelayerRequest relayerRequest) {
         HelloStartRequest request = JSON.parseObject(relayerRequest.getRequestPayload(), HelloStartRequest.class);

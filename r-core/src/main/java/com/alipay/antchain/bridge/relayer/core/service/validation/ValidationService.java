@@ -72,7 +72,7 @@ public class ValidationService {
         String domainName = blockchainManager.getBlockchainDomain(blockchainProduct, blockchainId);
 
         if (this.blockchainIdleDCache.ifUCPProcessIdle(blockchainProduct, blockchainId)) {
-            log.info("validation process : blockchain is idle {}-{}.", blockchainProduct, blockchainId);
+            log.debug("validation process : blockchain is idle {}-{}.", blockchainProduct, blockchainId);
         } else if (StrUtil.isNotEmpty(domainName)) {
             ucpContexts = crossChainMessageRepository.peekUCPMessages(
                     domainName,

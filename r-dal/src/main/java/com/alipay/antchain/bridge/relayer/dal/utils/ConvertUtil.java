@@ -310,7 +310,9 @@ public class ConvertUtil {
                 ObjectUtil.isNull(nodeInfo.getRelayerBlockchainContent()) ?
                         StrUtil.EMPTY.getBytes() : nodeInfo.getRelayerBlockchainContent().encodeToJson().getBytes()
         );
-        entity.setProperties(nodeInfo.marshalProperties().getBytes());
+        if (ObjectUtil.isNotNull(nodeInfo.getProperties())) {
+            entity.setProperties(nodeInfo.marshalProperties().getBytes());
+        }
 
         return entity;
     }

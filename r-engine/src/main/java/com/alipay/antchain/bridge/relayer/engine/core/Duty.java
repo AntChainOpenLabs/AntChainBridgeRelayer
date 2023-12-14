@@ -38,7 +38,7 @@ public class Duty {
         if (tasks.isEmpty()) {
             log.debug("empty duty tasks");
         } else {
-            log.info("duty tasks size {}", tasks.size());
+            log.debug("duty tasks size {}", tasks.size());
         }
 
         // 分配给各个职能线程池处理

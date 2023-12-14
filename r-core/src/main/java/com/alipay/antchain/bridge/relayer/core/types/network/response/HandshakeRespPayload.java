@@ -20,9 +20,13 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class HandshakeRespPayload implements IResponsePayload {
     public static HandshakeRespPayload decodeFromJson(String json) {
         return JSON.parseObject(json, HandshakeRespPayload.class);
