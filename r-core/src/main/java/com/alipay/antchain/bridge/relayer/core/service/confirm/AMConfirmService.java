@@ -18,6 +18,7 @@ import com.alipay.antchain.bridge.commons.core.base.CrossChainMessageReceipt;
 import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
+import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.AbstractBlockchainClient;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.BlockchainClientPool;
@@ -51,20 +52,26 @@ public class AMConfirmService {
     @Resource
     private IRelayerNetworkManager relayerNetworkManager;
 
-    public void process(String product, String blockchainId) {
-        AbstractBlockchainClient client = blockchainClientPool.getClient(product, blockchainId);
-        if (ObjectUtil.isNull(client)) {
-            log.info("waiting for hetero-client to start for blockchain {} - {}", product, blockchainId);
-            return;
-        }
+    @Resource
+    private IBlockchainManager blockchainManager;
 
-        HeteroBlockchainClient heteroBlockchainClient = (HeteroBlockchainClient) client;
+    public void process(String product, String blockchainId) {
         List<SDPMsgWrapper> sdpMsgWrappers = crossChainMessageRepository.peekSDPMessages(
                 product,
                 blockchainId,
                 SDPMsgProcessStateEnum.TX_PENDING,
                 confirmBatchSize
         );
+        if (ObjectUtil.isEmpty(sdpMsgWrappers)) {
+            log.debug("none tx pending sdp message in DB for blockchain {}-{}", product, blockchainId);
+            return;
+        }
+
+        AbstractBlockchainClient client = blockchainClientPool.getClient(product, blockchainId);
+        if (ObjectUtil.isNull(client)) {
+            client = blockchainClientPool.createClient(blockchainManager.getBlockchainMeta(product, blockchainId));
+        }
+        HeteroBlockchainClient heteroBlockchainClient = (HeteroBlockchainClient) client;
 
         List<Future<CrossChainMessageReceipt>> futureList = new ArrayList<>();
         sdpMsgWrappers.forEach(

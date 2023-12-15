@@ -546,7 +546,12 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                         )).eq(SDPMsgPoolEntity::getAuthMsgId, amId)
         );
         if (ObjectUtil.isNotNull(sdpMsgPoolEntity)) {
-            return ConvertUtil.convertFromSDPMsgPoolEntity(sdpMsgPoolEntity);
+            SDPMsgWrapper sdpMsgWrapper = new SDPMsgWrapper();
+            sdpMsgWrapper.setTxHash(sdpMsgPoolEntity.getTxHash());
+            sdpMsgWrapper.setProcessState(sdpMsgPoolEntity.getProcessState());
+            sdpMsgWrapper.setTxSuccess(sdpMsgPoolEntity.getTxSuccess());
+            sdpMsgWrapper.setTxFailReason(sdpMsgPoolEntity.getTxFailReason());
+            return sdpMsgWrapper;
         }
 
         SDPMsgArchiveEntity sdpMsgArchiveEntity = sdpMsgArchiveMapper.selectOne(

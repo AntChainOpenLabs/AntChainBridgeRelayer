@@ -69,8 +69,8 @@ public class Dispatcher {
 
             // 剔除已分配过时间片的任务
             List<IDistributedTask> tasksToDispatch = filterTasksInTimeSlice(tasks);
-            if (ObjectUtil.isEmpty(tasksToDispatch.isEmpty())) {
-                log.info("empty tasks to dispatch");
+            if (ObjectUtil.isEmpty(tasksToDispatch)) {
+                log.debug("empty tasks to dispatch");
                 return;
             }
 
@@ -239,6 +239,7 @@ public class Dispatcher {
                         ).map(task -> (BizDistributedTask) task)
                         .collect(Collectors.toList())
         );
+        log.info("dispatch tasks : {}", tasks.stream().map(IDistributedTask::getUniqueTaskKey).collect(Collectors.joining(" , ")));
     }
 
 //    private void averageDiffPerBlockchainForEachNode(List<ActiveNode> nodes, List<BlockchainDistributedTask> tasks) {

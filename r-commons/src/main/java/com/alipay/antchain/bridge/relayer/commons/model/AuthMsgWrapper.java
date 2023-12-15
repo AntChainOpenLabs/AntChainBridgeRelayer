@@ -20,6 +20,7 @@ import java.util.Map;
 
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.HexUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alipay.antchain.bridge.commons.core.am.AuthMessageFactory;
@@ -63,8 +64,22 @@ public class AuthMsgWrapper {
                     "not a valid auth message type: " + crossChainMessage.getType().name()
             );
         }
-        IAuthMessage authMessage = AuthMessageFactory.createAuthMessage(crossChainMessage.getMessage());
+        return buildFrom(
+                product,
+                blockchainId,
+                domain,
+                ucpId,
+                AuthMessageFactory.createAuthMessage(crossChainMessage.getMessage())
+        );
+    }
 
+    public static AuthMsgWrapper buildFrom(
+            String product,
+            String blockchainId,
+            String domain,
+            String ucpId,
+            IAuthMessage authMessage
+    ) {
         AuthMsgWrapper wrapper = new AuthMsgWrapper();
         wrapper.setUcpId(ucpId);
         wrapper.setAuthMessage(authMessage);
@@ -122,7 +137,7 @@ public class AuthMsgWrapper {
             int failCount,
             IAuthMessage authMessage
     ) {
-        this(0, product, blockchainId, domain, ucpId, amClientContractAddress, processState, failCount, authMessage);
+        this(0, product, blockchainId, domain, ucpId, amClientContractAddress, processState, failCount, null, authMessage);
     }
 
     public AuthMsgWrapper(
@@ -134,6 +149,7 @@ public class AuthMsgWrapper {
             String amClientContractAddress,
             AuthMsgProcessStateEnum processState,
             int failCount,
+            byte[] rawLedgerInfo,
             IAuthMessage authMessage
     ) {
         this.authMsgId = authMsgId;
@@ -151,6 +167,9 @@ public class AuthMsgWrapper {
         this.trustLevel = authMessage.getVersion() >= 2 ?
                 AuthMsgTrustLevelEnum.parseFromValue(((AuthMessageV2) authMessage).getTrustLevel().ordinal())
                 : AuthMsgTrustLevelEnum.NEGATIVE_TRUST;
+        if (ObjectUtil.isNotEmpty(rawLedgerInfo)) {
+            this.setLedgerInfo(new String(rawLedgerInfo));
+        }
     }
 
     public byte[] getPayload() {
@@ -162,7 +181,7 @@ public class AuthMsgWrapper {
     }
 
     public byte[] getRawLedgerInfo() {
-        return JSON.toJSONBytes(ledgerInfo);
+        return ledgerInfo.isEmpty() ? null : JSON.toJSONBytes(ledgerInfo);
     }
 
     public void addLedgerInfo(String key, String value) {

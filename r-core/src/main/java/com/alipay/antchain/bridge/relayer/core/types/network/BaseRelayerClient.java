@@ -155,7 +155,10 @@ public abstract class BaseRelayerClient implements RelayerClient {
 
     @Override
     public Map<String, CrossChainMessageReceipt> queryCrossChainMessageReceipts(List<String> ucpIds) {
-        RelayerResponse response = sendRequest(new QueryCrossChainMsgReceiptRequest(ucpIds));
+        RelayerRequest request = new QueryCrossChainMsgReceiptRequest(ucpIds);
+        relayerCredentialManager.signRelayerRequest(request);
+
+        RelayerResponse response = sendRequest(request);
         if (ObjectUtil.isNull(response)) {
             throw new RuntimeException(
                     "query cc msg receipts but get null response"
@@ -260,7 +263,7 @@ public abstract class BaseRelayerClient implements RelayerClient {
     }
 
     private RelayerResponse validateRelayerResponse(RelayerResponse relayerResponse) {
-        if (relayerCredentialManager.validateRelayerResponse(relayerResponse)) {
+        if (!relayerCredentialManager.validateRelayerResponse(relayerResponse)) {
             throw new RuntimeException(
                     StrUtil.format(
                             "response from relayer {} sig is invalid",

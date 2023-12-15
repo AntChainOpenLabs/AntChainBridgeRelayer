@@ -140,6 +140,7 @@ public class ConvertUtil {
                 authMsgPoolEntity.getAmClientContractAddress(),
                 authMsgPoolEntity.getProcessState(),
                 authMsgPoolEntity.getFailCount(),
+                authMsgPoolEntity.getExt(),
                 authMessage
         );
     }
@@ -285,11 +286,13 @@ public class ConvertUtil {
                     RelayerBlockchainContent.decodeFromJson(new String(entity.getBlockchainContent()))
             );
         }
-        nodeInfo.setProperties(
-                RelayerNodeInfo.RelayerNodeProperties.decodeFromJson(
-                        new String(entity.getProperties())
-                )
-        );
+        if (ObjectUtil.isNotNull(entity.getProperties())) {
+            nodeInfo.setProperties(
+                    RelayerNodeInfo.RelayerNodeProperties.decodeFromJson(
+                            new String(entity.getProperties())
+                    )
+            );
+        }
         return nodeInfo;
     }
 

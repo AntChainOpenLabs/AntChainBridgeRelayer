@@ -365,7 +365,7 @@ public class RelayerNetworkManager implements IRelayerNetworkManager {
     public String findRemoteRelayer(String receiverDomain) {
         RelayerNetwork.DomainRouterItem relayerNetworkItem = findNetworkItemByDomainName(receiverDomain);
         if (ObjectUtil.isNull(relayerNetworkItem)) {
-            log.info("can't find receiver domain {} in all network from local data", receiverDomain);
+            log.debug("can't find receiver domain {} in all network from local data", receiverDomain);
             return null;
         }
         if (relayerNetworkItem.getSyncState() != DomainRouterSyncStateEnum.SYNC) {

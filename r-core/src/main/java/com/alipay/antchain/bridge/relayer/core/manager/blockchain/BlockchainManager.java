@@ -143,12 +143,14 @@ public class BlockchainManager implements IBlockchainManager {
                 throw new RuntimeException(StrUtil.format("none blockchain found for {}-{}", product, blockchainId));
             }
 
-            AbstractBlockchainClient client = blockchainClientPool.createClient(blockchainMeta);
-            if (ObjectUtil.isNull(client)) {
-                throw new AntChainBridgeRelayerException(
-                        RelayerErrorCodeEnum.CORE_BLOCKCHAIN_CLIENT_INIT_ERROR,
-                        "null blockchain client for {}-{}", product, blockchainId
-                );
+            if (blockchainMeta.isRunning()) {
+                AbstractBlockchainClient client = blockchainClientPool.createClient(blockchainMeta);
+                if (ObjectUtil.isNull(client)) {
+                    throw new AntChainBridgeRelayerException(
+                            RelayerErrorCodeEnum.CORE_BLOCKCHAIN_CLIENT_INIT_ERROR,
+                            "null blockchain client for {}-{}", product, blockchainId
+                    );
+                }
             }
 
             BlockchainMeta.BlockchainProperties blockchainProperties = BlockchainMeta.BlockchainProperties.decode(

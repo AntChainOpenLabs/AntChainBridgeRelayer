@@ -346,6 +346,7 @@ public class ScheduleRepository implements IScheduleRepository {
                             .eq(MarkDTTaskEntity::getState, MarkDTTaskStateEnum.INIT)
                             .or(
                                     wrapper -> wrapper.lt(MarkDTTaskEntity::getEndTime, new Date())
+                                            .ne(MarkDTTaskEntity::getState, MarkDTTaskStateEnum.DONE)
                             )
             );
             if (ObjectUtil.isEmpty(entities)) {
