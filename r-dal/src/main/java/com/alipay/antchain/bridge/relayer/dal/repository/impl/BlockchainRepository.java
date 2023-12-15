@@ -44,6 +44,7 @@ import com.alipay.antchain.bridge.relayer.dal.service.BlockchainService;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
@@ -55,6 +56,7 @@ import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
+@Slf4j
 public class BlockchainRepository implements IBlockchainRepository {
 
     @Resource
@@ -156,6 +158,8 @@ public class BlockchainRepository implements IBlockchainRepository {
             if (flushPeriodForHeightsCache == 0) {
                 flushHeight(product, blockchainId, heightType, height);
                 setHeightToCache(product, blockchainId, heightType, height);
+                log.debug("flush anchor height ( type: {}, height: {} ) into DB for blockchain {}-{}",
+                        heightType, height, product, blockchainId);
             } else {
                 AnchorProcessHeights heights = getAnchorProcessHeightsFromCache(product, blockchainId);
                 if (ObjectUtil.isNull(heights)) {
@@ -167,6 +171,7 @@ public class BlockchainRepository implements IBlockchainRepository {
                 long now = System.currentTimeMillis();
                 if (now - heights.getLastUpdateTime() > flushPeriodForHeightsCache) {
                     flushAnchorProcessHeights(heights);
+                    log.debug("flush anchor heights into DB for blockchain {}-{}", product, blockchainId);
                     heights.setLastUpdateTime(now);
                 }
                 setAnchorProcessHeightsToCache(heights);

@@ -147,6 +147,9 @@ public class BCDNSRepository implements IBCDNSRepository {
         String currDomainSpace = leafDomainSpace;
         try {
             do {
+                if (StrUtil.equals(leafDomainSpace, CrossChainDomain.ROOT_DOMAIN_SPACE)) {
+                    break;
+                }
                 DomainSpaceCertEntity entity = domainSpaceCertMapper.selectOne(
                         new LambdaQueryWrapper<DomainSpaceCertEntity>()
                                 .select(ListUtil.toList(DomainSpaceCertEntity::getParentSpace))

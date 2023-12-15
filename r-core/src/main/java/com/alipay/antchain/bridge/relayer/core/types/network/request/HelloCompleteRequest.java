@@ -47,8 +47,8 @@ public class HelloCompleteRequest extends RelayerRequest {
     @JSONField(name = "domain_space_cert_path")
     private Map<String, AbstractCrossChainCertificate> domainSpaceCertPath;
 
-    @JSONField(name = "sigAlgo")
-    private String sigAlgo;
+    @JSONField(name = "sigAlgoType")
+    private String sigAlgoType;
 
     @JSONField(name = "sig")
     private byte[] sig;
@@ -64,6 +64,7 @@ public class HelloCompleteRequest extends RelayerRequest {
         this.remoteNodeInfo = Base64.encode(relayerNodeInfo.getEncode());
         this.domainSpaceCertPath = domainSpaceCertPath;
         this.sig = sig;
+        this.sigAlgoType = relayerNodeInfo.getSigAlgo();
         setRequestPayload(
                 JSON.toJSONBytes(this)
         );

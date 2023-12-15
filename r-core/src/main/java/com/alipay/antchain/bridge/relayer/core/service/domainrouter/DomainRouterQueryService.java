@@ -137,6 +137,12 @@ public class DomainRouterQueryService {
                         ) {
                             log.error("domain router for {} and crosschain channel {}-{} already exist ",
                                     destDomain, senderDomain, destDomain);
+                            scheduleRepository.updateMarkDTTaskState(
+                                    task.getTaskType(),
+                                    task.getNodeId(),
+                                    task.getUniqueKey(),
+                                    MarkDTTaskStateEnum.DONE
+                            );
                             return;
                         }
 

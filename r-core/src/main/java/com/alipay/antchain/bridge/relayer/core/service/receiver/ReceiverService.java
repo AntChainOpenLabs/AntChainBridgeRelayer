@@ -4,7 +4,10 @@ import java.util.Base64;
 import java.util.List;
 import javax.annotation.Resource;
 
+import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.core.am.AuthMessageFactory;
+import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgTrustLevelEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
@@ -49,15 +52,21 @@ public class ReceiverService {
      */
     public void receiveOffChainAMRequest(String domainName, String ucpId, String authMsg, String udagProof, String ledgerInfo) {
 
-        AuthMsgWrapper authMsgWrapper = new AuthMsgWrapper();
-        authMsgWrapper.setDomain(domainName);
-        authMsgWrapper.setUcpId(ucpId);
-        authMsgWrapper.setLedgerInfo(ledgerInfo);
-        authMsgWrapper.setAuthMessage(
+        AuthMsgWrapper authMsgWrapper = AuthMsgWrapper.buildFrom(
+                StrUtil.EMPTY,
+                StrUtil.EMPTY,
+                domainName,
+                ucpId,
                 AuthMessageFactory.createAuthMessage(
                         Base64.getDecoder().decode(authMsg)
                 )
         );
+        authMsgWrapper.setLedgerInfo(ledgerInfo);
+        if (authMsgWrapper.getTrustLevel() != AuthMsgTrustLevelEnum.POSITIVE_TRUST) {
+            authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROVED);
+        } else {
+            authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PENDING);
+        }
 
         try {
             syncReceiveHandler.receiveOffChainAMRequest(authMsgWrapper, udagProof);

@@ -17,6 +17,7 @@ import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgPackage;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
+import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.AbstractBlockchainClient;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.BlockchainClientPool;
 import com.alipay.antchain.bridge.relayer.core.utils.ProcessUtils;
@@ -39,6 +40,9 @@ public class CommitterService {
 
     @Resource(name = "committerServiceThreadsPool")
     private ExecutorService committerServiceThreadsPool;
+
+    @Resource
+    private IBlockchainManager blockchainManager;
 
     @Resource
     private BlockchainIdleDCache blockchainIdleDCache;
@@ -344,12 +348,7 @@ public class CommitterService {
         try {
             AbstractBlockchainClient client = blockchainClientPool.getClient(receiverProduct, receiverBlockchainId);
             if (ObjectUtil.isNull(client)) {
-                throw new RuntimeException(
-                        StrUtil.format(
-                                "No client found for blockchain {}-{} when committing msg. Could be anchor process not start yet or anchor service for this blockchain has been stopped",
-                                receiverProduct, receiverBlockchainId
-                        )
-                );
+                client = blockchainClientPool.createClient(blockchainManager.getBlockchainMeta(receiverProduct, receiverBlockchainId));
             }
 
             AbstractBlockchainClient.SendResponseResult res = client.getAMClientContract()

@@ -46,7 +46,10 @@ import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkMa
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.exception.RejectRequestException;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.*;
-import com.alipay.antchain.bridge.relayer.core.types.network.response.*;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.ChannelStartRespPayload;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloStartRespPayload;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.QueryCrossChainMsgReceiptsRespPayload;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.RelayerResponse;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -294,7 +297,9 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                                         receipt.setTxhash(sdpMsgWrapper.getTxHash());
                                         receipt.setConfirmed(
                                                 sdpMsgWrapper.getProcessState() == SDPMsgProcessStateEnum.TX_SUCCESS ||
-                                                        sdpMsgWrapper.getProcessState() == SDPMsgProcessStateEnum.TX_FAILED
+                                                        sdpMsgWrapper.getProcessState() == SDPMsgProcessStateEnum.TX_FAILED ||
+                                                        sdpMsgWrapper.getProcessState() == SDPMsgProcessStateEnum.MSG_REJECTED ||
+                                                        sdpMsgWrapper.getProcessState() == SDPMsgProcessStateEnum.MSG_ILLEGAL
                                         );
                                         receipt.setSuccessful(sdpMsgWrapper.isTxSuccess());
                                         receipt.setErrorMsg(sdpMsgWrapper.getTxFailReason());
@@ -332,10 +337,10 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
         RelayerNodeInfo remoteNodeInfo = RelayerNodeInfo.decode(
                 Base64.decode(request.getRemoteNodeInfo())
         );
-        log.info("process hello complete from {}", remoteNodeInfo.getNodeId());
+        log.info("process hello complete from {}-{}", remoteNodeInfo.getNodeId(), String.join(",", remoteNodeInfo.getEndpoints()));
 
         if (
-                getBcdnsManager().validateCrossChainCertificate(
+                !getBcdnsManager().validateCrossChainCertificate(
                         remoteNodeInfo.getRelayerCrossChainCertificate(),
                         request.getDomainSpaceCertPath()
                 )
@@ -359,7 +364,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
         }
 
         try {
-            Signature verifier = Signature.getInstance(request.getSigAlgo());
+            Signature verifier = Signature.getInstance(request.getSigAlgoType());
             verifier.initVerify(
                     CrossChainCertificateUtil.getPublicKeyFromCrossChainCertificate(remoteNodeInfo.getRelayerCrossChainCertificate())
             );
@@ -446,7 +451,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
         getRelayerNetworkManager().validateAndSaveBlockchainContent(
                 getDefaultNetworkId(),
-                getRelayerNetworkManager().getRelayerNodeInfo(),
+                getRelayerNetworkManager().getRelayerNode(request.getNodeId(),false),
                 content,
                 false
         );

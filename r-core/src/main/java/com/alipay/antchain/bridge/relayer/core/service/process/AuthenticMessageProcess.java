@@ -62,13 +62,8 @@ public class AuthenticMessageProcess {
     // TODO: 当支持TP-PROOF之后，应该从网络中获得到UCP，其携带着TP-PROOF
     public boolean doProcess(AuthMsgWrapper amMsgWrapper) {
 
-        log.info(
-                "process auth msg : (src_domain: {}, id: {}, if_remote: {})",
-                amMsgWrapper.getDomain(),
-                amMsgWrapper.getAuthMsgId(),
-                amMsgWrapper.isNetworkAM()
-        );
-
+        log.info("process auth msg : (src_domain: {}, id: {}, if_remote: {})",
+                amMsgWrapper.getDomain(), amMsgWrapper.getAuthMsgId(), amMsgWrapper.isNetworkAM());
         if (
                 amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROCESSED
                         || amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.REJECTED
@@ -83,6 +78,7 @@ public class AuthenticMessageProcess {
             return false;
         }
 
+        AuthMsgProcessStateEnum originalState = amMsgWrapper.getProcessState();
         try {
             if (!amMsgWrapper.isNetworkAM()) {
                 processLocalAM(amMsgWrapper);
@@ -113,6 +109,7 @@ public class AuthenticMessageProcess {
                 amMsgWrapper.setProcessState(AuthMsgProcessStateEnum.FAILED);
                 log.error("am {} out of retry times: ", amMsgWrapper.getAuthMsgId(), e);
             } else {
+                amMsgWrapper.setProcessState(originalState);
                 log.warn("am {} with fail count {} process failed", amMsgWrapper.getAuthMsgId(), amMsgWrapper.getFailCount(), e);
             }
             return crossChainMessageRepository.updateAuthMessage(amMsgWrapper);
@@ -278,7 +275,8 @@ public class AuthenticMessageProcess {
                     sdpMsgWrapper.getAuthMsgWrapper().getUcpId(),
                     sdpMsgWrapper.getAuthMsgWrapper().getAuthMessage(),
                     "",
-                    new String(sdpMsgWrapper.getAuthMsgWrapper().getRawLedgerInfo())
+                    ObjectUtil.isEmpty(sdpMsgWrapper.getAuthMsgWrapper().getLedgerInfo()) ? null
+                            : new String(sdpMsgWrapper.getAuthMsgWrapper().getRawLedgerInfo())
             );
         } catch (Exception e) {
             throw new SendAuthMessageException(
@@ -368,10 +366,10 @@ public class AuthenticMessageProcess {
 
         if (
                 !governManager.verifyCrossChainMsgACL(
-                        sdpMsgWrapper.getSenderBlockchainDomain(),
-                        sdpMsgWrapper.getMsgSender(),
                         sdpMsgWrapper.getReceiverBlockchainDomain(),
-                        sdpMsgWrapper.getMsgReceiver()
+                        sdpMsgWrapper.getMsgReceiver(),
+                        sdpMsgWrapper.getSenderBlockchainDomain(),
+                        sdpMsgWrapper.getMsgSender()
                 )
         ) {
             sdpMsgWrapper.setProcessState(SDPMsgProcessStateEnum.MSG_REJECTED);

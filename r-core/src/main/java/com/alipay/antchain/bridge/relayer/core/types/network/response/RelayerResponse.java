@@ -149,7 +149,7 @@ public class RelayerResponse {
     private byte[] signature;
 
     public byte[] rawEncode() {
-        return TLVUtils.encode(this, TLV_TYPE_RELAYER_RESPONSE_SIG);
+        return TLVUtils.encode(this, TLV_TYPE_RELAYER_RESPONSE_REMOTE_SIG_ALGO);
     }
 
     public byte[] encode() {

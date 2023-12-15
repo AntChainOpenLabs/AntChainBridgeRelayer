@@ -16,13 +16,11 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network.request;
 
-import java.security.PublicKey;
 import java.security.Signature;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
-import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
-import com.alipay.antchain.bridge.commons.bcdns.utils.ObjectIdentityUtil;
+import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.TLVTypeEnum;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.TLVUtils;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.annotation.TLVField;
@@ -92,7 +90,7 @@ public class RelayerRequest {
     private byte[] signature;
 
     public byte[] rawEncode() {
-        return TLVUtils.encode(this, TLV_TYPE_RELAYER_REQUEST_SIGNATURE);
+        return TLVUtils.encode(this, TLV_TYPE_RELAYER_REQUEST_SIG_ALGO);
     }
 
     public byte[] encode() {
@@ -105,22 +103,15 @@ public class RelayerRequest {
      * @return
      */
     public boolean verify() {
-
         try {
-            RelayerCredentialSubject relayerCredentialSubject = RelayerCredentialSubject.decode(
-                    senderRelayerCertificate.getCredentialSubject()
-            );
-            PublicKey publicKey = ObjectIdentityUtil.getPublicKeyFromSubject(
-                    relayerCredentialSubject.getApplicant(),
-                    relayerCredentialSubject.getSubjectInfo()
-            );
-
             Signature verifier = Signature.getInstance(sigAlgo);
-            verifier.initVerify(publicKey);
+            verifier.initVerify(
+                    CrossChainCertificateUtil.getPublicKeyFromCrossChainCertificate(
+                            senderRelayerCertificate
+                    )
+            );
             verifier.update(rawEncode());
-
             return verifier.verify(signature);
-
         } catch (Exception e) {
             throw new RuntimeException("failed to verify request sig", e);
         }
