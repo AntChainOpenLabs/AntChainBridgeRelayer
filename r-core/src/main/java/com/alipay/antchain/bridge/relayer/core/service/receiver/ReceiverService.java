@@ -121,7 +121,7 @@ public class ReceiverService {
     private void receiveUCP(List<UniformCrosschainPacketContext> ucpContexts) {
         asyncReceiveHandler.receiveUniformCrosschainPackets(ucpContexts);
         if (!ucpContexts.isEmpty()) {
-            blockchainIdleDCache.setLastAMReceiveTime(
+            blockchainIdleDCache.setLastUCPReceiveTime(
                     ucpContexts.get(0).getProduct(),
                     ucpContexts.get(0).getBlockchainId()
             );
