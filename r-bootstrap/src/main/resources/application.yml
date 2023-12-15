@@ -16,8 +16,6 @@ spring:
 logging:
   file:
     path: ./logs
-  level:
-    app: INFO
 
 relayer:
   network:
