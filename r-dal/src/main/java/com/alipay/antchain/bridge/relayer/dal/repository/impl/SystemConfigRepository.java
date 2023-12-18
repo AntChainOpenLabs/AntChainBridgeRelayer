@@ -169,6 +169,11 @@ public class SystemConfigRepository implements ISystemConfigRepository {
     }
 
     @Override
+    public void setLocalEndpoints(List<String> endpoints) {
+        setSystemConfig(LOCAL_ENDPOINTS_KEY, StrUtil.join("^", endpoints));
+    }
+
+    @Override
     public String getDefaultNetworkId() {
         return StrUtil.emptyToDefault(getSystemConfig(DEFAULT_RELAYER_NETWORK_ID_KEY), networkIdInConfig);
     }

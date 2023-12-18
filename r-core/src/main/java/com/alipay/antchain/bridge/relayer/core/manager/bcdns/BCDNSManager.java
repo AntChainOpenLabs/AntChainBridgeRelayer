@@ -56,6 +56,7 @@ import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainSpaceCertWrapper;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBCDNSRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
+import com.alipay.antchain.bridge.relayer.dal.repository.ISystemConfigRepository;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RedissonClient;
@@ -76,13 +77,13 @@ public class BCDNSManager implements IBCDNSManager {
     private IBlockchainRepository blockchainRepository;
 
     @Resource
+    private ISystemConfigRepository systemConfigRepository;
+
+    @Resource
     private RedissonClient redisson;
 
     @Value("#{relayerCoreConfig.localRelayerCrossChainCertificate}")
     private AbstractCrossChainCertificate localRelayerCertificate;
-
-    @Value("#{systemConfigRepository.getLocalEndpoints()}")
-    private List<String> localEndpoints;
 
     private final Map<String, IBlockChainDomainNameService> bcdnsClientMap = new ConcurrentHashMap<>();
 
@@ -607,7 +608,7 @@ public class BCDNSManager implements IBCDNSManager {
                                                     new Relayer(
                                                             localRelayerCertificate.getId(),
                                                             localRelayerCertificate,
-                                                            localEndpoints
+                                                            systemConfigRepository.getLocalEndpoints()
                                                     )
                                             )
                                     ).build()
