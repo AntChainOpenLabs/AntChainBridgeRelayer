@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.alipay.antchain.bridge.relayer.cli.groovyshell.command.BCDNSManagerCmdNamespace;
 import com.alipay.antchain.bridge.relayer.cli.groovyshell.command.BlockchainManagerCmdNamespace;
+import com.alipay.antchain.bridge.relayer.cli.groovyshell.command.RelayerCmdNamespace;
 import com.alipay.antchain.bridge.relayer.cli.groovyshell.command.ServiceManagerCmdNamespace;
 
 
@@ -44,6 +45,7 @@ public class NamespaceManagerImpl implements NamespaceManager {
         this.addNamespace(new BCDNSManagerCmdNamespace());
         this.addNamespace(new BlockchainManagerCmdNamespace());
         this.addNamespace(new ServiceManagerCmdNamespace());
+        this.addNamespace(new RelayerCmdNamespace());
     }
 
     @Override
