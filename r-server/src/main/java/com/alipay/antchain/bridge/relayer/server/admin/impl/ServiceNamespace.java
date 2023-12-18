@@ -69,7 +69,7 @@ public class ServiceNamespace extends AbstractNamespace {
             if (ObjectUtil.isNotEmpty(
                     governManager.getMatchedCrossChainACLItems(ownerDomain, ownerIdentity, grantDomain, grantIdentity)
             )) {
-                return "already exist";
+                return "existed rules matched";
             }
 
             governManager.addCrossChainMsgACL(

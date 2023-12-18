@@ -265,6 +265,10 @@ public class BlockchainNamespace extends AbstractNamespace {
             return "wrong args size. ";
         }
 
+        if (!StrUtil.isNumeric(args[2])) {
+            return "the third arg supposed to be numeric";
+        }
+
         BlockchainMeta meta = this.blockchainManager.getBlockchainMeta(args[0], args[1]);
         if (ObjectUtils.isEmpty(meta)) {
             return String.format("none blockchain found for id %s", args[1]);
