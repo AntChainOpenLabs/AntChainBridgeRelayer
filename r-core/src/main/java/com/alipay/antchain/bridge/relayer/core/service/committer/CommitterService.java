@@ -131,7 +131,7 @@ public class CommitterService {
             busy = crossChainMessageRepository.countSDPMessagesByState(
                     blockchainProduct,
                     blockchainId,
-                    SDPMsgProcessStateEnum.PENDING
+                    SDPMsgProcessStateEnum.TX_PENDING
             ) >= Integer.parseInt(pendingLimit);
         }
 

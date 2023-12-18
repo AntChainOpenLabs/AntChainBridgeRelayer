@@ -35,6 +35,7 @@ import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.utils.BIDHelper;
 import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.commons.core.base.*;
+import com.alipay.antchain.bridge.commons.core.rules.DomainLengthRule;
 import com.alipay.antchain.bridge.relayer.commons.constant.DomainCertApplicationStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainCertApplicationDO;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
@@ -123,6 +124,9 @@ public class BCDNSNamespace extends AbstractNamespace {
         int applicantOidType = Integer.parseInt(args[2]);
         String oidFilePath = args[3];
 
+        if (StrUtil.length(domain) >= DomainLengthRule.MAX_DOMAIN_LENGTH) {
+            return "your domain should less than max length " + DomainLengthRule.MAX_DOMAIN_LENGTH;
+        }
         try {
             byte[] rawSubject = null;
             ObjectIdentity oid = null;
