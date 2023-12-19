@@ -26,6 +26,7 @@ import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
 import com.alipay.antchain.bridge.relayer.commons.model.BCDNSServiceDO;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainCertApplicationDO;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainSpaceCertWrapper;
 
 public interface IBCDNSManager {
 
@@ -43,6 +44,8 @@ public interface IBCDNSManager {
 
     BCDNSServiceDO getBCDNSServiceData(String domainSpace);
 
+    void deleteBCDNSServiceDate(String domainSpace);
+
     List<String> getAllBCDNSDomainSpace();
 
     boolean hasBCDNSServiceData(String domainSpace);
@@ -59,6 +62,8 @@ public interface IBCDNSManager {
             AbstractCrossChainCertificate certificate,
             Map<String, AbstractCrossChainCertificate> domainSpaceCertPath
     );
+
+    DomainSpaceCertWrapper getDomainSpaceCert(String domainSpace);
 
     void saveDomainSpaceCerts(Map<String, AbstractCrossChainCertificate> domainSpaceCerts);
 

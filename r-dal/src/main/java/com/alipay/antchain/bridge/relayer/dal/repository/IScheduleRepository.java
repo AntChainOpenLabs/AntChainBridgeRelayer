@@ -40,6 +40,8 @@ public interface IScheduleRepository {
 
     List<BlockchainDistributedTask> getBlockchainDistributedTasksByNodeId(String nodeId);
 
+    List<BlockchainDistributedTask> getBlockchainDistributedTasksByBlockchain(String product, String blockchainId);
+
     List<BizDistributedTask> getBizDistributedTasksByNodeId(String nodeId);
 
     List<ActiveNode> getAllActiveNodes();

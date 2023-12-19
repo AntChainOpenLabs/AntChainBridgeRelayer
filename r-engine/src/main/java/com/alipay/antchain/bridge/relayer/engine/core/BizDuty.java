@@ -38,7 +38,7 @@ public class BizDuty {
     @Resource
     private IScheduleRepository scheduleRepository;
 
-    @Value("${relayer.engine.schedule.duty.dt_task.time_slice:180000}")
+    @Value("#{duty.timeSliceLength}")
     private long timeSliceLength;
 
     @Resource

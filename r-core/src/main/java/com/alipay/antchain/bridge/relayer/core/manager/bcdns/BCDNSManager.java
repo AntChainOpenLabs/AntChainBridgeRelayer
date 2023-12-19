@@ -157,7 +157,7 @@ public class BCDNSManager implements IBCDNSManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BCDNS_MANAGER_ERROR,
                     e,
-                    "failed to register bcdns service client for {}",
+                    "failed to register bcdns service client for [{}]",
                     domainSpace
             );
         }
@@ -293,6 +293,13 @@ public class BCDNSManager implements IBCDNSManager {
     }
 
     @Override
+    @Synchronized
+    public void deleteBCDNSServiceDate(String domainSpace) {
+        bcdnsRepository.deleteBCDNSServiceDO(domainSpace);
+        bcdnsClientMap.remove(domainSpace);
+    }
+
+    @Override
     public List<String> getAllBCDNSDomainSpace() {
         return bcdnsRepository.getAllBCDNSDomainSpace();
     }
@@ -340,6 +347,11 @@ public class BCDNSManager implements IBCDNSManager {
                 certificate.getEncodedToSign(),
                 certificate.getProof()
         );
+    }
+
+    @Override
+    public DomainSpaceCertWrapper getDomainSpaceCert(String domainSpace) {
+        return bcdnsRepository.getDomainSpaceCert(domainSpace);
     }
 
     @Override

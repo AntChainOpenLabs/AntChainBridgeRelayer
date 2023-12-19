@@ -7,13 +7,15 @@ import javax.annotation.Resource;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alipay.antchain.bridge.relayer.commons.constant.PluginServerStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.model.BlockchainDistributedTask;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
-import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
+import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.BlockchainClientPool;
+import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -27,10 +29,16 @@ public class Cleaner {
     private IBlockchainManager blockchainManager;
 
     @Resource
-    private IBBCPluginManager bbcPluginManager;
+    private IBCDNSManager bcdnsManager;
 
     @Resource
     private BlockchainClientPool blockchainClientPool;
+
+    @Resource
+    private IScheduleRepository scheduleRepository;
+
+    @Value("#{duty.timeSliceLength}")
+    private long timeSliceLength;
 
     public void clean() {
 
@@ -64,10 +72,18 @@ public class Cleaner {
             return ListUtil.empty();
         }
         return blockchainMetas.stream().filter(
-                blockchainMeta ->
-                        PluginServerStateEnum.STOP == bbcPluginManager.getPluginServerState(
-                                blockchainMeta.getProperties().getPluginServerId()
-                        )
+                blockchainMeta -> !isAnyDTTaskRunning(blockchainMeta.getProduct(), blockchainMeta.getBlockchainId())
         ).collect(Collectors.toList());
+    }
+
+    private boolean isAnyDTTaskRunning(String product, String blockchainId) {
+        List<BlockchainDistributedTask> tasks = scheduleRepository.getBlockchainDistributedTasksByBlockchain(product, blockchainId);
+        if (ObjectUtil.isEmpty(tasks)) {
+            return false;
+        }
+        return tasks.stream().anyMatch(task -> {
+            task.setTimeSliceLength(timeSliceLength);
+            return !task.ifFinish();
+        });
     }
 }

@@ -152,6 +152,26 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     @Override
+    public List<BlockchainDistributedTask> getBlockchainDistributedTasksByBlockchain(String product, String blockchainId) {
+        try {
+            return blockchainDtTaskMapper.selectList(
+                            new LambdaQueryWrapper<BlockchainDTTaskEntity>()
+                                    .eq(BlockchainDTTaskEntity::getProduct, product)
+                                    .eq(BlockchainDTTaskEntity::getProduct, blockchainId)
+                    ).stream()
+                    .map(ConvertUtil::convertFromBlockchainDTTaskEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_DT_TASK_ERROR,
+                    e,
+                    "failed to get distributed tasks for blockchain {}-{} ",
+                    product, blockchainId
+            );
+        }
+    }
+
+    @Override
     public List<ActiveNode> getAllActiveNodes() {
         try {
             return dtActiveNodeMapper.selectList(null).stream()

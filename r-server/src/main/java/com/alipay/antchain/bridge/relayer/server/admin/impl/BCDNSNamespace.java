@@ -38,6 +38,7 @@ import com.alipay.antchain.bridge.commons.core.base.*;
 import com.alipay.antchain.bridge.commons.core.rules.DomainLengthRule;
 import com.alipay.antchain.bridge.relayer.commons.constant.DomainCertApplicationStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainCertApplicationDO;
+import com.alipay.antchain.bridge.relayer.commons.model.DomainSpaceCertWrapper;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.server.admin.AbstractNamespace;
 import lombok.SneakyThrows;
@@ -57,6 +58,9 @@ public class BCDNSNamespace extends AbstractNamespace {
         addCommand("registerBCDNSService", this::registerBCDNSService);
         addCommand("stopBCDNSService", this::stopBCDNSService);
         addCommand("restartBCDNSService", this::restartBCDNSService);
+        addCommand("getBCDNSService", this::getBCDNSService);
+        addCommand("deleteBCDNSService", this::deleteBCDNSService);
+        addCommand("getBCDNSCertificate", this::getBCDNSCertificate);
         addCommand("applyDomainNameCert", this::applyDomainNameCert);
         addCommand("queryDomainCertApplicationState", this::queryDomainCertApplicationState);
         addCommand("fetchDomainNameCertFromBCDNS", this::fetchDomainNameCertFromBCDNS);
@@ -74,6 +78,9 @@ public class BCDNSNamespace extends AbstractNamespace {
             String bcdnsType = args[1];
             String propFile = args[2];
 
+            if (bcdnsManager.hasBCDNSServiceData(domainSpace)) {
+                return "already exist";
+            }
             bcdnsManager.registerBCDNSService(
                     domainSpace,
                     BCDNSTypeEnum.parseFromValue(bcdnsType),
@@ -84,7 +91,7 @@ public class BCDNSNamespace extends AbstractNamespace {
             return "success";
         } catch (Throwable e) {
             log.error("failed to register BCDNS for domain space {}", args[0], e);
-            return "failed to register BCDNS: " + e.getMessage();
+            return "failed to register BCDNS: " + e.getCause().getMessage();
         }
     }
 
@@ -111,6 +118,59 @@ public class BCDNSNamespace extends AbstractNamespace {
         } catch (Throwable e) {
             log.error("failed to restart BCDNS for domain space {}", args[0], e);
             return "failed to restart BCDNS: " + e.getMessage();
+        }
+    }
+
+    Object getBCDNSService(String... args) {
+        if (args.length != 1) {
+            return "wrong number of arguments";
+        }
+
+        String domainSpace = args[0];
+        try {
+            if (!bcdnsManager.hasBCDNSServiceData(domainSpace)) {
+                return "not found";
+            }
+            return JSON.toJSONString(bcdnsManager.getBCDNSServiceData(domainSpace));
+        } catch (Throwable e) {
+            log.error("failed to get BCDNS for domain space {}", domainSpace, e);
+            return "failed to get BCDNS: " + e.getMessage();
+        }
+    }
+
+    Object deleteBCDNSService(String... args) {
+        if (args.length != 1) {
+            return "wrong number of arguments";
+        }
+
+        String domainSpace = args[0];
+        try {
+            if (!bcdnsManager.hasBCDNSServiceData(domainSpace)) {
+                return "not found";
+            }
+            bcdnsManager.deleteBCDNSServiceDate(domainSpace);
+            return "success";
+        } catch (Throwable e) {
+            log.error("failed to del BCDNS for domain space {}", domainSpace, e);
+            return "failed to del BCDNS: " + e.getMessage();
+        }
+    }
+
+    Object getBCDNSCertificate(String... args) {
+        if (args.length != 1) {
+            return "wrong number of arguments";
+        }
+
+        String domainSpace = args[0];
+        try {
+            DomainSpaceCertWrapper domainSpaceCertWrapper = bcdnsManager.getDomainSpaceCert(domainSpace);
+            if (ObjectUtil.isNull(domainSpaceCertWrapper) || ObjectUtil.isNull(domainSpaceCertWrapper.getDomainSpaceCert())) {
+                return "not found";
+            }
+            return CrossChainCertificateUtil.formatCrossChainCertificateToPem(domainSpaceCertWrapper.getDomainSpaceCert());
+        } catch (Throwable e) {
+            log.error("failed to get BCDNS certificate for {}", domainSpace, e);
+            return "failed to get BCDNS certificate: " + e.getMessage();
         }
     }
 
