@@ -20,7 +20,5 @@ public enum OnChainServiceStatusEnum {
 
     INIT,
 
-    DEPLOY_FINISHED,
-
-    SETUP_FINISHED;
+    DEPLOY_FINISHED;
 }

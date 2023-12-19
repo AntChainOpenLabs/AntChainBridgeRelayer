@@ -9,7 +9,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainDistributedTask;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
-import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.BlockchainClientPool;
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
@@ -27,9 +26,6 @@ public class Cleaner {
 
     @Resource
     private IBlockchainManager blockchainManager;
-
-    @Resource
-    private IBCDNSManager bcdnsManager;
 
     @Resource
     private BlockchainClientPool blockchainClientPool;

@@ -42,6 +42,11 @@ public class BlockSyncTask extends BlockBaseTask {
     }
 
     private void poll() {
+        if (!getProcessContext().getBlockchainClient().ifHasDeployedAMClientContract()) {
+            log.debug("skip sync task because of BBC contracts not ready now for blockchain {}-{}",
+                    getProcessContext().getAnchorProduct(), getProcessContext().getAnchorBlockchainId());
+            return;
+        }
         long localBlockHeaderHeight = getLocalBlockHeaderHeight();
         long remoteBlockHeaderHeight = getRemoteBlockHeaderHeight();
 
