@@ -237,7 +237,7 @@ public class BCDNSManager implements IBCDNSManager {
                         bcdnsServiceDO.getDomainSpace()
                 );
             }
-
+            bcdnsRepository.updateBCDNSServiceState(domainSpace, BCDNSStateEnum.WORKING);
             bcdnsClientMap.put(bcdnsServiceDO.getDomainSpace(), service);
 
         } catch (AntChainBridgeRelayerException e) {
