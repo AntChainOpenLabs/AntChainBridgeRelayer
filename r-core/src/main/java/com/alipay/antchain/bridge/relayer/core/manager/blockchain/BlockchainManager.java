@@ -289,6 +289,10 @@ public class BlockchainManager implements IBlockchainManager {
                 return;
             }
 
+            if (!blockchainClientPool.hasClient(product, blockchainId)) {
+                blockchainClientPool.createClient(blockchainMeta);
+            }
+
             blockchainMeta.getProperties().setAnchorRuntimeStatus(BlockchainStateEnum.RUNNING);
             if (!updateBlockchainMeta(blockchainMeta)) {
                 throw new RuntimeException(

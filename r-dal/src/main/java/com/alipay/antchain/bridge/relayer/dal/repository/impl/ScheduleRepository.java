@@ -157,7 +157,7 @@ public class ScheduleRepository implements IScheduleRepository {
             return blockchainDtTaskMapper.selectList(
                             new LambdaQueryWrapper<BlockchainDTTaskEntity>()
                                     .eq(BlockchainDTTaskEntity::getProduct, product)
-                                    .eq(BlockchainDTTaskEntity::getProduct, blockchainId)
+                                    .eq(BlockchainDTTaskEntity::getBlockchainId, blockchainId)
                     ).stream()
                     .map(ConvertUtil::convertFromBlockchainDTTaskEntity)
                     .collect(Collectors.toList());
