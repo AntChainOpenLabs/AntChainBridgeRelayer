@@ -268,7 +268,7 @@ public class BlockchainManager implements IBlockchainManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
                     e,
-                    "failed to mark am contract to deploy for blockchain {} - {}",
+                    "failed to mark blockchain {} - {} to deploy BBC contracts",
                     product, blockchainId
             );
         }
@@ -287,6 +287,10 @@ public class BlockchainManager implements IBlockchainManager {
             // 已启动的不重复启动
             if (blockchainMeta.isRunning()) {
                 return;
+            }
+
+            if (!blockchainClientPool.hasClient(product, blockchainId)) {
+                blockchainClientPool.createClient(blockchainMeta);
             }
 
             blockchainMeta.getProperties().setAnchorRuntimeStatus(BlockchainStateEnum.RUNNING);

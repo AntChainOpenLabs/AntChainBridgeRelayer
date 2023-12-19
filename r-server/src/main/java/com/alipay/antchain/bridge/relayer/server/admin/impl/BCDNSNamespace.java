@@ -91,7 +91,7 @@ public class BCDNSNamespace extends AbstractNamespace {
             return "success";
         } catch (Throwable e) {
             log.error("failed to register BCDNS for domain space {}", args[0], e);
-            return "failed to register BCDNS: " + e.getCause().getMessage();
+            return "failed to register BCDNS: " + ObjectUtil.defaultIfNull(e.getCause(), e).getMessage();
         }
     }
 
@@ -270,7 +270,7 @@ public class BCDNSNamespace extends AbstractNamespace {
             return "success";
         } catch (Throwable e) {
             log.error("failed to register router for domain {} to BCDNS:", domain, e);
-            return "failed to register router: " + e.getMessage();
+            return "failed to register router: " + ObjectUtil.defaultIfNull(e.getCause(), e).getMessage();
         }
     }
 
