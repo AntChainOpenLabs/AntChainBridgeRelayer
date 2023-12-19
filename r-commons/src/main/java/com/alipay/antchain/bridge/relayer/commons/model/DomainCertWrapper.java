@@ -16,8 +16,10 @@
 
 package com.alipay.antchain.bridge.relayer.commons.model;
 
+import cn.hutool.core.lang.Assert;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.DomainNameCredentialSubject;
+import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,6 +30,14 @@ import lombok.Setter;
 @Getter
 @Setter
 public class DomainCertWrapper {
+
+    public DomainCertWrapper(AbstractCrossChainCertificate crossChainCertificate) {
+        Assert.isTrue(CrossChainCertificateUtil.isDomainCert(crossChainCertificate));
+        this.crossChainCertificate = crossChainCertificate;
+        this.domainNameCredentialSubject = (DomainNameCredentialSubject) crossChainCertificate.getCredentialSubjectInstance();
+        this.domain = this.domainNameCredentialSubject.getDomainName().getDomain();
+        this.domainSpace = this.domainNameCredentialSubject.getParentDomainSpace().getDomain();
+    }
 
     private AbstractCrossChainCertificate crossChainCertificate;
 

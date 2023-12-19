@@ -2,11 +2,9 @@ package com.alipay.antchain.bridge.relayer.core.manager.network;
 
 import java.util.List;
 
-import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
-import com.alipay.antchain.bridge.relayer.commons.model.RelayerHealthInfo;
-import com.alipay.antchain.bridge.relayer.commons.model.RelayerNetwork;
-import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
+import com.alipay.antchain.bridge.relayer.commons.model.CrossChainChannelDO;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.model.*;
 
 /**
  * 该Manager提供个管理RelayerNetwork的系列管理接口
@@ -69,9 +67,10 @@ public interface IRelayerNetworkManager {
      * 获取Relayer节点
      *
      * @param nodeId
+     * @param lock
      * @return
      */
-    RelayerNodeInfo getRelayerNode(String nodeId);
+    RelayerNodeInfo getRelayerNode(String nodeId, boolean lock);
 
     /**
      * 同步网络里Relayer节点信息，该同步动作会向远程relayer节点请求信息，包括：
@@ -91,6 +90,13 @@ public interface IRelayerNetworkManager {
      * @return
      */
     void syncRelayerNode(String networkId, String nodeId);
+
+    void validateAndSaveBlockchainContent(
+            String networkId,
+            RelayerNodeInfo relayerNodeInfo,
+            RelayerBlockchainContent relayerBlockchainContent,
+            boolean ifNewContent
+    );
 
     //**********************************************
     // relayer 网络管理
@@ -114,16 +120,9 @@ public interface IRelayerNetworkManager {
      * @param domainName
      * @return
      */
-    RelayerNetwork.Item findNetworkItemByDomainName(String domainName);
+    RelayerNetwork.DomainRouterItem findNetworkItemByDomainName(String domainName);
 
-    /**
-     * 往Relayer网络新增路由信息
-     *
-     * @param domain
-     * @param nodeId
-     * @return
-     */
-    boolean addRelayerNetworkItem(String networkId, String domain, String nodeId);
+    String findRemoteRelayer(String receiverDomain);
 
     /**
      * 往Relayer网络新增路由信息
@@ -134,7 +133,7 @@ public interface IRelayerNetworkManager {
      * @param syncState
      * @return
      */
-    boolean addRelayerNetworkItem(String networkId, String domain, String nodeId, RelayerNodeSyncStateEnum syncState);
+    void addRelayerNetworkItem(String networkId, String domain, String nodeId, DomainRouterSyncStateEnum syncState);
 
     /**
      * 删除对应的item
@@ -161,42 +160,11 @@ public interface IRelayerNetworkManager {
      */
     RelayerNodeInfo getRelayerNodeInfoForDomain(String domain);
 
-    /**
-     * 从DiscoveryServer获取对应域名的relayer node info。
-     * @param domain
-     * @return
-     */
-    RelayerNodeInfo getRemoteRelayerNodeInfo(String domain);
+    boolean hasRemoteRelayerNodeInfoByCertId(String relayerCertId);
 
-    /**
-     * 注册域名到DiscoveryServer
-     *
-     * @param nodeInfo
-     */
-    void registerDomainToDiscoveryServer(RelayerNodeInfo nodeInfo, String networkId) throws Exception;
+    boolean hasRemoteRelayerNode(String relayerNodeId);
 
-    /**
-     * 更新域名到DiscoveryServer
-     *
-     * @param nodeInfo
-     */
-    void updateDomainToDiscoveryServer(RelayerNodeInfo nodeInfo) throws Exception;
-
-    /**
-     * 删除域名到DiscoveryServer
-     *
-     * @param nodeInfo
-     */
-    void deleteDomainToDiscoveryServer(RelayerNodeInfo nodeInfo) throws Exception;
-
-    /**
-     * 在amRequest和udagRequest的时候，从发现中心获取域名对应的relayer信息，
-     * 尝试握手获取并验证对应的信息，存储域名到数据库。
-     *     TODO: <a href="https://crosschain.yuque.com/org-wiki-crosschain-zvbyzk/zg3xnv/pguzbyb4r4obpxfb#Da3Vt">Need to implement</a>
-     * @param domainName
-     * @return
-     */
-    boolean tryHandshake(String domainName, RelayerNodeInfo remoteNodeInfo);
+    RelayerNodeInfo getRemoteRelayerNodeInfoByCertId(String relayerCertId);
 
     /**
      * 更新relayerNodeInfo
@@ -204,7 +172,7 @@ public interface IRelayerNetworkManager {
      * @param nodeInfo
      * @return
      */
-    boolean updateRelayerNode(RelayerNodeInfo nodeInfo);
+    void updateRelayerNode(RelayerNodeInfo nodeInfo);
 
     /**
      * Obtain health information about the relayer node, including the node ip address, port number, and whether the node is alive
@@ -212,4 +180,10 @@ public interface IRelayerNetworkManager {
      * @return
      */
     List<RelayerHealthInfo> healthCheckRelayers();
+
+    void createNewCrossChainChannel(String localDomain, String remoteDomain, String relayerNodeId);
+
+    CrossChainChannelDO getCrossChainChannel(String localDomain, String remoteDomain);
+
+    boolean hasCrossChainChannel(String localDomain, String remoteDomain);
 }

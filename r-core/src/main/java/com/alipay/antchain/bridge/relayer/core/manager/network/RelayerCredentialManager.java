@@ -18,13 +18,13 @@ package com.alipay.antchain.bridge.relayer.core.manager.network;
 
 import java.security.PrivateKey;
 import java.security.Signature;
-
+import java.util.Set;
 import javax.annotation.Resource;
 
-import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.collection.ConcurrentHashSet;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
-import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
+import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
@@ -55,8 +55,13 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
     @Value("${relayer.network.node.sig_algo:SHA256WithRSA}")
     private String localNodeSigAlgo;
 
+    @Value("#{relayerCoreConfig.localRelayerIssuerDomainSpace}")
+    private String localRelayerIssuerDomainSpace;
+
     @Resource
     private IBCDNSManager bcdnsManager;
+
+    private final Set<String> validatedCertIdCache = new ConcurrentHashSet<>();
 
     @Override
     public void signRelayerRequest(RelayerRequest relayerRequest) {
@@ -98,36 +103,57 @@ public class RelayerCredentialManager implements IRelayerCredentialManager {
     }
 
     @Override
-    public boolean validateRelayerRequest(RelayerRequest relayerRequest) {
-        if (!bcdnsManager.validateCrossChainCertificate(relayerRequest.getSenderRelayerCertificate())) {
-            return false;
+    public byte[] signHelloRand(byte[] rand) {
+        try {
+            Signature signer = Signature.getInstance(localNodeSigAlgo);
+            signer.initSign(localRelayerPrivateKey);
+            signer.update(rand);
+            return signer.sign();
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_RELAYER_NETWORK_ERROR,
+                    "failed to sign hello rand",
+                    e
+            );
         }
-        if (
-                ObjectUtil.notEqual(
-                        CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
-                        relayerRequest.getSenderRelayerCertificate().getType()
-                )
-        ) {
+    }
+
+    @Override
+    public boolean validateRelayerRequest(RelayerRequest relayerRequest) {
+
+        if (!validatedCertIdCache.contains(relayerRequest.calcRelayerNodeId())) {
+            if (!bcdnsManager.validateCrossChainCertificate(relayerRequest.getSenderRelayerCertificate())) {
+                return false;
+            }
+        }
+
+        if (!CrossChainCertificateUtil.isRelayerCert(relayerRequest.getSenderRelayerCertificate())) {
             return false;
         }
 
-        return relayerRequest.verify();
+        if (relayerRequest.verify()) {
+            validatedCertIdCache.add(relayerRequest.calcRelayerNodeId());
+            return true;
+        }
+        return false;
     }
 
     @Override
     public boolean validateRelayerResponse(RelayerResponse relayerResponse) {
-        if (!bcdnsManager.validateCrossChainCertificate(relayerResponse.getRemoteRelayerCertificate())) {
-            return false;
+        if (!validatedCertIdCache.contains(relayerResponse.calcRelayerNodeId())) {
+            if (!bcdnsManager.validateCrossChainCertificate(relayerResponse.getRemoteRelayerCertificate())) {
+                return false;
+            }
         }
-        if (
-                ObjectUtil.notEqual(
-                        CrossChainCertificateTypeEnum.RELAYER_CERTIFICATE,
-                        relayerResponse.getRemoteRelayerCertificate().getType()
-                )
-        ) {
+
+        if (!CrossChainCertificateUtil.isRelayerCert(relayerResponse.getRemoteRelayerCertificate())) {
             return false;
         }
 
-        return relayerResponse.verify();
+        if (relayerResponse.verify()) {
+            validatedCertIdCache.add(relayerResponse.calcRelayerNodeId());
+            return true;
+        }
+        return false;
     }
 }

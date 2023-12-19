@@ -19,7 +19,7 @@ package com.alipay.antchain.bridge.relayer.commons.model;
 import java.util.Map;
 
 import cn.hutool.core.map.MapUtil;
-import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,21 +34,21 @@ public class RelayerNetwork {
 
     private String networkId;
 
-    private Map<String, Item> networkItemTable = MapUtil.newHashMap();
+    private Map<String, DomainRouterItem> networkItemTable = MapUtil.newHashMap();
 
     public RelayerNetwork(String networkId) {
         this.networkId = networkId;
     }
 
     public void addItem(String domain, String nodeId) {
-        this.networkItemTable.put(domain, new Item(nodeId));
+        this.networkItemTable.put(domain, new DomainRouterItem(nodeId));
     }
 
-    public void addItem(String domain, String nodeId, RelayerNodeSyncStateEnum syncState) {
-        this.networkItemTable.put(domain, new Item(nodeId, syncState));
+    public void addItem(String domain, String nodeId, DomainRouterSyncStateEnum syncState) {
+        this.networkItemTable.put(domain, new DomainRouterItem(nodeId, syncState));
     }
 
-    public void addItem(Map<String, Item> table) {
+    public void addItem(Map<String, DomainRouterItem> table) {
         this.networkItemTable.putAll(table);
     }
 
@@ -56,20 +56,20 @@ public class RelayerNetwork {
     @AllArgsConstructor
     @Getter
     @Setter
-    public static class Item {
+    public static class DomainRouterItem {
 
         private String nodeId;
 
-        private RelayerNodeSyncStateEnum syncState;
+        private DomainRouterSyncStateEnum syncState;
 
-        public Item(String nodeId) {
+        public DomainRouterItem(String nodeId) {
             this.nodeId = nodeId;
-            this.syncState = RelayerNodeSyncStateEnum.INIT;
+            this.syncState = DomainRouterSyncStateEnum.INIT;
         }
 
-        public Item(String nodeId, String syncState) {
+        public DomainRouterItem(String nodeId, String syncState) {
             this.nodeId = nodeId;
-            this.syncState = RelayerNodeSyncStateEnum.parseFromValue(syncState);
+            this.syncState = DomainRouterSyncStateEnum.parseFromValue(syncState);
         }
     }
 }

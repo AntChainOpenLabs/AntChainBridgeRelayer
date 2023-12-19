@@ -35,6 +35,10 @@
             <artifactId>antchain-bridge-commons</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.alipay.antchain.bridge</groupId>
+            <artifactId>antchain-bridge-bcdns</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
         </dependency>

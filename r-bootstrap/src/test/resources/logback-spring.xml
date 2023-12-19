@@ -21,9 +21,9 @@
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <FileNamePattern>${logging.path}/${APP_NAME}/error.log.%d{yyyy-MM-dd}.%i</FileNamePattern>
-            <maxHistory>7</maxHistory>
-            <maxFileSize>100MB</maxFileSize>
-            <totalSizeCap>2GB</totalSizeCap>
+            <maxHistory>1</maxHistory>
+            <maxFileSize>50MB</maxFileSize>
+            <totalSizeCap>50MB</totalSizeCap>
         </rollingPolicy>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>ERROR</level>
@@ -72,21 +72,21 @@
     </appender>
     <!--非 error 级别的日志-->
 
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <!--官方logback.xml配置-->
-            <pattern>
-                %clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(-&#45;&#45;){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}
-            </pattern>
-        </layout>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>INFO</level>
-            <!--<onMismatch>DENY</onMismatch>-->
-        </filter>
-    </appender>
+<!--    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">-->
+<!--        <layout class="ch.qos.logback.classic.PatternLayout">-->
+<!--            &lt;!&ndash;官方logback.xml配置&ndash;&gt;-->
+<!--            <pattern>-->
+<!--                %clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(-&#45;&#45;){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}-->
+<!--            </pattern>-->
+<!--        </layout>-->
+<!--        <filter class="ch.qos.logback.classic.filter.LevelFilter">-->
+<!--            <level>INFO</level>-->
+<!--            &lt;!&ndash;<onMismatch>DENY</onMismatch>&ndash;&gt;-->
+<!--        </filter>-->
+<!--    </appender>-->
 
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
+<!--        <appender-ref ref="CONSOLE"/>-->
         <appender-ref ref="full-application"/>
         <appender-ref ref="full-errors"/>
     </root>

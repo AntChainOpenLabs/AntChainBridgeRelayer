@@ -16,25 +16,46 @@
 
 package com.alipay.antchain.bridge.relayer.server.network;
 
+import java.security.Signature;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.stream.Collectors;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
+import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainMessageReceipt;
+import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainContent;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerBlockchainInfo;
+import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
+import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
+import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.service.receiver.ReceiverService;
 import com.alipay.antchain.bridge.relayer.core.types.network.exception.RejectRequestException;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.*;
-import com.alipay.antchain.bridge.relayer.core.types.network.response.HandshakeRespPayload;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.ChannelStartRespPayload;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.HelloStartRespPayload;
+import com.alipay.antchain.bridge.relayer.core.types.network.response.QueryCrossChainMsgReceiptsRespPayload;
 import com.alipay.antchain.bridge.relayer.core.types.network.response.RelayerResponse;
+import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.ByteArrayCodec;
 
 @WebService(targetNamespace = "http://ws.offchainapi.oracle.mychain.alipay.com/")
 @SOAPBinding
@@ -42,14 +63,19 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor
 public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelayerServerAPI {
 
+    private static final String RELAYER_HELLO_RAND_KEY_PREFIX = "RELAYER_HELLO_RAND_";
+
     public WSRelayerServerAPImpl(
             IRelayerNetworkManager relayerNetworkManager,
+            IBCDNSManager bcdnsManager,
             IRelayerCredentialManager relayerCredentialManager,
             ReceiverService receiverService,
+            ICrossChainMessageRepository crossChainMessageRepository,
+            RedissonClient redisson,
             String defaultNetworkId,
             boolean isDiscoveryServer
     ) {
-        super(relayerNetworkManager, relayerCredentialManager, receiverService, defaultNetworkId, isDiscoveryServer);
+        super(relayerNetworkManager, bcdnsManager, relayerCredentialManager, receiverService, crossChainMessageRepository, redisson, defaultNetworkId, isDiscoveryServer);
     }
 
     @Override
@@ -85,14 +111,6 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                 ).encode();
             }
 
-            if (isAboutDomain(request.getRequestType()) && !isDiscoveryServer()) {
-                log.error("Invalid relayer request from relayer {} that sending request about Discovery Service", request.calcRelayerNodeId());
-                return RelayerResponse.createFailureResponse(
-                        "node you connected isn't a relayer discovery server",
-                        getRelayerCredentialManager()
-                ).encode();
-            }
-
             switch (request.getRequestType()) {
                 case GET_RELAYER_NODE_INFO:
                     return processGetRelayerNodeInfo().encode();
@@ -100,18 +118,26 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
                     return processGetRelayerBlockchainInfo(
                             GetRelayerBlockchainInfoRelayerRequest.createFrom(request)
                     ).encode();
-                case AM_REQUEST:
-                    return processAMRequest(
-                            AMRelayerRequest.createFrom(request)
-                    ).encode();
-                case HANDSHAKE:
-                    return processHandshakeRequest(
-                            HandshakeRelayerRequest.createFrom(request)
-                    ).encode();
                 case GET_RELAYER_BLOCKCHAIN_CONTENT:
                     return processGetRelayerBlockchainContent(
                             GetRelayerBlockchainContentRelayerRequest.createFrom(request)
                     ).encode();
+                case PROPAGATE_CROSSCHAIN_MESSAGE:
+                    return processPropagateCrossChainMsgRequest(
+                            PropagateCrossChainMsgRequest.createFrom(request)
+                    ).encode();
+                case QUERY_CROSSCHAIN_MSG_RECEIPT:
+                    return processCrossChainMsgReceiptsQuery(
+                            QueryCrossChainMsgReceiptRequest.createFrom(request)
+                    ).encode();
+                case HELLO_START:
+                    return processHelloStart(HelloStartRequest.createFrom(request)).encode();
+                case HELLO_COMPLETE:
+                    return processHelloComplete(HelloCompleteRequest.createFrom(request)).encode();
+                case CROSSCHAIN_CHANNEL_START:
+                    return processChannelStart(ChannelStartRequest.createFrom(request)).encode();
+                case CROSSCHAIN_CHANNEL_COMPLETE:
+                    return processChannelComplete(ChannelCompleteRequest.createFrom(request)).encode();
                 default:
                     return RelayerResponse.createFailureResponse(
                             "request type not supported: " + request.getRequestType().getCode(),
@@ -136,9 +162,9 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
 
     private RelayerResponse processGetRelayerBlockchainInfo(GetRelayerBlockchainInfoRelayerRequest request) {
         if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
-            log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(), request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
-                    "verify sig failed",
+                    "verify crosschain cert failed",
                     getRelayerCredentialManager()
             );
         }
@@ -163,16 +189,19 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
         }
 
         return RelayerResponse.createSuccessResponse(
-                blockchainInfo::encode,
+                () -> new RelayerBlockchainContent(
+                        MapUtil.builder(blockchainInfo.getDomainCert().getDomain(), blockchainInfo).build(),
+                        getBcdnsManager().getTrustRootCertChain(blockchainInfo.getDomainCert().getDomainSpace())
+                ).encodeToJson(),
                 getRelayerCredentialManager()
         );
     }
 
     private RelayerResponse processGetRelayerBlockchainContent(GetRelayerBlockchainContentRelayerRequest request) {
         if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
-            log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(), request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
-                    "verify sig failed",
+                    "verify crosschain cert failed",
                     getRelayerCredentialManager()
             );
         }
@@ -201,18 +230,19 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
         );
     }
 
-    private RelayerResponse processAMRequest(AMRelayerRequest request) {
+    private RelayerResponse processPropagateCrossChainMsgRequest(PropagateCrossChainMsgRequest request) {
         if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
-            log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(), request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
-                    "verify sig failed",
+                    "verify crosschain cert failed",
                     getRelayerCredentialManager()
             );
         }
 
         try {
-            amRequest(
+            propagateCrossChainMsg(
                     request.getDomainName(),
+                    request.getUcpId(),
                     request.getAuthMsg(),
                     request.getUdagProof(),
                     request.getLedgerInfo()
@@ -239,7 +269,7 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
             );
         }
 
-        log.info( "handle am request from relayer {} success: ", request.calcRelayerNodeId());
+        log.info("handle am request from relayer {} success: ", request.calcRelayerNodeId());
 
         return RelayerResponse.createSuccessResponse(
                 () -> null,
@@ -247,42 +277,209 @@ public class WSRelayerServerAPImpl extends BaseRelayerServer implements WSRelaye
         );
     }
 
-    private RelayerResponse processHandshakeRequest(HandshakeRelayerRequest request) {
+    private RelayerResponse processCrossChainMsgReceiptsQuery(QueryCrossChainMsgReceiptRequest request) {
         if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
-            log.error("failed to validate request from relayer {}", request.calcRelayerNodeId());
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(), request.calcRelayerNodeId());
             return RelayerResponse.createFailureResponse(
-                    "verify sig failed",
+                    "verify crosschain cert failed",
                     getRelayerCredentialManager()
             );
         }
 
+        return RelayerResponse.createSuccessResponse(
+                new QueryCrossChainMsgReceiptsRespPayload(
+                        request.getUcpIds().stream().map(
+                                s -> {
+                                    SDPMsgWrapper sdpMsgWrapper = getCrossChainMessageRepository().querySDPMessage(s);
+                                    CrossChainMessageReceipt receipt = null;
+                                    if (ObjectUtil.isNotNull(sdpMsgWrapper)) {
+                                        receipt = new CrossChainMessageReceipt();
+                                        receipt.setTxhash(sdpMsgWrapper.getTxHash());
+                                        receipt.setConfirmed(
+                                                sdpMsgWrapper.getProcessState() == SDPMsgProcessStateEnum.TX_SUCCESS ||
+                                                        sdpMsgWrapper.getProcessState() == SDPMsgProcessStateEnum.TX_FAILED ||
+                                                        sdpMsgWrapper.getProcessState() == SDPMsgProcessStateEnum.MSG_REJECTED ||
+                                                        sdpMsgWrapper.getProcessState() == SDPMsgProcessStateEnum.MSG_ILLEGAL
+                                        );
+                                        receipt.setSuccessful(sdpMsgWrapper.isTxSuccess());
+                                        receipt.setErrorMsg(sdpMsgWrapper.getTxFailReason());
+                                    }
+
+                                    return MapUtil.entry(s, receipt);
+                                }
+                        ).collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                Map.Entry::getValue
+                        ))
+                ),
+                getRelayerCredentialManager()
+        );
+    }
+
+    private RelayerResponse processHelloStart(HelloStartRequest request) {
+        log.info("process hello start from {}", request.getRelayerNodeId());
+
+        byte[] myRand = RandomUtil.randomBytes(32);
+        setMyRelayerHelloRand(request.getRelayerNodeId(), myRand);
+        return RelayerResponse.createSuccessResponse(
+                new HelloStartRespPayload(
+                        Base64.encode(getRelayerNetworkManager().getRelayerNodeInfo().getEncode()),
+                        getBcdnsManager().getTrustRootCertChain(getRelayerCredentialManager().getLocalRelayerIssuerDomainSpace()),
+                        getRelayerCredentialManager().getLocalNodeSigAlgo(),
+                        getRelayerCredentialManager().signHelloRand(request.getRand()),
+                        myRand
+                ),
+                getRelayerCredentialManager()
+        );
+    }
+
+    private RelayerResponse processHelloComplete(HelloCompleteRequest request) {
+        RelayerNodeInfo remoteNodeInfo = RelayerNodeInfo.decode(
+                Base64.decode(request.getRemoteNodeInfo())
+        );
+        log.info("process hello complete from {}-{}", remoteNodeInfo.getNodeId(), String.join(",", remoteNodeInfo.getEndpoints()));
+
+        if (
+                !getBcdnsManager().validateCrossChainCertificate(
+                        remoteNodeInfo.getRelayerCrossChainCertificate(),
+                        request.getDomainSpaceCertPath()
+                )
+        ) {
+            throw new RuntimeException(
+                    StrUtil.format(
+                            "failed to verify the relayer {} 's cert {} with cert path [ {} ]",
+                            remoteNodeInfo.getNodeId(),
+                            remoteNodeInfo.getRelayerCrossChainCertificate().encodeToBase64(),
+                            request.getDomainSpaceCertPath().entrySet().stream()
+                                    .map(entry -> StrUtil.format("{} : {}", entry.getKey(), entry.getValue().encodeToBase64()))
+                                    .reduce((s1, s2) -> s1 + ", " + s2)
+                                    .orElse("")
+                    )
+            );
+        }
+
+        byte[] myRand = getMyRelayerHelloRand(remoteNodeInfo.getNodeId());
+        if (ObjectUtil.isEmpty(myRand)) {
+            throw new RuntimeException("none my rand found");
+        }
+
         try {
-            doHandshake(
-                    request.getSenderNodeInfo(),
-                    request.getNetworkId()
+            Signature verifier = Signature.getInstance(request.getSigAlgoType());
+            verifier.initVerify(
+                    CrossChainCertificateUtil.getPublicKeyFromCrossChainCertificate(remoteNodeInfo.getRelayerCrossChainCertificate())
             );
+            verifier.update(myRand);
+            if (!verifier.verify(request.getSig())) {
+                throw new RuntimeException("not pass");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    StrUtil.format("failed to verify sig for rand: ( rand: {}, sig: {} )",
+                            HexUtil.encodeHexStr(myRand), HexUtil.encodeHexStr(request.getSig()), e)
+            );
+        }
+
+        getRelayerNetworkManager().addRelayerNode(remoteNodeInfo);
+
+        return RelayerResponse.createSuccessResponse(
+                () -> null,
+                getRelayerCredentialManager()
+        );
+    }
+
+    private RelayerResponse processChannelStart(ChannelStartRequest request) {
+        if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(), request.calcRelayerNodeId());
+            return RelayerResponse.createFailureResponse(
+                    "verify crosschain cert failed",
+                    getRelayerCredentialManager()
+            );
+        }
+
+        RelayerBlockchainInfo blockchainInfo;
+        try {
+            blockchainInfo = getRelayerNetworkManager().getRelayerBlockchainInfo(request.getDomain());
         } catch (AntChainBridgeRelayerException e) {
-            log.error(
-                    "handle handshake request from relayer {} failed: ",
-                    request.calcRelayerNodeId(),
-                    e
-            );
+            log.error("failed to process channel start request for domain {} from relayer {}", request.getDomain(), request.calcRelayerNodeId(), e);
             return RelayerResponse.createFailureResponse(
                     e.getMsg(),
                     getRelayerCredentialManager()
             );
         }
-
-        log.info( "handle handshake request from relayer {} success: ", request.calcRelayerNodeId());
+        if (ObjectUtil.isNull(blockchainInfo)) {
+            return RelayerResponse.createFailureResponse(
+                    "empty result",
+                    getRelayerCredentialManager()
+            );
+        }
 
         return RelayerResponse.createSuccessResponse(
-                new HandshakeRespPayload(
-                        getDefaultNetworkId(),
-                        Base64.encode(
-                                getRelayerNetworkManager().getRelayerNodeInfoWithContent().encodeWithProperties()
-                        )
+                new ChannelStartRespPayload(
+                        new RelayerBlockchainContent(
+                                MapUtil.builder(blockchainInfo.getDomainCert().getDomain(), blockchainInfo).build(),
+                                getBcdnsManager().getTrustRootCertChain(blockchainInfo.getDomainCert().getDomainSpace())
+                        ).encodeToJson()
                 ),
                 getRelayerCredentialManager()
         );
+    }
+
+    private RelayerResponse processChannelComplete(ChannelCompleteRequest request) {
+        if (!getRelayerCredentialManager().validateRelayerRequest(request)) {
+            log.error("failed to validate {} request from relayer {}", request.getRequestType().getCode(), request.calcRelayerNodeId());
+            return RelayerResponse.createFailureResponse(
+                    "verify crosschain cert failed",
+                    getRelayerCredentialManager()
+            );
+        }
+
+        RelayerBlockchainContent content = RelayerBlockchainContent.decodeFromJson(request.getRawContentWithSingleBlockchain());
+        if (ObjectUtil.isNull(content)) {
+            log.error("null relayer blockchain content in request from relayer {} for domain {}", request.calcRelayerNodeId(), request.getSenderDomain());
+            return RelayerResponse.createFailureResponse(
+                    "null relayer blockchain content",
+                    getRelayerCredentialManager()
+            );
+        }
+        if (ObjectUtil.isNull(content.getRelayerBlockchainInfo(request.getSenderDomain()))) {
+            log.error("null relayer blockchain content in request from relayer {} for domain {}", request.calcRelayerNodeId(), request.getSenderDomain());
+            return RelayerResponse.createFailureResponse(
+                    "null relayer blockchain info",
+                    getRelayerCredentialManager()
+            );
+        }
+
+        getRelayerNetworkManager().validateAndSaveBlockchainContent(
+                getDefaultNetworkId(),
+                getRelayerNetworkManager().getRelayerNode(request.getNodeId(),false),
+                content,
+                false
+        );
+        getRelayerNetworkManager().createNewCrossChainChannel(
+                request.getReceiverDomain(),
+                request.getSenderDomain(),
+                request.calcRelayerNodeId()
+        );
+
+        return RelayerResponse.createSuccessResponse(
+                () -> null,
+                getRelayerCredentialManager()
+        );
+    }
+
+    private void setMyRelayerHelloRand(String relayerNodeId, byte[] myRand) {
+        RBucket<byte[]> bucket = getRedisson().getBucket(
+                RELAYER_HELLO_RAND_KEY_PREFIX + relayerNodeId,
+                ByteArrayCodec.INSTANCE
+        );
+        bucket.set(myRand, Duration.of(3, ChronoUnit.MINUTES));
+    }
+
+    private byte[] getMyRelayerHelloRand(String relayerNodeId) {
+        RBucket<byte[]> bucket = getRedisson().getBucket(
+                RELAYER_HELLO_RAND_KEY_PREFIX + relayerNodeId,
+                ByteArrayCodec.INSTANCE
+        );
+        return bucket.getAndDelete();
     }
 }

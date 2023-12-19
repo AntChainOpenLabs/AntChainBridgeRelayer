@@ -18,6 +18,8 @@ package com.alipay.antchain.bridge.relayer.commons.model;
 
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.core.sdp.AbstractSDPMessage;
+import com.alipay.antchain.bridge.commons.core.sdp.ISDPMessage;
+import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageFactory;
 import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -33,6 +35,15 @@ public class SDPMsgWrapper {
     public final static int UNORDERED_SDP_MSG_SEQ = -1;
 
     public final static String UNORDERED_SDP_MSG_SESSION = "UNORDERED";
+
+    public static SDPMsgWrapper buildFrom(AuthMsgWrapper authMsgWrapper) {
+        ISDPMessage sdpMessage = SDPMessageFactory.createSDPMessage(authMsgWrapper.getAuthMessage().getPayload());
+        SDPMsgWrapper sdpMsgWrapper = new SDPMsgWrapper();
+        sdpMsgWrapper.setAuthMsgWrapper(authMsgWrapper);
+        sdpMsgWrapper.setSdpMessage((AbstractSDPMessage) sdpMessage);
+
+        return sdpMsgWrapper;
+    }
 
     private Long id;
 

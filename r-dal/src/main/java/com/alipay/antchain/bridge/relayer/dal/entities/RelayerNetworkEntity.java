@@ -16,7 +16,7 @@
 
 package com.alipay.antchain.bridge.relayer.dal.entities;
 
-import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.DomainRouterSyncStateEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
@@ -37,5 +37,5 @@ public class RelayerNetworkEntity extends BaseEntity {
     private String nodeId;
 
     @TableField("sync_state")
-    private RelayerNodeSyncStateEnum syncState;
+    private DomainRouterSyncStateEnum syncState;
 }

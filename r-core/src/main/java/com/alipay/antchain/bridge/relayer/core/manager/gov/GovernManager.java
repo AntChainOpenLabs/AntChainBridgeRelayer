@@ -16,8 +16,11 @@
 
 package com.alipay.antchain.bridge.relayer.core.manager.gov;
 
+import java.util.List;
 import javax.annotation.Resource;
 
+import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
+import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.CrossChainMsgACLItem;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMsgACLRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -54,5 +57,26 @@ public class GovernManager implements IGovernManager {
     @Override
     public CrossChainMsgACLItem getCrossChainMsgACL(String bizId) {
         return crossChainMsgACLRepository.getItemByBizId(bizId);
+    }
+
+    @Override
+    public List<CrossChainMsgACLItem> getMatchedCrossChainACLItems(String ownerDomain, String ownerId, String grantDomain, String grantId) {
+        try {
+            return crossChainMsgACLRepository.getMatchedItems(new CrossChainMsgACLItem(ownerDomain, ownerId, grantDomain, grantId));
+        } catch (AntChainBridgeRelayerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.CORE_GOV_ACL_ERROR,
+                    e,
+                    "failed to check get crosschain ACL entries that match rule: ( owner_domain: {}, owner_id: {}, grant_domain: {}, grant_id: {} )",
+                    ownerDomain, ownerId, grantDomain, grantId
+            );
+        }
+    }
+
+    @Override
+    public boolean hasCrossChainMsgACL(String bizId) {
+        return crossChainMsgACLRepository.hasItemByBizId(bizId);
     }
 }

@@ -29,7 +29,7 @@ public class SyncReceiveHandler {
 
     public void receiveOffChainAMRequest(AuthMsgWrapper authMsg, String ptcProof) {
 
-        log.info("receive a off-chain am request from blockchain {}", authMsg.getDomain());
+        log.info("receive a off-chain am request with ucp id {} from blockchain {}", authMsg.getUcpId(), authMsg.getDomain());
 
         authMsg.setNetworkAM(true);
 
@@ -41,12 +41,15 @@ public class SyncReceiveHandler {
                             authMsg.setAuthMsgId(
                                     crossChainMessageRepository.putAuthMessageWithIdReturned(authMsg)
                             );
-                            if (
-                                    !processService.getAuthenticMessageProcess().doProcess(authMsg)
-                            ) {
-                                throw new RuntimeException(StrUtil.format("process off-chain am request from blockchain {} failed", authMsg.getDomain()));
+                            if (!processService.getAuthenticMessageProcess().doProcess(authMsg)) {
+                                throw new RuntimeException(
+                                        StrUtil.format(
+                                                "process off-chain am request with ucp id {} from blockchain {} failed",
+                                                authMsg.getUcpId(), authMsg.getDomain()
+                                        )
+                                );
                             }
-                            log.info("process off-chain am request from blockchain {} success", authMsg.getDomain());
+                            log.info("process off-chain am request with ucp id {} from blockchain {} success", authMsg.getUcpId(), authMsg.getDomain());
                         }
                     }
             );
@@ -56,10 +59,9 @@ public class SyncReceiveHandler {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.SERVICE_MULTI_ANCHOR_PROCESS_REMOTE_AM_PROCESS_FAILED,
                     e,
-                    "failed to process remote am request from blockchain {}",
-                    authMsg.getDomain()
+                    "failed to process remote am request with ucp id {} from blockchain {}",
+                    authMsg.getUcpId(), authMsg.getDomain()
             );
         }
     }
-
 }

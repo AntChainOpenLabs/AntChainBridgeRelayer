@@ -3,7 +3,8 @@ package com.alipay.antchain.bridge.relayer.engine.executor;
 import java.util.concurrent.ExecutorService;
 import javax.annotation.Resource;
 
-import com.alipay.antchain.bridge.relayer.commons.model.DistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.BlockchainDistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.IDistributedTask;
 import com.alipay.antchain.bridge.relayer.core.service.committer.CommitterService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +24,18 @@ public class CommitterScheduleTaskExecutor extends BaseScheduleTaskExecutor {
     }
 
     @Override
-    public Runnable genTask(DistributedTask task) {
+    public Runnable genTask(IDistributedTask task) {
         return () -> {
-            try {
-                committerService.process(task.getBlockchainProduct(), task.getBlockchainId());
-            } catch (Exception e) {
-                log.error("CommitterScheduleTaskExecutor failed for blockchain {}", task.getBlockchainId(), e);
+            if (task instanceof BlockchainDistributedTask) {
+                try {
+                    committerService.process(
+                            ((BlockchainDistributedTask) task).getBlockchainProduct(),
+                            ((BlockchainDistributedTask) task).getBlockchainId()
+                    );
+                } catch (Exception e) {
+                    log.error("CommitterScheduleTaskExecutor failed for blockchain {}",
+                            ((BlockchainDistributedTask) task).getBlockchainId(), e);
+                }
             }
         };
     }

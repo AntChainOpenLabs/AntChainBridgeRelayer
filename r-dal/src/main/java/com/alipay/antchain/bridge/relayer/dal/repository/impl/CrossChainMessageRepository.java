@@ -27,21 +27,17 @@ import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgTrustLevelEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.UniformCrosschainPacketStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.UniformCrosschainPacketContext;
-import com.alipay.antchain.bridge.relayer.dal.entities.AuthMsgPoolEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.BaseEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.SDPMsgPoolEntity;
-import com.alipay.antchain.bridge.relayer.dal.entities.UCPPoolEntity;
-import com.alipay.antchain.bridge.relayer.dal.mapper.AuthMsgArchiveMapper;
-import com.alipay.antchain.bridge.relayer.dal.mapper.AuthMsgPoolMapper;
-import com.alipay.antchain.bridge.relayer.dal.mapper.SDPMsgPoolMapper;
-import com.alipay.antchain.bridge.relayer.dal.mapper.UCPPoolMapper;
+import com.alipay.antchain.bridge.relayer.dal.entities.*;
+import com.alipay.antchain.bridge.relayer.dal.mapper.*;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -68,9 +64,12 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     private AuthMsgArchiveMapper authMsgArchiveMapper;
 
     @Resource
+    private SDPMsgArchiveMapper sdpMsgArchiveMapper;
+
+    @Resource
     private RedissonClient redisson;
 
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     @Override
     public long putAuthMessageWithIdReturned(AuthMsgWrapper authMsgWrapper) {
         try {
@@ -119,28 +118,22 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
         }
     }
 
-    public List<AuthMsgWrapper> peekAuthMessages(String domain, AuthMsgProcessStateEnum processState, int limit) {
+    public List<AuthMsgWrapper> peekAuthMessages(String domain, int limit, int failLimit) {
         try {
             List<AuthMsgPoolEntity> entities = authMsgPoolMapper.selectList(
                     new LambdaQueryWrapper<AuthMsgPoolEntity>()
-                            .select(
-                                    ListUtil.toList(
-                                            BaseEntity::getId,
-                                            AuthMsgPoolEntity::getUcpId,
-                                            AuthMsgPoolEntity::getProduct,
-                                            AuthMsgPoolEntity::getBlockchainId,
-                                            AuthMsgPoolEntity::getDomain,
-                                            AuthMsgPoolEntity::getAmClientContractAddress,
-                                            AuthMsgPoolEntity::getVersion,
-                                            AuthMsgPoolEntity::getMsgSender,
-                                            AuthMsgPoolEntity::getProtocolType,
-                                            AuthMsgPoolEntity::getTrustLevel,
-                                            AuthMsgPoolEntity::getPayload,
-                                            AuthMsgPoolEntity::getProcessState,
-                                            AuthMsgPoolEntity::getExt
-                                    )
-                            ).eq(AuthMsgPoolEntity::getDomain, domain)
-                            .eq(AuthMsgPoolEntity::getProcessState, processState)
+                            .eq(AuthMsgPoolEntity::getDomain, domain)
+                            .and(
+                                    wrapper -> wrapper.eq(AuthMsgPoolEntity::getTrustLevel, AuthMsgTrustLevelEnum.NEGATIVE_TRUST)
+                                            .eq(AuthMsgPoolEntity::getProcessState, AuthMsgProcessStateEnum.PROVED)
+                                            .or(
+                                                    wrapper1 -> wrapper1.eq(AuthMsgPoolEntity::getTrustLevel, AuthMsgTrustLevelEnum.POSITIVE_TRUST)
+                                                            .eq(AuthMsgPoolEntity::getProcessState, AuthMsgProcessStateEnum.PENDING)
+                                            ).or(
+                                                    wrapper1 -> wrapper1.eq(AuthMsgPoolEntity::getTrustLevel, AuthMsgTrustLevelEnum.ZERO_TRUST)
+                                                            .eq(AuthMsgPoolEntity::getProcessState, AuthMsgProcessStateEnum.PROVED)
+                                            )
+                            ).lt(AuthMsgPoolEntity::getFailCount, failLimit)
                             .last("limit " + limit)
             );
             if (ObjectUtil.isEmpty(entities)) {
@@ -161,6 +154,39 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     }
 
     @Override
+    public List<AuthMsgWrapper> peekNotReadyAuthMessages(String domain, int limit) {
+        try {
+            List<AuthMsgPoolEntity> entities = authMsgPoolMapper.selectList(
+                    new LambdaQueryWrapper<AuthMsgPoolEntity>()
+                            .eq(AuthMsgPoolEntity::getDomain, domain)
+                            .eq(AuthMsgPoolEntity::getProcessState, AuthMsgProcessStateEnum.NOT_READY)
+                            .last("limit " + limit)
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return ListUtil.empty();
+            }
+            return entities.stream()
+                    .map(ConvertUtil::convertFromAuthMsgPoolEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    String.format("failed to peek auth messages for chain %s", domain),
+                    e
+            );
+        }
+    }
+
+    @Override
+    public boolean hasNotReadyAuthMessages(String domain) {
+        return authMsgPoolMapper.exists(
+                new LambdaQueryWrapper<AuthMsgPoolEntity>()
+                        .eq(AuthMsgPoolEntity::getDomain, domain)
+                        .eq(AuthMsgPoolEntity::getProcessState, AuthMsgProcessStateEnum.NOT_READY)
+        );
+    }
+
+    @Override
     public void putUniformCrosschainPacket(UniformCrosschainPacketContext context) {
         try {
             ucpPoolMapper.saveUCPMessages(ListUtil.toList(context));
@@ -176,18 +202,59 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     }
 
     @Override
-    public UniformCrosschainPacketContext getUniformCrosschainPacket(byte[] ucpId) {
+    public int putUniformCrosschainPackets(List<UniformCrosschainPacketContext> contexts) {
         try {
-            UCPPoolEntity entity = ucpPoolMapper.selectOne(
-                    new LambdaQueryWrapper<UCPPoolEntity>()
-                            .eq(UCPPoolEntity::getUcpId, ucpId)
+            return ucpPoolMapper.saveUCPMessages(contexts);
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    e,
+                    "failed to put multiple ucp on block {} for chain {}",
+                    contexts.get(0).getBlockHash(),
+                    contexts.get(0).getBlockchainId()
             );
+        }
+    }
+
+    @Override
+    public UniformCrosschainPacketContext getUniformCrosschainPacket(String ucpId, boolean lock) {
+        try {
+            UCPPoolEntity entity = lock ?
+                    ucpPoolMapper.selectOne(
+                            new LambdaQueryWrapper<UCPPoolEntity>()
+                                    .eq(UCPPoolEntity::getUcpId, ucpId)
+                                    .last("for update")
+                    ) :
+                    ucpPoolMapper.selectOne(
+                            new LambdaQueryWrapper<UCPPoolEntity>()
+                                    .eq(UCPPoolEntity::getUcpId, ucpId)
+                    );
             return ConvertUtil.convertFromUCPPoolEntity(entity);
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
                     String.format("failed to get ucp (id: %s)", HexUtil.encodeHexStr(ucpId)),
                     e
+            );
+        }
+    }
+
+    @Override
+    public boolean updateUniformCrosschainPacketState(String ucpId, UniformCrosschainPacketStateEnum state) {
+        try {
+            return ucpPoolMapper.update(
+                    UCPPoolEntity.builder()
+                            .processState(state)
+                            .build(),
+                    new LambdaUpdateWrapper<UCPPoolEntity>()
+                            .eq(UCPPoolEntity::getUcpId, ucpId)
+            ) == 1;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    e,
+                    "failed to update state of UCP message (ucp_id: {}) to {}",
+                    ucpId, state.getCode()
             );
         }
     }
@@ -204,6 +271,45 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                             HexUtil.encodeHexStr(authMsgWrapper.getUcpId()), authMsgWrapper.getAuthMsgId(), authMsgWrapper.getDomain()
                     ),
                     e
+            );
+        }
+    }
+
+    @Override
+    public boolean updateAuthMessageState(String ucpId, AuthMsgProcessStateEnum state) {
+        try {
+            return authMsgPoolMapper.update(
+                    AuthMsgPoolEntity.builder()
+                            .processState(state)
+                            .build(),
+                    new LambdaUpdateWrapper<AuthMsgPoolEntity>()
+                            .eq(AuthMsgPoolEntity::getUcpId, ucpId)
+            ) == 1;
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    e,
+                    "failed to update state of auth message (ucp_id: {}) to {}",
+                    ucpId, state.getCode()
+            );
+        }
+    }
+
+    @Override
+    public AuthMsgProcessStateEnum getAuthMessageState(String ucpId) {
+        try {
+            AuthMsgPoolEntity entity = authMsgPoolMapper.selectOne(
+                    new LambdaQueryWrapper<AuthMsgPoolEntity>()
+                            .select(ListUtil.toList(AuthMsgPoolEntity::getProcessState))
+                            .eq(AuthMsgPoolEntity::getUcpId, ucpId)
+            );
+            return entity.getProcessState();
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    e,
+                    "failed to get state of auth message (ucp_id: {})",
+                    ucpId
             );
         }
     }
@@ -237,6 +343,13 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
                                     entity.setTxFailReason(result.getFailReasonTruncated());
                                     entity.setProcessState(result.getProcessState());
                                     entity.setTxHash(result.getTxHash());
+                                    if (ObjectUtil.isNotNull(result.getSdpMsgId())) {
+                                        return sdpMsgPoolMapper.update(
+                                                entity,
+                                                new LambdaUpdateWrapper<SDPMsgPoolEntity>()
+                                                        .eq(SDPMsgPoolEntity::getId, result.getSdpMsgId())
+                                        );
+                                    }
                                     return sdpMsgPoolMapper.update(
                                             entity,
                                             new LambdaUpdateWrapper<SDPMsgPoolEntity>()
@@ -264,6 +377,28 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     @Override
     public AuthMsgWrapper getAuthMessage(long authMsgId) {
         return getAuthMessage(authMsgId, false);
+    }
+
+    @Override
+    public String getUcpId(long authMsgId) {
+        try {
+            AuthMsgPoolEntity entity =
+                    this.authMsgPoolMapper.selectOne(
+                            new LambdaQueryWrapper<AuthMsgPoolEntity>()
+                                    .select(ListUtil.toList(AuthMsgPoolEntity::getUcpId))
+                                    .eq(BaseEntity::getId, authMsgId)
+                    );
+            if (ObjectUtil.isNull(entity)) {
+                return null;
+            }
+            return entity.getUcpId();
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    StrUtil.format("failed to get ucp id for {}", authMsgId),
+                    e
+            );
+        }
     }
 
     @Override
@@ -333,6 +468,108 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     }
 
     @Override
+    public List<UniformCrosschainPacketContext> peekUCPMessages(String domain, UniformCrosschainPacketStateEnum processState, int limit) {
+        try {
+            List<UCPPoolEntity> entities = ucpPoolMapper.selectList(
+                    new LambdaQueryWrapper<UCPPoolEntity>()
+                            .eq(UCPPoolEntity::getSrcDomain, domain)
+                            .eq(UCPPoolEntity::getProcessState, processState)
+                            .last("limit " + limit)
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return ListUtil.empty();
+            }
+
+            return entities.stream()
+                    .map(ConvertUtil::convertFromUCPPoolEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    e,
+                    "failed to peek {} UCP messages for chain {}",
+                    processState.getCode(), domain
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public SDPMsgWrapper querySDPMessage(String ucpId) {
+        try {
+            Long amId = getAuthMsgId(ucpId);
+            if (ObjectUtil.isNull(amId)) {
+                return null;
+            }
+
+            return getSDPMessageByAmId(amId);
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    e,
+                    "failed to get sdp message for chain for ucp id {}",
+                    ucpId
+            );
+        }
+    }
+
+    private Long getAuthMsgId(String ucpId) {
+        AuthMsgPoolEntity entity = authMsgPoolMapper.selectOne(
+                new LambdaQueryWrapper<AuthMsgPoolEntity>()
+                        .select(ListUtil.toList(AuthMsgPoolEntity::getId))
+                        .eq(AuthMsgPoolEntity::getUcpId, ucpId)
+        );
+        if (ObjectUtil.isNotNull(entity)) {
+            return entity.getId();
+        }
+
+        AuthMsgArchiveEntity authMsgArchiveEntity = authMsgArchiveMapper.selectOne(
+                new LambdaQueryWrapper<AuthMsgArchiveEntity>()
+                        .select(ListUtil.toList(AuthMsgArchiveEntity::getId))
+                        .eq(AuthMsgArchiveEntity::getUcpId, ucpId)
+        );
+        if (ObjectUtil.isNull(authMsgArchiveEntity)) {
+            return null;
+        }
+
+        return authMsgArchiveEntity.getId();
+    }
+
+    private SDPMsgWrapper getSDPMessageByAmId(Long amId) {
+        SDPMsgPoolEntity sdpMsgPoolEntity = sdpMsgPoolMapper.selectOne(
+                new LambdaQueryWrapper<SDPMsgPoolEntity>()
+                        .select(ListUtil.toList(
+                                SDPMsgPoolEntity::getTxHash,
+                                SDPMsgPoolEntity::getProcessState,
+                                SDPMsgPoolEntity::getTxSuccess,
+                                SDPMsgPoolEntity::getTxFailReason
+                        )).eq(SDPMsgPoolEntity::getAuthMsgId, amId)
+        );
+        if (ObjectUtil.isNotNull(sdpMsgPoolEntity)) {
+            SDPMsgWrapper sdpMsgWrapper = new SDPMsgWrapper();
+            sdpMsgWrapper.setTxHash(sdpMsgPoolEntity.getTxHash());
+            sdpMsgWrapper.setProcessState(sdpMsgPoolEntity.getProcessState());
+            sdpMsgWrapper.setTxSuccess(sdpMsgPoolEntity.getTxSuccess());
+            sdpMsgWrapper.setTxFailReason(sdpMsgPoolEntity.getTxFailReason());
+            return sdpMsgWrapper;
+        }
+
+        SDPMsgArchiveEntity sdpMsgArchiveEntity = sdpMsgArchiveMapper.selectOne(
+                new LambdaQueryWrapper<SDPMsgArchiveEntity>()
+                        .select(ListUtil.toList(
+                                SDPMsgArchiveEntity::getTxHash,
+                                SDPMsgArchiveEntity::getProcessState,
+                                SDPMsgArchiveEntity::getTxSuccess,
+                                SDPMsgArchiveEntity::getTxFailReason
+                        )).eq(SDPMsgArchiveEntity::getAuthMsgId, amId)
+        );
+        if (ObjectUtil.isNull(sdpMsgArchiveEntity)) {
+            return null;
+        }
+        return ConvertUtil.convertFromSDPMsgPoolEntity(BeanUtil.copyProperties(sdpMsgArchiveEntity, SDPMsgPoolEntity.class));
+    }
+
+    @Override
     public List<SDPMsgWrapper> peekSDPMessages(String receiverBlockchainProduct, String receiverBlockchainId, SDPMsgProcessStateEnum processState, int limit) {
         try {
             List<SDPMsgPoolEntity> entities = sdpMsgPoolMapper.selectList(
@@ -361,6 +598,34 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
     }
 
     @Override
+    public List<SDPMsgWrapper> peekSDPMessagesSent(String senderBlockchainProduct, String senderBlockchainId, SDPMsgProcessStateEnum processState, int limit) {
+        try {
+            List<SDPMsgPoolEntity> entities = sdpMsgPoolMapper.selectList(
+                    new LambdaQueryWrapper<SDPMsgPoolEntity>()
+                            .eq(SDPMsgPoolEntity::getSenderBlockchainProduct, senderBlockchainProduct)
+                            .eq(SDPMsgPoolEntity::getSenderBlockchainId, senderBlockchainId)
+                            .eq(SDPMsgPoolEntity::getProcessState, processState)
+                            .last("limit " + limit)
+            );
+            if (ObjectUtil.isEmpty(entities)) {
+                return ListUtil.empty();
+            }
+
+            return entities.stream()
+                    .map(ConvertUtil::convertFromSDPMsgPoolEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,
+                    StrUtil.format(
+                            "failed to peek {} sdp messages sent to network for chain (product: {}, blockchain_id: {})",
+                            processState.getCode(), senderBlockchainProduct, senderBlockchainId
+                    ), e
+            );
+        }
+    }
+
+    @Override
     public List<SDPMsgWrapper> peekTxFinishedSDPMessageIds(String receiverBlockchainProduct, String receiverBlockchainId, int limit) {
         try {
             List<SDPMsgPoolEntity> entities = sdpMsgPoolMapper.selectList(
@@ -380,8 +645,14 @@ public class CrossChainMessageRepository implements ICrossChainMessageRepository
             }
 
             return entities.stream()
-                    .map(sdpMsgPoolEntity -> BeanUtil.copyProperties(sdpMsgPoolEntity, SDPMsgWrapper.class))
-                    .collect(Collectors.toList());
+                    .map(entity -> {
+                        SDPMsgWrapper sdpMsgWrapper = new SDPMsgWrapper();
+                        sdpMsgWrapper.setId(entity.getId());
+                        AuthMsgWrapper authMsgWrapper = new AuthMsgWrapper();
+                        authMsgWrapper.setAuthMsgId(entity.getAuthMsgId());
+                        sdpMsgWrapper.setAuthMsgWrapper(authMsgWrapper);
+                        return sdpMsgWrapper;
+                    }).collect(Collectors.toList());
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_CROSSCHAIN_MSG_ERROR,

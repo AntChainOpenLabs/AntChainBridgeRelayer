@@ -18,7 +18,11 @@ public class BlockPollingTask extends BlockBaseTask {
     @Override
     public void doProcess() {
         try {
-            saveRemoteBlockHeaderHeight(queryRemoteBlockHeaderHeight());
+            long latestHeight = queryRemoteBlockHeaderHeight();
+            if (getRemoteBlockHeaderHeight() < latestHeight) {
+                log.info("polling height {} remote block header from {}", latestHeight, getProcessContext().getBlockchainMeta().getMetaKey());
+                saveRemoteBlockHeaderHeight(latestHeight);
+            }
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.SERVICE_MULTI_ANCHOR_PROCESS_POLLING_TASK_FAILED,
@@ -30,8 +34,6 @@ public class BlockPollingTask extends BlockBaseTask {
     }
 
     private long queryRemoteBlockHeaderHeight() {
-        long blockHeaderHeight = getProcessContext().getBlockchainClient().getLastBlockHeight();
-        log.info("polling height {} remote block header from {}", blockHeaderHeight, getProcessContext().getBlockchainMeta().getMetaKey());
-        return blockHeaderHeight;
+        return getProcessContext().getBlockchainClient().getLastBlockHeight();
     }
 }

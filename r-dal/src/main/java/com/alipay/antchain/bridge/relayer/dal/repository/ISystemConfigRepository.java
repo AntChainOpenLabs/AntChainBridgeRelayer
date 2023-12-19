@@ -34,5 +34,7 @@ public interface ISystemConfigRepository {
 
     List<String> getLocalEndpoints();
 
+    void setLocalEndpoints(List<String> endpoints);
+
     String getDefaultNetworkId();
 }

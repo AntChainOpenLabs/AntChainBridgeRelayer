@@ -29,6 +29,8 @@ public enum SDPMsgProcessStateEnum {
 
     MSG_REJECTED("am_msg_rejected"),
 
+    REMOTE_PENDING("remote_pending"),
+
     TX_PENDING("tx_pending"),
 
     TX_SUCCESS("tx_success"),

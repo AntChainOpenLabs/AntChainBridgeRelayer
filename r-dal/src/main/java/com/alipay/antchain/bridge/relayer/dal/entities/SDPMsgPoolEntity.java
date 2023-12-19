@@ -27,7 +27,7 @@ import lombok.Setter;
 @TableName("sdp_msg_pool")
 public class SDPMsgPoolEntity extends BaseEntity {
     @TableField("auth_msg_id")
-    private Integer authMsgId;
+    private Long authMsgId;
 
     @TableField("version")
     private Integer version;
