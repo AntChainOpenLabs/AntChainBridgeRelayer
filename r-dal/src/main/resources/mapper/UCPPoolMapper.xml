@@ -84,8 +84,8 @@
             #{ucp.srcMessage},
             #{ucp.ptcOid},
             #{ucp.tpProof},
-            #{upc.fromNetwork},
-            #{upc.relayerId},
+            #{ucp.fromNetwork},
+            #{ucp.relayerId},
             #{ucp.processState}
             )
         </foreach>

@@ -16,37 +16,50 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network.ws;
 
-import java.io.ByteArrayInputStream;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.*;
 
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.net.SSLUtil;
 import cn.hutool.crypto.PemUtil;
 import io.grpc.util.CertificateUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 @Component
 public class WsSslFactory {
 
     @Value("${relayer.network.node.tls.private_key_path}")
-    private String privateKeyPath;
+    private Resource privateKeyPath;
 
     @Value("${relayer.network.node.tls.trust_ca_path}")
-    private String trustCaPath;
+    private Resource trustCaPath;
+
+//    private PrivateKey randomTLSPrivateKey;
+//
+//    private Certificate randomTLSCert;
 
     public SSLContext getSslContext() throws Exception {
-        PrivateKey privateKey = PemUtil.readPemPrivateKey(
-                new ByteArrayInputStream(FileUtil.readBytes(privateKeyPath))
-        );
-        Certificate[] trustCertificates = CertificateUtils.getX509Certificates(
-                new ByteArrayInputStream(FileUtil.readBytes(trustCaPath))
-        );
+        PrivateKey privateKey = PemUtil.readPemPrivateKey(privateKeyPath.getInputStream());
+        Certificate[] trustCertificates = CertificateUtils.getX509Certificates(trustCaPath.getInputStream());
+//        if (ObjectUtil.isNull(randomTLSPrivateKey)) {
+//            KeyPair keyPair = KeyUtil.generateKeyPair("RSA", 2048);
+//            randomTLSPrivateKey = keyPair.getPrivate();
+//            X509V3CertificateGenerator certGen = new X509V3CertificateGenerator();
+//            X500Principal dnName = new X500Principal("CN=Example");
+//            certGen.setSubjectDN(dnName);
+//            certGen.setIssuerDN(dnName);
+//            certGen.setPublicKey(keyPair.getPublic());
+//            certGen.setNotBefore(new Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 30));
+//            certGen.setNotAfter(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10));
+//            certGen.setSignatureAlgorithm("SHA256WithRSAEncryption");
+//            randomTLSCert = certGen.generate(keyPair.getPrivate(), "BC");
+//        }
+//
+//        Certificate[] trustCertificates = new Certificate[]{randomTLSCert};
 
         char[] keyStorePassword = new char[0];
         KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -71,7 +84,17 @@ public class WsSslFactory {
         return SSLUtil.createSSLContext(
                 "TLSv1.2",
                 keyManagerFactory.getKeyManagers(),
-                trustManagerFactory.getTrustManagers()
+                new TrustManager[] {
+                        new X509TrustManager() {
+                            public X509Certificate[] getAcceptedIssuers() {
+                                return null;
+                            }
+
+                            public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+
+                            public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+                        }
+                }
         );
     }
 }

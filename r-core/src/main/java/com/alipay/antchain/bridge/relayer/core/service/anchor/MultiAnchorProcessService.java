@@ -179,8 +179,7 @@ public class MultiAnchorProcessService {
         }
         anchorProcess.updateBlockchainMetaIntoClient(blockchainMeta);
 
-        log.info("update anchor blockchain meta for : {}_{}", blockchainMeta.getProduct(), blockchainMeta.getBlockchainId());
-
+        log.debug("update anchor blockchain meta for : {}_{}", blockchainMeta.getProduct(), blockchainMeta.getBlockchainId());
 
         // 如果部署了跨链服务，就同步domain name信息
         if (

@@ -44,6 +44,7 @@ import com.alipay.antchain.bridge.relayer.dal.service.BlockchainService;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
@@ -55,6 +56,7 @@ import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
+@Slf4j
 public class BlockchainRepository implements IBlockchainRepository {
 
     @Resource
@@ -156,16 +158,20 @@ public class BlockchainRepository implements IBlockchainRepository {
             if (flushPeriodForHeightsCache == 0) {
                 flushHeight(product, blockchainId, heightType, height);
                 setHeightToCache(product, blockchainId, heightType, height);
+                log.debug("flush anchor height ( type: {}, height: {} ) into DB for blockchain {}-{}",
+                        heightType, height, product, blockchainId);
             } else {
                 AnchorProcessHeights heights = getAnchorProcessHeightsFromCache(product, blockchainId);
                 if (ObjectUtil.isNull(heights)) {
                     heights = new AnchorProcessHeights(product, blockchainId);
-                    heights.getProcessHeights().put(heightType, height);
                 }
+
+                heights.getProcessHeights().put(heightType, height);
 
                 long now = System.currentTimeMillis();
                 if (now - heights.getLastUpdateTime() > flushPeriodForHeightsCache) {
                     flushAnchorProcessHeights(heights);
+                    log.debug("flush anchor heights into DB for blockchain {}-{}", product, blockchainId);
                     heights.setLastUpdateTime(now);
                 }
                 setAnchorProcessHeightsToCache(heights);
@@ -252,7 +258,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     public BlockchainMeta getBlockchainMetaByDomain(String domain) {
         try {
             if (blockchainMetaCache.containsKey(getDomainBlockchainMetaCacheKey(domain))) {
-                return blockchainMetaCache.get(getDomainBlockchainMetaCacheKey(domain));
+                return blockchainMetaCache.get(getDomainBlockchainMetaCacheKey(domain), false);
             }
 
             BlockchainEntity blockchainEntity = blockchainService.getBaseMapper().queryBlockchainByDomain(domain);
@@ -329,7 +335,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     @Override
     public BlockchainMeta getBlockchainMeta(String product, String blockchainId) {
         if (blockchainMetaCache.containsKey(blockchainId)) {
-            return blockchainMetaCache.get(blockchainId);
+            return blockchainMetaCache.get(blockchainId, false);
         }
 
         BlockchainEntity blockchainEntity = blockchainService.lambdaQuery()
@@ -405,7 +411,7 @@ public class BlockchainRepository implements IBlockchainRepository {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = AntChainBridgeRelayerException.class)
     public List<String> getBlockchainDomainsByState(BlockchainStateEnum state) {
         try {
             List<BlockchainEntity> blockchainEntities = blockchainService.lambdaQuery()
@@ -472,6 +478,59 @@ public class BlockchainRepository implements IBlockchainRepository {
         }
     }
 
+    @Override
+    public boolean hasDomainCert(String domain) {
+        if (domainCertWrapperCache.containsKey(domain)) {
+            return true;
+        }
+        return domainCertMapper.exists(new LambdaQueryWrapper<DomainCertEntity>().eq(DomainCertEntity::getDomain, domain));
+    }
+
+    @Override
+    public void saveDomainCert(DomainCertWrapper domainCertWrapper) {
+        try {
+            if (hasDomainCert(domainCertWrapper.getDomain())) {
+                throw new RuntimeException(StrUtil.format("domain cert for {} already exist", domainCertWrapper.getDomain()));
+            }
+            domainCertMapper.insert(ConvertUtil.convertFromDomainCertWrapper(domainCertWrapper));
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to save domain cert to DB for domain {}",
+                    domainCertWrapper.getDomain()
+            );
+        }
+    }
+
+    @Override
+    public void updateBlockchainInfoOfDomainCert(String domain, String product, String blockchainId) {
+        try {
+            if (!hasDomainCert(domain)) {
+                throw new RuntimeException(StrUtil.format("domain cert for {} not found", domain));
+            }
+            if (
+                    domainCertMapper.update(
+                            DomainCertEntity.builder()
+                                    .product(product)
+                                    .blockchainId(blockchainId)
+                                    .build(),
+                            new LambdaUpdateWrapper<DomainCertEntity>()
+                                    .eq(DomainCertEntity::getDomain, domain)
+                    ) != 1
+            ) {
+                throw new RuntimeException("failed to update the domain cert in DB");
+            }
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BLOCKCHAIN_ERROR,
+                    e,
+                    "failed to update domain cert to DB for domain {}",
+                    domain
+            );
+        }
+    }
+
     private void flushAnchorProcessHeights(AnchorProcessHeights heights) {
         for (Map.Entry<String, Long> entry : heights.getProcessHeights().entrySet()) {
             flushHeight(heights.getProduct(), heights.getBlockchainId(), entry.getKey(), entry.getValue());
@@ -519,13 +578,17 @@ public class BlockchainRepository implements IBlockchainRepository {
     }
 
     private Long getAnchorProcessHeightFromDB(String product, String blockchainId, String heightType) {
-        return anchorProcessMapper.selectOne(
+        AnchorProcessEntity entity = anchorProcessMapper.selectOne(
                 new LambdaQueryWrapper<AnchorProcessEntity>()
                         .select(ListUtil.toList(AnchorProcessEntity::getBlockHeight))
                         .eq(AnchorProcessEntity::getProduct, product)
                         .eq(AnchorProcessEntity::getBlockchainId, blockchainId)
                         .eq(AnchorProcessEntity::getTask, heightType)
-        ).getBlockHeight();
+        );
+        if (ObjectUtil.isNull(entity)) {
+            return 0L;
+        }
+        return entity.getBlockHeight();
     }
 
     private Long getHeightFromCache(String product, String blockchainId, String heightKey) {

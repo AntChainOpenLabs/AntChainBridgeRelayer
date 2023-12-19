@@ -1,6 +1,5 @@
 package com.alipay.antchain.bridge.relayer.core.service.process;
 
-import java.util.Base64;
 import javax.annotation.Resource;
 
 import cn.hutool.core.util.ObjectUtil;
@@ -8,7 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.commons.core.sdp.AbstractSDPMessage;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageFactory;
 import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
-import com.alipay.antchain.bridge.relayer.commons.constant.RelayerNodeSyncStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgTrustLevelEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.UpperProtocolTypeBeyondAMEnum;
 import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelayerException;
@@ -17,20 +16,18 @@ import com.alipay.antchain.bridge.relayer.commons.model.*;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.manager.gov.IGovernManager;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
+import com.alipay.antchain.bridge.relayer.core.types.exception.CrossChainChannelNotExistException;
+import com.alipay.antchain.bridge.relayer.core.types.exception.SendAuthMessageException;
+import com.alipay.antchain.bridge.relayer.core.types.exception.UnknownRelayerForDestDomainException;
 import com.alipay.antchain.bridge.relayer.core.types.network.IRelayerClientPool;
+import com.alipay.antchain.bridge.relayer.core.types.network.RelayerClient;
 import com.alipay.antchain.bridge.relayer.dal.repository.ICrossChainMessageRepository;
+import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import com.alipay.antchain.bridge.relayer.dal.repository.impl.BlockchainIdleDCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-/**
- * AM消息处理器
- * <p>
- * 根据不同的上层AM协议，处理流程不一样
- * <p>
- * 如果是MSG消息，则需要将取UDAG数据后，将消息拆分为一条发送消息落库
- */
 @Component
 @Slf4j
 public class AuthenticMessageProcess {
@@ -53,38 +50,43 @@ public class AuthenticMessageProcess {
     @Resource
     private IRelayerClientPool relayerClientPool;
 
+    @Resource
+    private IScheduleRepository scheduleRepository;
+
     @Value("${relayer.service.process.sdp.acl_on:true}")
     private boolean sdpACLOn;
 
+    @Value("${relayer.service.process.ccmsg.fail_limit:10}")
+    private int ccmsgFailLimit;
+
+    // TODO: 当支持TP-PROOF之后，应该从网络中获得到UCP，其携带着TP-PROOF
     public boolean doProcess(AuthMsgWrapper amMsgWrapper) {
 
-        log.info(
-                "process auth msg : (src_domain: {}, id: {}, if_remote: {})",
-                amMsgWrapper.getDomain(),
-                amMsgWrapper.getAuthMsgId(),
-                amMsgWrapper.isNetworkAM()
-        );
-
+        log.info("process auth msg : (src_domain: {}, id: {}, if_remote: {})",
+                amMsgWrapper.getDomain(), amMsgWrapper.getAuthMsgId(), amMsgWrapper.isNetworkAM());
         if (
-                amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROVED
+                amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROCESSED
                         || amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.REJECTED
         ) {
             log.error("auth msg repeat process : {}", amMsgWrapper.getAuthMsgId());
             return true;
-        } else if (amMsgWrapper.getProcessState() != AuthMsgProcessStateEnum.PENDING) {
-            log.error("auth msg process state error : {}-{}", amMsgWrapper.getAuthMsgId(), amMsgWrapper.getProcessState());
+        } else if (
+                amMsgWrapper.getTrustLevel() == AuthMsgTrustLevelEnum.NEGATIVE_TRUST
+                        && amMsgWrapper.getProcessState() != AuthMsgProcessStateEnum.PROVED
+        ) {
+            log.error("auth msg with NEGATIVE_TRUST its state error : {}-{}", amMsgWrapper.getAuthMsgId(), amMsgWrapper.getProcessState());
             return false;
         }
 
+        AuthMsgProcessStateEnum originalState = amMsgWrapper.getProcessState();
         try {
             if (!amMsgWrapper.isNetworkAM()) {
                 processLocalAM(amMsgWrapper);
             } else {
-                processRemoteAM(amMsgWrapper);
+                processRemoteAM(amMsgWrapper, null);
             }
 
-            // 只有am_proof状态，需要解析协议栈处理
-            if (amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROVED) {
+            if (amMsgWrapper.getProcessState() == AuthMsgProcessStateEnum.PROCESSED) {
                 log.info(
                         "process high layer protocol {} of am message : (src_domain: {}, id: {}, if_remote: {})",
                         UpperProtocolTypeBeyondAMEnum.parseFromValue(amMsgWrapper.getAuthMessage().getUpperProtocol()).name(),
@@ -101,19 +103,33 @@ public class AuthenticMessageProcess {
             }
 
             return crossChainMessageRepository.updateAuthMessage(amMsgWrapper);
+        } catch (SendAuthMessageException e) {
+            amMsgWrapper.setFailCount(amMsgWrapper.getFailCount() + 1);
+            if (amMsgWrapper.getFailCount() > ccmsgFailLimit) {
+                amMsgWrapper.setProcessState(AuthMsgProcessStateEnum.FAILED);
+                log.error("am {} out of retry times: ", amMsgWrapper.getAuthMsgId(), e);
+            } else {
+                amMsgWrapper.setProcessState(originalState);
+                log.warn("am {} with fail count {} process failed", amMsgWrapper.getAuthMsgId(), amMsgWrapper.getFailCount(), e);
+            }
+            return crossChainMessageRepository.updateAuthMessage(amMsgWrapper);
+        } catch (CrossChainChannelNotExistException e) {
+            log.error("failed to process sdp (send: {}, dest: {}) because that crosschain channel not found: ",
+                    e.getSenderDomain(), e.getReceiverDomain(), e);
+            scheduleRepository.markForDomainRouterQuery(e.getSenderDomain(), e.getReceiverDomain());
+            return true;
         } catch (AntChainBridgeRelayerException e) {
             throw e;
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.SERVICE_CORE_PROCESS_AUTH_MSG_PROCESS_FAILED,
                     e,
-                    "process auth msg : (src_domain: {}, id: {}, if_remote: {})",
+                    "process auth msg failed: (src_domain: {}, id: {}, if_remote: {})",
                     amMsgWrapper.getDomain(),
                     amMsgWrapper.getAuthMsgId(),
                     amMsgWrapper.isNetworkAM()
             );
         }
-
     }
 
     private void processLocalAM(AuthMsgWrapper authMsgWrapper) {
@@ -140,12 +156,14 @@ public class AuthenticMessageProcess {
             );
         }
 
-        authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROVED);
+        authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROCESSED);
     }
 
-    private void processRemoteAM(AuthMsgWrapper authMsgWrapper) {
-
-        authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROVED);
+    // TODO: 当支持TP-PROOF之后，应该从网络中获得到UCP，其携带着TP-PROOF
+    private void processRemoteAM(AuthMsgWrapper authMsgWrapper, UniformCrosschainPacketContext ucpContext) {
+        // TODO : 无论是哪种信任等级，都应该被标记为PROCESSED，之后增加duty任务内容，
+        //  将信任等级是POSITIVE_TRUST且PROCESSED的消息，传递其TP-PROOF
+        authMsgWrapper.setProcessState(AuthMsgProcessStateEnum.PROCESSED);
     }
 
     private void processSDPMsg(AuthMsgWrapper authMsgWrapper) {
@@ -158,11 +176,11 @@ public class AuthenticMessageProcess {
                     sdpMsgWrapper.getReceiverBlockchainProduct(),
                     sdpMsgWrapper.getReceiverBlockchainId()
             );
-            processLocalP2PMsg(sdpMsgWrapper);
+            processLocalSDPMsg(sdpMsgWrapper);
             return;
         }
 
-        processRemoteP2PMsg(sdpMsgWrapper);
+        processRemoteSDPMsg(sdpMsgWrapper);
     }
 
     public SDPMsgWrapper parseSDPMsgFrom(AuthMsgWrapper authMsgWrapper) {
@@ -224,47 +242,45 @@ public class AuthenticMessageProcess {
         );
 
         return sdpMsgWrapper;
-
     }
 
-    private String findRemoteRelayer(SDPMsgWrapper sdpMsgWrapper) {
-        RelayerNetwork.Item relayerNetworkItem = relayerNetworkManager.findNetworkItemByDomainName(sdpMsgWrapper.getReceiverBlockchainDomain());
-        // Network也没有该domain，就拒绝请求
-        if (ObjectUtil.isNull(relayerNetworkItem)) {
-            log.info("can't find receiver domain {} in all network from local data", sdpMsgWrapper.getReceiverBlockchainDomain());
-            return null;
+    private void processRemoteSDPMsg(SDPMsgWrapper sdpMsgWrapper) {
+        String relayerNodeId = relayerNetworkManager.findRemoteRelayer(sdpMsgWrapper.getReceiverBlockchainDomain());
+        if (ObjectUtil.isNull(relayerNodeId)) {
+            throw new UnknownRelayerForDestDomainException(
+                    StrUtil.format("relayer not exist for dest domain {}", sdpMsgWrapper.getReceiverBlockchainDomain())
+            );
         }
-        if (relayerNetworkItem.getSyncState() != RelayerNodeSyncStateEnum.SYNC) {
-            log.warn("receiver domain {} router existed but not on state SYNC.", sdpMsgWrapper.getReceiverBlockchainDomain());
-            return null;
+        if (
+                blockchainManager.hasBlockchain(sdpMsgWrapper.getSenderBlockchainDomain())
+                        && !relayerNetworkManager.hasCrossChainChannel(sdpMsgWrapper.getSenderBlockchainDomain(), sdpMsgWrapper.getReceiverBlockchainDomain())
+        ) {
+            throw new CrossChainChannelNotExistException(
+                    sdpMsgWrapper.getSenderBlockchainDomain(),
+                    sdpMsgWrapper.getReceiverBlockchainDomain(),
+                    StrUtil.format("crosschain channel not exist for local sdp msg (send: {}, dest: {})",
+                            sdpMsgWrapper.getSenderBlockchainDomain(), sdpMsgWrapper.getReceiverBlockchainDomain())
+            );
         }
-        return relayerNetworkItem.getNodeId();
-    }
-
-    private void processRemoteP2PMsg(SDPMsgWrapper sdpMsgWrapper) {
-        String relayerNodeId = findRemoteRelayer(sdpMsgWrapper);
         try {
-            if (ObjectUtil.isNull(relayerNodeId)) {
-                // TODO: call BCDNS for domain router
+            RelayerClient relayerClient = relayerClientPool.getRelayerClientByDomain(sdpMsgWrapper.getReceiverBlockchainDomain());
+            if (ObjectUtil.isNull(relayerClient)) {
+                relayerClient = relayerClientPool.getRelayerClient(
+                        relayerNetworkManager.getRelayerNode(relayerNodeId, false),
+                        sdpMsgWrapper.getReceiverBlockchainDomain()
+                );
             }
-
-            if (ObjectUtil.isNull(relayerNodeId)) {
-                // Even try BCDNS but not found
-                sdpMsgWrapper.setProcessState(SDPMsgProcessStateEnum.MSG_REJECTED);
-                sdpMsgWrapper.setTxFailReason("Unknown receiver domain");
-
-                crossChainMessageRepository.putSDPMessage(sdpMsgWrapper);
-            }
-
-            relayerClientPool.getRelayerClient(relayerNetworkManager.getRelayerNode(relayerNodeId))
-                    .amRequest(
-                            sdpMsgWrapper.getSenderBlockchainDomain(),
-                            Base64.getEncoder().encodeToString(sdpMsgWrapper.getAuthMsgWrapper().getAuthMessage().encode()),
-                            "",
-                            new String(sdpMsgWrapper.getAuthMsgWrapper().getRawLedgerInfo())
-                    );
+            relayerClient.propagateCrossChainMsg(
+                    sdpMsgWrapper.getSenderBlockchainDomain(),
+                    sdpMsgWrapper.getAuthMsgWrapper().getUcpId(),
+                    sdpMsgWrapper.getAuthMsgWrapper().getAuthMessage(),
+                    "",
+                    ObjectUtil.isEmpty(sdpMsgWrapper.getAuthMsgWrapper().getLedgerInfo()) ? null
+                            : new String(sdpMsgWrapper.getAuthMsgWrapper().getRawLedgerInfo())
+            );
         } catch (Exception e) {
-            log.error(
+            throw new SendAuthMessageException(
+                    e,
                     "failed to send message " +
                             "( version: {}, from_blockchain: {}, sender: {}, receiver_blockchain: {}, receiver: {}, seq: {}, am_id: {} ) " +
                             "to remote relayer {}",
@@ -275,11 +291,12 @@ public class AuthenticMessageProcess {
                     sdpMsgWrapper.getMsgReceiver(),
                     sdpMsgWrapper.getMsgSequence(),
                     sdpMsgWrapper.getAuthMsgWrapper().getAuthMsgId(),
-                    relayerNodeId,
-                    e
+                    relayerNodeId
             );
-            return;
         }
+
+        sdpMsgWrapper.setProcessState(SDPMsgProcessStateEnum.REMOTE_PENDING);
+        crossChainMessageRepository.putSDPMessage(sdpMsgWrapper);
 
         log.info(
                 "successful to send message " +
@@ -296,7 +313,7 @@ public class AuthenticMessageProcess {
         );
     }
 
-    private void processLocalP2PMsg(SDPMsgWrapper sdpMsgWrapper) {
+    private void processLocalSDPMsg(SDPMsgWrapper sdpMsgWrapper) {
         switch (sdpMsgWrapper.getProcessState()) {
             case PENDING:
                 // 检查ACL规则，若规则不满足，则状态置为am_msg_rejected
@@ -349,10 +366,10 @@ public class AuthenticMessageProcess {
 
         if (
                 !governManager.verifyCrossChainMsgACL(
-                        sdpMsgWrapper.getSenderBlockchainDomain(),
-                        sdpMsgWrapper.getMsgSender(),
                         sdpMsgWrapper.getReceiverBlockchainDomain(),
-                        sdpMsgWrapper.getMsgReceiver()
+                        sdpMsgWrapper.getMsgReceiver(),
+                        sdpMsgWrapper.getSenderBlockchainDomain(),
+                        sdpMsgWrapper.getMsgSender()
                 )
         ) {
             sdpMsgWrapper.setProcessState(SDPMsgProcessStateEnum.MSG_REJECTED);

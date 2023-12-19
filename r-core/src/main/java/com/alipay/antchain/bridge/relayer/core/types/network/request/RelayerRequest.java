@@ -16,12 +16,11 @@
 
 package com.alipay.antchain.bridge.relayer.core.types.network.request;
 
-import java.security.PublicKey;
 import java.security.Signature;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
-import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
-import com.alipay.antchain.bridge.commons.bcdns.utils.ObjectIdentityUtil;
+import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.TLVTypeEnum;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.TLVUtils;
 import com.alipay.antchain.bridge.commons.utils.codec.tlv.annotation.TLVField;
@@ -67,25 +66,31 @@ public class RelayerRequest {
     }
 
     @TLVField(tag = TLV_TYPE_RELAYER_REQUEST_TYPE, type = TLVTypeEnum.UINT8)
+    @JSONField(serialize = false)
     private RelayerRequestType requestType;
 
     @TLVField(tag = TLV_TYPE_RELAYER_REQUEST_NODE_ID, type = TLVTypeEnum.STRING, order = TLV_TYPE_RELAYER_REQUEST_NODE_ID)
+    @JSONField(serialize = false)
     private String nodeId;
 
     @TLVField(tag = TLV_TYPE_RELAYER_REQUEST_RELAYER_CERT, type = TLVTypeEnum.BYTES, order = TLV_TYPE_RELAYER_REQUEST_RELAYER_CERT)
+    @JSONField(serialize = false)
     private AbstractCrossChainCertificate senderRelayerCertificate;
 
     @TLVField(tag = TLV_TYPE_RELAYER_REQUEST_PAYLOAD, type = TLVTypeEnum.BYTES, order = TLV_TYPE_RELAYER_REQUEST_PAYLOAD)
+    @JSONField(serialize = false)
     private byte[] requestPayload;
 
     @TLVField(tag = TLV_TYPE_RELAYER_REQUEST_SIG_ALGO, type = TLVTypeEnum.STRING, order = TLV_TYPE_RELAYER_REQUEST_SIG_ALGO)
+    @JSONField(serialize = false)
     private String sigAlgo;
 
     @TLVField(tag = TLV_TYPE_RELAYER_REQUEST_SIGNATURE, type = TLVTypeEnum.BYTES, order = TLV_TYPE_RELAYER_REQUEST_SIGNATURE)
+    @JSONField(serialize = false)
     private byte[] signature;
 
     public byte[] rawEncode() {
-        return TLVUtils.encode(this, TLV_TYPE_RELAYER_REQUEST_SIGNATURE);
+        return TLVUtils.encode(this, TLV_TYPE_RELAYER_REQUEST_SIG_ALGO);
     }
 
     public byte[] encode() {
@@ -98,29 +103,18 @@ public class RelayerRequest {
      * @return
      */
     public boolean verify() {
-
         try {
-            RelayerCredentialSubject relayerCredentialSubject = RelayerCredentialSubject.decode(
-                    senderRelayerCertificate.getCredentialSubject()
-            );
-            PublicKey publicKey = ObjectIdentityUtil.getPublicKeyFromSubject(
-                    relayerCredentialSubject.getApplicant(),
-                    relayerCredentialSubject.getSubjectInfo()
-            );
-
             Signature verifier = Signature.getInstance(sigAlgo);
-            verifier.initVerify(publicKey);
+            verifier.initVerify(
+                    CrossChainCertificateUtil.getPublicKeyFromCrossChainCertificate(
+                            senderRelayerCertificate
+                    )
+            );
             verifier.update(rawEncode());
-
             return verifier.verify(signature);
-
         } catch (Exception e) {
             throw new RuntimeException("failed to verify request sig", e);
         }
-    }
-
-    public void setRequestTypeCode(String requestType) {
-        this.requestType = RelayerRequestType.parseFromValue(requestType);
     }
 
     public String calcRelayerNodeId() {

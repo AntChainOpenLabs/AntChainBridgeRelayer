@@ -6,9 +6,9 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alipay.antchain.bridge.bcdns.types.base.Relayer;
 import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerCredentialManager;
-import com.alipay.antchain.bridge.relayer.core.manager.network.IRelayerNetworkManager;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.WsSslFactory;
 import com.alipay.antchain.bridge.relayer.core.types.network.ws.client.WSRelayerClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class RelayerClientPool implements IRelayerClientPool {
+
+    private static final String DOMAIN_CACHE_KEY_PREFIX = "DOMAIN^";
 
     @Resource
     private IRelayerCredentialManager relayerCredentialManager;
@@ -31,9 +33,12 @@ public class RelayerClientPool implements IRelayerClientPool {
 
     private final Map<String, RelayerClient> clientMap = MapUtil.newConcurrentHashMap();
 
-    public RelayerClient getRelayerClient(RelayerNodeInfo remoteRelayerNodeInfo) {
+    public RelayerClient getRelayerClient(RelayerNodeInfo remoteRelayerNodeInfo, String domain) {
 
         try {
+            if (StrUtil.isNotEmpty(domain) && clientMap.containsKey(DOMAIN_CACHE_KEY_PREFIX + domain)) {
+                clientMap.get(DOMAIN_CACHE_KEY_PREFIX + domain);
+            }
             if (!clientMap.containsKey(remoteRelayerNodeInfo.getNodeId())) {
                 WSRelayerClient client = new WSRelayerClient(
                         remoteRelayerNodeInfo,
@@ -44,6 +49,9 @@ public class RelayerClientPool implements IRelayerClientPool {
                 );
                 client.startup();
                 clientMap.put(remoteRelayerNodeInfo.getNodeId(), client);
+                if (StrUtil.isNotEmpty(domain)) {
+                    clientMap.put(DOMAIN_CACHE_KEY_PREFIX + domain, client);
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(
@@ -52,8 +60,35 @@ public class RelayerClientPool implements IRelayerClientPool {
             );
         }
 
-
         return clientMap.get(remoteRelayerNodeInfo.getNodeId());
+    }
+
+    public RelayerClient getRelayerClientByDomain(String domain) {
+        return clientMap.get(DOMAIN_CACHE_KEY_PREFIX + domain);
+    }
+
+    @Override
+    public RelayerClient createRelayerClient(Relayer destRelayer) {
+        RelayerNodeInfo tempNodeInfo = new RelayerNodeInfo();
+        tempNodeInfo.setEndpoints(destRelayer.getNetAddressList());
+        tempNodeInfo.setNodeId(RelayerNodeInfo.calculateNodeId(destRelayer.getRelayerCert()));
+
+        try {
+            WSRelayerClient client = new WSRelayerClient(
+                    tempNodeInfo,
+                    relayerCredentialManager,
+                    defaultNetworkId,
+                    wsRelayerClientThreadsPool,
+                    wsSslFactory.getSslContext().getSocketFactory()
+            );
+            client.startup();
+            return client;
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    StrUtil.format("failed to create new relayer client for {}: ", StrUtil.join(",", tempNodeInfo.getEndpoints())),
+                    e
+            );
+        }
     }
 
     public void addRelayerClient(String nodeId, RelayerClient client) {

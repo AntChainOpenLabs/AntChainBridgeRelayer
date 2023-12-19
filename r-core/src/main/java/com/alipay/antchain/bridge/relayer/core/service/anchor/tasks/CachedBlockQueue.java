@@ -47,13 +47,13 @@ public class CachedBlockQueue implements IBlockQueue {
 
     private long latestBlockHeightFetched = Long.MAX_VALUE;
 
-//    private final ArrayBlockingQueue blockingQueue;
-
     public CachedBlockQueue(
+            AnchorProcessContext processContext,
             RedissonClient redisson,
             int blockCacheCapacity,
             int blockCacheTTL
     ) {
+        this.processContext = processContext;
         this.blockCache = CacheUtil.newFIFOCache(blockCacheCapacity);
         this.redisson = redisson;
         this.blockCacheTTL = blockCacheTTL;
@@ -65,7 +65,7 @@ public class CachedBlockQueue implements IBlockQueue {
 
     public AbstractBlock getBlockFromQueue(long height) {
         if (blockCache.containsKey(getMemCacheKey(height))) {
-            return blockCache.get(getMemCacheKey(height));
+            return blockCache.get(getMemCacheKey(height), false);
         }
 
         if (height <= latestBlockHeightFetched) {

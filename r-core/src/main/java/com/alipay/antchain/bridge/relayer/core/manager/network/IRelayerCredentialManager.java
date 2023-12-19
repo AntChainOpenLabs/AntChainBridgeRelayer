@@ -16,6 +16,8 @@
 
 package com.alipay.antchain.bridge.relayer.core.manager.network;
 
+import java.security.PrivateKey;
+
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.RelayerCredentialSubject;
 import com.alipay.antchain.bridge.relayer.core.types.network.request.RelayerRequest;
@@ -33,6 +35,8 @@ public interface IRelayerCredentialManager {
      */
     void signRelayerResponse(RelayerResponse relayerResponse);
 
+    byte[] signHelloRand(byte[] rand);
+
     AbstractCrossChainCertificate getLocalRelayerCertificate();
 
     RelayerCredentialSubject getLocalRelayerCredentialSubject();
@@ -44,4 +48,8 @@ public interface IRelayerCredentialManager {
     String getLocalNodeId();
 
     String getLocalNodeSigAlgo();
+
+    PrivateKey getLocalRelayerPrivateKey();
+
+    String getLocalRelayerIssuerDomainSpace();
 }

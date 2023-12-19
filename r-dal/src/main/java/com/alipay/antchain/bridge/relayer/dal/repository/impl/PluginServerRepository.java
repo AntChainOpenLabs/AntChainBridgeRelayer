@@ -106,12 +106,14 @@ public class PluginServerRepository implements IPluginServerRepository {
     @Override
     public PluginServerDO getPluginServer(String psId) {
         try {
-            return ConvertUtil.convertFromPluginServerObjectsEntity(
-                    pluginServerObjectsMapper.selectOne(
-                            new LambdaQueryWrapper<PluginServerObjectsEntity>()
-                                    .eq(PluginServerObjectsEntity::getPsId, psId)
-                    )
+            PluginServerObjectsEntity entity = pluginServerObjectsMapper.selectOne(
+                    new LambdaQueryWrapper<PluginServerObjectsEntity>()
+                            .eq(PluginServerObjectsEntity::getPsId, psId)
             );
+            if (ObjectUtil.isNull(entity)) {
+                return null;
+            }
+            return ConvertUtil.convertFromPluginServerObjectsEntity(entity);
         } catch (Exception e) {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.DAL_PLUGINSERVER_ERROR,

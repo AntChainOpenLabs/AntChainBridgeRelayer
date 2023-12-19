@@ -21,10 +21,7 @@ import java.util.Objects;
 
 import cn.hutool.core.util.*;
 import cn.hutool.crypto.digest.DigestUtil;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 
 /**
@@ -36,6 +33,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class CrossChainMsgACLItem {
 
@@ -83,8 +81,8 @@ public class CrossChainMsgACLItem {
 
     public CrossChainMsgACLItem(
             String bizId,
-            String ownerDomain, String ownerDomainProduct, String ownerIdentity,
-            String grantDomain, String grantDomainProduct, String grantIdentity,
+            String ownerDomain, String ownerIdentity,
+            String grantDomain, String grantIdentity,
             int isDeleted
     ) {
         this.bizId = bizId;
@@ -95,6 +93,15 @@ public class CrossChainMsgACLItem {
         this.grantIdentity = grantIdentity;
         this.grantIdentityHex = getIdentityHex(grantIdentity);
         this.isDeleted = isDeleted;
+    }
+
+    public CrossChainMsgACLItem(String ownerDomain, String ownerIdentity, String grantDomain, String grantIdentity) {
+        this.ownerDomain = ownerDomain;
+        this.ownerIdentity = ownerIdentity;
+        this.ownerIdentityHex = getIdentityHex(ownerIdentity);
+        this.grantDomain = grantDomain;
+        this.grantIdentity = grantIdentity;
+        this.grantIdentityHex = getIdentityHex(grantIdentity);
     }
 
     private String getIdentityHex(String identity) {

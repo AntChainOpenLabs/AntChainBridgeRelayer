@@ -20,6 +20,8 @@ import cn.hutool.cache.Cache;
 import cn.hutool.cache.CacheUtil;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
+import com.alipay.antchain.bridge.relayer.commons.model.RelayerNetwork;
+import com.alipay.antchain.bridge.relayer.commons.model.RelayerNodeInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,6 +37,15 @@ public class MemCacheConfig {
 
     @Value("${relayer.cache.system_conf.ttl:30000}")
     private long systemConfigCacheTTL;
+
+    @Value("${relayer.cache.relayer_net_item.ttl:30000}")
+    private long relayerNetworkItemCacheTTL;
+
+    @Value("${relayer.cache.mark_task.ttl:10000}")
+    private long markTaskCacheTTL;
+
+    @Value("${relayer.cache.relayer_node.ttl:3000}")
+    private long relayerNodeInfoCacheTTL;
 
     @Bean
     public Cache<String, DomainCertWrapper> domainCertWrapperCache() {
@@ -54,5 +65,20 @@ public class MemCacheConfig {
     @Bean(name = "systemConfigCache")
     public Cache<String, String> systemConfigCache() {
         return CacheUtil.newLRUCache(10, systemConfigCacheTTL);
+    }
+
+    @Bean(name = "relayerNetworkItemCache")
+    public Cache<String, RelayerNetwork.DomainRouterItem> relayerNetworkItemCache() {
+        return CacheUtil.newLRUCache(32, relayerNetworkItemCacheTTL);
+    }
+
+    @Bean(name = "markTaskCache")
+    public Cache<String, Boolean> markTaskCache() {
+        return CacheUtil.newLRUCache(10, markTaskCacheTTL);
+    }
+
+    @Bean(name = "relayerNodeInfoCache")
+    public Cache<String, RelayerNodeInfo> relayerNodeInfoCache() {
+        return CacheUtil.newLRUCache(20, relayerNodeInfoCacheTTL);
     }
 }

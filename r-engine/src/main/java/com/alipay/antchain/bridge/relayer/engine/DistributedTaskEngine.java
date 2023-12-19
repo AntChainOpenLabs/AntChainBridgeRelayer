@@ -4,6 +4,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 
+import com.alipay.antchain.bridge.relayer.core.service.domainrouter.DomainRouterQueryService;
 import com.alipay.antchain.bridge.relayer.engine.core.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +30,22 @@ public class DistributedTaskEngine implements ApplicationRunner {
     private Duty duty;
 
     @Resource
+    private BizDuty bizDuty;
+
+    @Resource
     private Cleaner cleaner;
 
     @Resource
+    private Marker marker;
+
+    @Resource
+    private DomainRouterQueryService domainRouterQueryService;
+
+    @Resource(name = "distributedTaskEngineScheduleThreadsPool")
     private ScheduledExecutorService distributedTaskEngineScheduleThreadsPool;
+
+    @Resource(name = "markTaskProcessEngineScheduleThreadsPool")
+    private ScheduledExecutorService markTaskProcessEngineScheduleThreadsPool;
 
     @Value("${relayer.engine.schedule.activate.period:1000}")
     private long activatePeriod;
@@ -45,6 +58,15 @@ public class DistributedTaskEngine implements ApplicationRunner {
 
     @Value("${relayer.engine.schedule.duty.period:100}")
     private long dutyPeriod;
+
+    @Value("${relayer.engine.schedule.duty.period:3000}")
+    private long bizDutyPeriod;
+
+    @Value("${relayer.engine.schedule.marker.period:300}")
+    private long markerPeriod;
+
+    @Value("${relayer.service.domain_router.period:300}")
+    private int domainRouterPeriod;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -66,7 +88,7 @@ public class DistributedTaskEngine implements ApplicationRunner {
         );
 
         // schedule dispatcher
-        distributedTaskEngineScheduleThreadsPool.scheduleWithFixedDelay(
+        distributedTaskEngineScheduleThreadsPool.scheduleAtFixedRate(
                 () -> {
                     try {
                         dispatcher.dispatch();
@@ -104,6 +126,48 @@ public class DistributedTaskEngine implements ApplicationRunner {
                 },
                 0,
                 cleanPeriod,
+                TimeUnit.MILLISECONDS
+        );
+
+        // schedule biz duty
+        distributedTaskEngineScheduleThreadsPool.scheduleWithFixedDelay(
+                () -> {
+                    try {
+                        bizDuty.duty();
+                    } catch (Throwable e) {
+                        log.error("schedule biz duty failed.", e);
+                    }
+                },
+                0,
+                bizDutyPeriod,
+                TimeUnit.MILLISECONDS
+        );
+
+        // schedule marker task
+        distributedTaskEngineScheduleThreadsPool.scheduleAtFixedRate(
+                () -> {
+                    try {
+                        marker.mark();
+                    } catch (Throwable e) {
+                        log.error("schedule marker failed.", e);
+                    }
+                },
+                0,
+                markerPeriod,
+                TimeUnit.MILLISECONDS
+        );
+
+        // more services tasks for mark-tasks
+        markTaskProcessEngineScheduleThreadsPool.scheduleWithFixedDelay(
+                () -> {
+                    try {
+                        domainRouterQueryService.process();
+                    } catch (Throwable e) {
+                        log.error("failed to process domain router query", e);
+                    }
+                },
+                0,
+                domainRouterPeriod,
                 TimeUnit.MILLISECONDS
         );
     }

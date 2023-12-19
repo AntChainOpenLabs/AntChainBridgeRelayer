@@ -26,70 +26,82 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ThreadsConfig {
 
-    @Value("${relayer.network.node.server.threads.core_size:32}")
+    @Value("${relayer.network.node.server.threads.core_size:4}")
     private int wsRelayerServerCoreSize;
 
-    @Value("${relayer.network.node.server.threads.total_size:64}")
+    @Value("${relayer.network.node.server.threads.total_size:8}")
     private int wsRelayerServerTotalSize;
 
-    @Value("${relayer.network.node.client.threads.core_size:32}")
+    @Value("${relayer.network.node.client.threads.core_size:4}")
     private int wsRelayerClientCoreSize;
 
-    @Value("${relayer.network.node.client.threads.total_size:64}")
+    @Value("${relayer.network.node.client.threads.total_size:8}")
     private int wsRelayerClientTotalSize;
 
-    @Value("${relayer.service.process.threads.core_size:32}")
+    @Value("${relayer.service.validation.threads.core_size:4}")
+    private int validationServiceCoreSize;
+
+    @Value("${relayer.service.validation.threads.total_size:8}")
+    private int validationServiceTotalSize;
+
+    @Value("${relayer.service.process.threads.core_size:4}")
     private int processServiceCoreSize;
 
-    @Value("${relayer.service.process.threads.total_size:64}")
+    @Value("${relayer.service.process.threads.total_size:8}")
     private int processServiceTotalSize;
 
-    @Value("${relayer.service.committer.threads.core_size:32}")
+    @Value("${relayer.service.committer.threads.core_size:8}")
     private int committerServiceCoreSize;
 
-    @Value("${relayer.service.committer.threads.total_size:64}")
+    @Value("${relayer.service.committer.threads.total_size:8}")
     private int committerServiceTotalSize;
 
-    @Value("${relayer.service.anchor.sync_task.threads.core_size:16}")
+    @Value("${relayer.service.anchor.sync_task.threads.core_size:4}")
     private int blockSyncTaskCoreSize;
 
-    @Value("${relayer.service.anchor.sync_task.threads.total_size:256}")
+    @Value("${relayer.service.anchor.sync_task.threads.total_size:8}")
     private int blockSyncTaskTotalSize;
 
-    @Value("${relayer.service.confirm.threads.core_size:16}")
+    @Value("${relayer.service.confirm.threads.core_size:4}")
     private int confirmServiceCoreSize;
 
-    @Value("${relayer.service.confirm.threads.total_size:64}")
+    @Value("${relayer.service.confirm.threads.total_size:4}")
     private int confirmServiceTotalSize;
 
-    @Value("${relayer.engine.duty.anchor.threads.core_size:16}")
+    @Value("${relayer.engine.duty.anchor.threads.core_size:4}")
     private int anchorScheduleTaskExecutorCoreSize;
 
-    @Value("${relayer.engine.duty.anchor.threads.total_size:32}")
+    @Value("${relayer.engine.duty.anchor.threads.total_size:8}")
     private int anchorScheduleTaskExecutorTotalSize;
 
-    @Value("${relayer.engine.duty.committer.threads.core_size:16}")
+    @Value("${relayer.engine.duty.committer.threads.core_size:4}")
     private int committerScheduleTaskExecutorCoreSize;
 
-    @Value("${relayer.engine.duty.committer.threads.total_size:32}")
+    @Value("${relayer.engine.duty.committer.threads.total_size:8}")
     private int committerScheduleTaskExecutorTotalSize;
 
-    @Value("${relayer.engine.duty.process.threads.core_size:16}")
+    @Value("${relayer.engine.duty.process.threads.core_size:4}")
     private int processScheduleTaskExecutorCoreSize;
 
-    @Value("${relayer.engine.duty.process.threads.total_size:32}")
+    @Value("${relayer.engine.duty.process.threads.total_size:8}")
     private int processScheduleTaskExecutorTotalSize;
 
-    @Value("${relayer.engine.duty.confirm.threads.core_size:8}")
+    @Value("${relayer.engine.duty.validation.threads.core_size:4}")
+    private int validationScheduleTaskExecutorCoreSize;
+
+    @Value("${relayer.engine.duty.validation.threads.total_size:8}")
+    private int validationScheduleTaskExecutorTotalSize;
+
+    @Value("${relayer.engine.duty.confirm.threads.core_size:4}")
     private int confirmScheduleTaskExecutorCoreSize;
 
-    @Value("${relayer.engine.duty.confirm.threads.total_size:16}")
+    @Value("${relayer.engine.duty.confirm.threads.total_size:4}")
     private int confirmScheduleTaskExecutorTotalSize;
 
-    @Value("${relayer.engine.duty.archive.threads.core_size:16}")
+    @Value("${relayer.engine.duty.archive.threads.core_size:4}")
     private int archiveScheduleTaskExecutorCoreSize;
 
-    @Value("${relayer.engine.duty.archive.threads.total_size:16}")
+    @Value("${relayer.engine.duty.archive.threads.total_size:4}")
     private int archiveScheduleTaskExecutorTotalSize;
 
     @Value("${relayer.engine.duty.deploy.threads.core_size:4}")
@@ -98,6 +110,17 @@ public class ThreadsConfig {
     @Value("${relayer.engine.duty.deploy.threads.total_size:8}")
     private int deployScheduleTaskExecutorTotalSize;
 
+    @Value("${relayer.engine.duty.biz_base.threads.core_size:1}")
+    private int baseScheduleBizTaskExecutorCoreSize;
+
+    @Value("${relayer.engine.duty.biz_base.threads.total_size:4}")
+    private int baseScheduleBizTaskExecutorTotalSize;
+
+    @Value("${relayer.service.domain_router.threads.core_size:1}")
+    private int domainRouterQueryCoreSize;
+
+    @Value("${relayer.service.domain_router.threads.total_size:4}")
+    private int domainRouterQueryTotalSize;
 
     @Bean(name = "wsRelayerServerExecutorService")
     public ExecutorService wsRelayerServerExecutorService() {
@@ -121,6 +144,19 @@ public class ThreadsConfig {
                 TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(10000),
                 new ThreadFactoryBuilder().setNameFormat("ws-relayer-client-worker-%d").build(),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+    }
+
+    @Bean(name = "validationServiceThreadsPool")
+    public ExecutorService validationServiceThreadsPool() {
+        return new ThreadPoolExecutor(
+                validationServiceCoreSize,
+                validationServiceTotalSize,
+                1000,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(10000),
+                new ThreadFactoryBuilder().setNameFormat("Process-worker-%d").build(),
                 new ThreadPoolExecutor.AbortPolicy()
         );
     }
@@ -179,7 +215,15 @@ public class ThreadsConfig {
     @Bean(name = "distributedTaskEngineScheduleThreadsPool")
     public ScheduledExecutorService distributedTaskEngineScheduleThreadsPool() {
         return new ScheduledThreadPoolExecutor(
-                4,
+                6,
+                new ThreadFactoryBuilder().setNameFormat("ScheduleEngine-Executor-%d").build()
+        );
+    }
+
+    @Bean(name = "markTaskProcessEngineScheduleThreadsPool")
+    public ScheduledExecutorService markTaskProcessEngineScheduleThreadsPool() {
+        return new ScheduledThreadPoolExecutor(
+                1,
                 new ThreadFactoryBuilder().setNameFormat("ScheduleEngine-Executor-%d").build()
         );
     }
@@ -213,10 +257,22 @@ public class ThreadsConfig {
         return new ThreadPoolExecutor(
                 processScheduleTaskExecutorCoreSize,
                 processScheduleTaskExecutorTotalSize,
-                0, TimeUnit.MILLISECONDS,
+                5000, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(100),
                 new ThreadFactoryBuilder().setNameFormat("process_executor-worker-%d").build(),
                 new ThreadPoolExecutor.DiscardPolicy()
+        );
+    }
+
+    @Bean(name = "validationScheduleTaskExecutorThreadsPool")
+    public ExecutorService validationScheduleTaskExecutorThreadsPool() {
+        return new ThreadPoolExecutor(
+                validationScheduleTaskExecutorCoreSize,
+                validationScheduleTaskExecutorTotalSize,
+                5000, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(100),
+                new ThreadFactoryBuilder().setNameFormat("validation_executor-worker-%d").build(),
+                new ThreadPoolExecutor.CallerRunsPolicy()
         );
     }
 
@@ -253,6 +309,30 @@ public class ThreadsConfig {
                 new ArrayBlockingQueue<>(100),
                 new ThreadFactoryBuilder().setNameFormat("deploy_executor-worker-%d").build(),
                 new ThreadPoolExecutor.DiscardPolicy()
+        );
+    }
+
+    @Bean(name = "baseScheduleBizTaskExecutorThreadsPool")
+    public ExecutorService baseScheduleBizTaskExecutorThreadsPool() {
+        return new ThreadPoolExecutor(
+                baseScheduleBizTaskExecutorCoreSize,
+                baseScheduleBizTaskExecutorTotalSize,
+                0, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(10),
+                new ThreadFactoryBuilder().setNameFormat("base_executor-worker-%d").build(),
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+    }
+
+    @Bean(name = "domainRouterScheduleTaskExecutorThreadsPool")
+    public ExecutorService domainRouterScheduleTaskExecutorThreadsPool() {
+        return new ThreadPoolExecutor(
+                domainRouterQueryCoreSize,
+                domainRouterQueryTotalSize,
+                0, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(10),
+                new ThreadFactoryBuilder().setNameFormat("domain_router_executor-worker-%d").build(),
+                new ThreadPoolExecutor.CallerRunsPolicy()
         );
     }
 }

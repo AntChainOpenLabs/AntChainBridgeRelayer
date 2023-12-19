@@ -5,7 +5,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import cn.hutool.core.lang.Assert;
-import com.alipay.antchain.bridge.relayer.commons.model.DistributedTask;
+import com.alipay.antchain.bridge.relayer.commons.model.IDistributedTask;
 import com.google.common.collect.Maps;
 import lombok.Getter;
 import lombok.Synchronized;
@@ -33,15 +33,15 @@ public abstract class BaseScheduleTaskExecutor {
      * @param task
      */
     @Synchronized
-    public void execute(DistributedTask task) {
+    public void execute(IDistributedTask task) {
 
         // 该任务是否已经在执行
         if (currentTasks.containsKey(task.getUniqueTaskKey())) {
             if (!currentTasks.get(task.getUniqueTaskKey()).isDone()) {
-                log.info("task is running : {}", task.getUniqueTaskKey());
+                log.debug("task is running : {}", task.getUniqueTaskKey());
                 return;
             } else {
-                log.info("task finish : {}", task.getUniqueTaskKey());
+                log.debug("task finish : {}", task.getUniqueTaskKey());
                 currentTasks.remove(task.getUniqueTaskKey());
             }
         }
@@ -53,7 +53,7 @@ public abstract class BaseScheduleTaskExecutor {
         }
 
         // 触发执行
-        log.info("execute task : {}", task.getUniqueTaskKey());
+        log.debug("execute task : {}", task.getUniqueTaskKey());
 
         Future currentTask = executor.submit(genTask(task));
 
@@ -64,5 +64,5 @@ public abstract class BaseScheduleTaskExecutor {
     // 子类实现
     //*******************************************
 
-    public abstract Runnable genTask(DistributedTask task);
+    public abstract Runnable genTask(IDistributedTask task);
 }

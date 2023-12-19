@@ -21,6 +21,7 @@ import java.util.concurrent.locks.Lock;
 
 import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.constant.SDPMsgProcessStateEnum;
+import com.alipay.antchain.bridge.relayer.commons.constant.UniformCrosschainPacketStateEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AuthMsgWrapper;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgCommitResult;
 import com.alipay.antchain.bridge.relayer.commons.model.SDPMsgWrapper;
@@ -30,7 +31,11 @@ public interface ICrossChainMessageRepository {
 
     void putUniformCrosschainPacket(UniformCrosschainPacketContext context);
 
-    UniformCrosschainPacketContext getUniformCrosschainPacket(byte[] ucpId);
+    int putUniformCrosschainPackets(List<UniformCrosschainPacketContext> contexts);
+
+    UniformCrosschainPacketContext getUniformCrosschainPacket(String ucpId, boolean lock);
+
+    boolean updateUniformCrosschainPacketState(String ucpId, UniformCrosschainPacketStateEnum state);
 
     long putAuthMessageWithIdReturned(AuthMsgWrapper authMsgWrapper);
 
@@ -40,11 +45,17 @@ public interface ICrossChainMessageRepository {
 
     boolean updateAuthMessage(AuthMsgWrapper authMsgWrapper);
 
+    boolean updateAuthMessageState(String ucpId, AuthMsgProcessStateEnum state);
+
+    AuthMsgProcessStateEnum getAuthMessageState(String ucpId);
+
     boolean updateSDPMessage(SDPMsgWrapper sdpMsgWrapper);
 
     List<Integer> updateSDPMessageResults(List<SDPMsgCommitResult> results);
 
     AuthMsgWrapper getAuthMessage(long authMsgId);
+
+    String getUcpId(long authMsgId);
 
     AuthMsgWrapper getAuthMessage(long authMsgId, boolean lock);
 
@@ -52,9 +63,19 @@ public interface ICrossChainMessageRepository {
 
     SDPMsgWrapper getSDPMessage(String txHash);
 
-    List<AuthMsgWrapper> peekAuthMessages(String domain, AuthMsgProcessStateEnum processState, int limit);
+    List<UniformCrosschainPacketContext> peekUCPMessages(String domain, UniformCrosschainPacketStateEnum processState, int limit);
+
+    List<AuthMsgWrapper> peekAuthMessages(String domain, int limit, int failLimit);
+
+    List<AuthMsgWrapper> peekNotReadyAuthMessages(String domain, int limit);
+
+    boolean hasNotReadyAuthMessages(String domain);
+
+    SDPMsgWrapper querySDPMessage(String ucpId);
 
     List<SDPMsgWrapper> peekSDPMessages(String receiverBlockchainProduct, String receiverBlockchainId, SDPMsgProcessStateEnum processState, int limit);
+
+    List<SDPMsgWrapper> peekSDPMessagesSent(String senderBlockchainProduct, String senderBlockchainId, SDPMsgProcessStateEnum processState, int limit);
 
     List<SDPMsgWrapper> peekTxFinishedSDPMessageIds(String receiverBlockchainProduct, String receiverBlockchainId, int limit);
 
