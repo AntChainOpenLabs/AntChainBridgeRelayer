@@ -76,10 +76,8 @@ public class BlockNotifyTask extends BlockBaseTask {
 
             // 如果合约还未部署，不进行该任务
             if (!ifDeployContract(notifyTaskType)) {
-                log.info(
-                        "blockchain {} has not deployed {} contract yeah, wait for it.",
-                        getProcessContext().getBlockchainMeta().getMetaKey(), notifyTaskType.getCode()
-                );
+                log.debug("blockchain {} has not deployed {} contract yet, wait for it.",
+                        getProcessContext().getBlockchainMeta().getMetaKey(), notifyTaskType.getCode());
                 continue;
             }
 

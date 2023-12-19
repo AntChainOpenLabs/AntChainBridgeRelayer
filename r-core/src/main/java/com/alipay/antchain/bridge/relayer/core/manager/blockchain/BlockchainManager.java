@@ -268,7 +268,7 @@ public class BlockchainManager implements IBlockchainManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
                     e,
-                    "failed to mark am contract to deploy for blockchain {} - {}",
+                    "failed to mark blockchain {} - {} to deploy BBC contracts",
                     product, blockchainId
             );
         }

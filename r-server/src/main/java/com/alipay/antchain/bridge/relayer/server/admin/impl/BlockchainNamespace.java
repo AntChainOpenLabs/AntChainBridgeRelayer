@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -78,7 +79,7 @@ public class BlockchainNamespace extends AbstractNamespace {
         String domain = args[0];
         try {
             BlockchainMeta blockchainMeta = blockchainManager.getBlockchainMetaByDomain(domain);
-            if (ObjectUtils.isNotEmpty(blockchainMeta)) {
+            if (ObjectUtils.isEmpty(blockchainMeta)) {
                 return "none blockchain found";
             }
             return StrUtil.format("( product: {} , blockchain_id: {} )",
@@ -165,7 +166,7 @@ public class BlockchainNamespace extends AbstractNamespace {
             return "success";
         } catch (Exception e) {
             log.error("failed to mark BBC contract to deploy for blockchain {}-{}: ", product, blockchainId, e);
-            return "exception happened: " + e.getMessage();
+            return "exception happened: " + ObjectUtil.defaultIfNull(e.getCause(), e).getMessage();
         }
     }
 
