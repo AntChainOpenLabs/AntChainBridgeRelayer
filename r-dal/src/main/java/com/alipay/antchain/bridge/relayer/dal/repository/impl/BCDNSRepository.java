@@ -47,6 +47,7 @@ import com.alipay.antchain.bridge.relayer.dal.repository.IBCDNSRepository;
 import com.alipay.antchain.bridge.relayer.dal.utils.ConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class BCDNSRepository implements IBCDNSRepository {
@@ -209,6 +210,28 @@ public class BCDNSRepository implements IBCDNSRepository {
                     RelayerErrorCodeEnum.DAL_BCDNS_ERROR,
                     e,
                     "failed to get bcdns data for space [{}]",
+                    domainSpace
+            );
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteBCDNSServiceDO(String domainSpace) {
+        try {
+            domainSpaceCertMapper.delete(
+                    new LambdaQueryWrapper<DomainSpaceCertEntity>()
+                            .eq(DomainSpaceCertEntity::getDomainSpace, domainSpace)
+            );
+            bcdnsServiceMapper.delete(
+                    new LambdaQueryWrapper<BCDNSServiceEntity>()
+                            .eq(BCDNSServiceEntity::getDomainSpace, domainSpace)
+            );
+        } catch (Exception e) {
+            throw new AntChainBridgeRelayerException(
+                    RelayerErrorCodeEnum.DAL_BCDNS_ERROR,
+                    e,
+                    "failed to delete bcdns data for space [{}]",
                     domainSpace
             );
         }

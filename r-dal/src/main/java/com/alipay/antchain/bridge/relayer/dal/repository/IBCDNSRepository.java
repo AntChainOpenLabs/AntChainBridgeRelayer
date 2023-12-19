@@ -44,6 +44,8 @@ public interface IBCDNSRepository {
 
     BCDNSServiceDO getBCDNSServiceDO(String domainSpace);
 
+    void deleteBCDNSServiceDO(String domainSpace);
+
     List<String> getAllBCDNSDomainSpace();
 
     void saveBCDNSServiceDO(BCDNSServiceDO bcdnsServiceDO);

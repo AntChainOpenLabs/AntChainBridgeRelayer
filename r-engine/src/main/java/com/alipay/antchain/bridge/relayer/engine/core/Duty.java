@@ -8,6 +8,7 @@ import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainDistributed
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainDistributedTask;
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import com.alipay.antchain.bridge.relayer.engine.executor.BaseScheduleTaskExecutor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class Duty {
     @Resource
     private ScheduleContext scheduleContext;
 
+    @Getter
     @Value("${relayer.engine.schedule.duty.dt_task.time_slice:180000}")
     private long timeSliceLength;
 
@@ -47,4 +49,5 @@ public class Duty {
             scheduleTaskExecutorMap.get(task.getTaskType()).execute(task);
         }
     }
+
 }

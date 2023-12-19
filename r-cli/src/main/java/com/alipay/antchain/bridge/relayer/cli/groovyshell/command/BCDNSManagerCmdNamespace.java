@@ -45,6 +45,21 @@ public class BCDNSManagerCmdNamespace extends GroovyScriptCommandNamespace {
         return queryAPI("registerBCDNSService", domainSpace, bcdnsType, propFile, bcdnsCertPath);
     }
 
+    Object getBCDNSService(@ArgsConstraint(name = "domainSpace") String domainSpace) {
+
+        return queryAPI("getBCDNSService", domainSpace);
+    }
+
+    Object deleteBCDNSService(@ArgsConstraint(name = "domainSpace") String domainSpace) {
+
+        return queryAPI("deleteBCDNSService", domainSpace);
+    }
+
+    Object getBCDNSCertificate(@ArgsConstraint(name = "domainSpace") String domainSpace) {
+
+        return queryAPI("getBCDNSCertificate", domainSpace);
+    }
+
     Object stopBCDNSService(@ArgsConstraint(name = "domainSpace") String domainSpace) {
 
         return queryAPI("stopBCDNSService", domainSpace);

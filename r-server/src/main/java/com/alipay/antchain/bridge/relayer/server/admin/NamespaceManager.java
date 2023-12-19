@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.alipay.antchain.bridge.relayer.server.admin.impl.BCDNSNamespace;
 import com.alipay.antchain.bridge.relayer.server.admin.impl.BlockchainNamespace;
+import com.alipay.antchain.bridge.relayer.server.admin.impl.RelayerNamespace;
 import com.alipay.antchain.bridge.relayer.server.admin.impl.ServiceNamespace;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,11 +19,12 @@ public class NamespaceManager {
     public NamespaceManager(
             BlockchainNamespace blockchainNamespace,
             BCDNSNamespace bcdnsNamespace,
-            ServiceNamespace serviceNamespace
+            ServiceNamespace serviceNamespace,
+            RelayerNamespace relayerNamespace
     ) {
         namespaces.put("service", serviceNamespace);
         namespaces.put("blockchain", blockchainNamespace);
-        namespaces.put("relayer", null);
+        namespaces.put("relayer", relayerNamespace);
         namespaces.put("bcdns", bcdnsNamespace);
     }
 
