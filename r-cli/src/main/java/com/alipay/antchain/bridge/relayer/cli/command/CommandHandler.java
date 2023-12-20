@@ -20,11 +20,11 @@ package com.alipay.antchain.bridge.relayer.cli.command;
 public interface CommandHandler {
 
     /**
-     * 执行命令
+     * execute command
      *
-     * @param namespace 命令空间
-     * @param command   命令
-     * @param params    执行参数
+     * @param namespace
+     * @param command
+     * @param params
      * @return
      */
     Object execute(String namespace, String command, String... params);

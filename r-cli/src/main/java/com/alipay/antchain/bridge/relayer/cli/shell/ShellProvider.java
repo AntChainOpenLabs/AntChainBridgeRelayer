@@ -18,15 +18,10 @@ package com.alipay.antchain.bridge.relayer.cli.shell;
 
 public interface ShellProvider {
 
-    /**
-     * 执行命令
-     *
-     * @param cmd
-     */
     String execute(String cmd);
 
     /**
      * shutdown
      */
-    void shutdowm();
+    void shutdown();
 }

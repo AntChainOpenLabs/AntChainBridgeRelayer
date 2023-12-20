@@ -73,6 +73,10 @@
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.alipay.antchain.bridge</groupId>
+            <artifactId>r-core</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

@@ -16,10 +16,6 @@
 
 package com.alipay.antchain.bridge.relayer.cli.util;
 
-/**
- * @author honglin.qhl
- * @version $Id: CliConstant.java, v 0.1 2017-09-15 上午11:22 honglin.qhl Exp $$
- */
 public class CliConstant {
 
     public static final String CLI_VERSION = "0.2.0";

@@ -21,14 +21,14 @@ import java.util.Map;
 public interface CommandNamespace {
 
     /**
-     * 命名空间名称
+     * namespace name
      *
      * @return
      */
     public String name();
 
     /**
-     * 获取命令命名空间下所有命令
+     * get all commands in the command namespace
      *
      * @return
      */
