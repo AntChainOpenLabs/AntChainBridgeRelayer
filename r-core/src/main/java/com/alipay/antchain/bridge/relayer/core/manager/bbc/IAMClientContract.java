@@ -38,9 +38,6 @@ public interface IAMClientContract {
 
     /**
      * 部署合约
-     *
-     * @param contractId
-     * @return
      */
     void deployContract();
 }

@@ -19,10 +19,6 @@ package com.alipay.antchain.bridge.relayer.cli.command;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: CommandNamespaceImpl.java, v 0.1 2017-06-14 下午9:42 honglin.qhl Exp $$
- */
 public class CommandNamespaceImpl implements CommandNamespace {
     /**
      * 命令集合

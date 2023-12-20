@@ -26,10 +26,6 @@ import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.ParsedLine;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: PromptCompleter.java, v 0.1 2017-06-14 下午9:58 honglin.qhl Exp $$
- */
 public class PromptCompleter implements Completer {
 
     private List<CommandNamespace> namespaces = new ArrayList<>();

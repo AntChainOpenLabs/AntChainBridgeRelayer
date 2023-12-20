@@ -18,12 +18,6 @@ package com.alipay.antchain.bridge.relayer.cli.command;
 
 import java.util.Map;
 
-/**
- * 命令命名空间
- *
- * @author honglin.qhl
- * @version $Id: CmdNamespace.java, v 0.1 2017-06-14 下午9:32 honglin.qhl Exp $$
- */
 public interface CommandNamespace {
 
     /**

@@ -26,10 +26,6 @@ import com.alipay.antchain.bridge.relayer.core.grpc.admin.AdministratorServiceGr
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: GrpcClient.java, v 0.1 2017-06-17 下午2:56 honglin.qhl Exp $$
- */
 public class GrpcClient {
 
     private final ManagedChannel channel;

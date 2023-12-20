@@ -25,10 +25,6 @@ import groovy.lang.Script;
 import org.codehaus.groovy.reflection.ClassInfo;
 import org.codehaus.groovy.runtime.InvokerHelper;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: GroovyShellProvider.java, v 0.1 2017-06-17 下午5:44 honglin.qhl Exp $$
- */
 public class GroovyShellProvider extends GroovyShell implements ShellProvider {
 
     private NamespaceManager namespaceManager;

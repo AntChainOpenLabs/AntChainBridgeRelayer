@@ -165,7 +165,6 @@ public class CrossChainMsgACLRepository implements ICrossChainMsgACLRepository {
         try {
             List<CrossChainMsgACLEntity> entityList = crossChainMsgACLMapper.selectList(
                     new LambdaQueryWrapper<CrossChainMsgACLEntity>()
-                            .select(ListUtil.of(CrossChainMsgACLEntity::getIsDeleted))
                             .eq(CrossChainMsgACLEntity::getOwnerDomain, item.getOwnerDomain())
                             .eq(
                                     CrossChainMsgACLEntity::getOwnerIdHex,

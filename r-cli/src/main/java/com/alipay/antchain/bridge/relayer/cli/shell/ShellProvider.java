@@ -16,10 +16,6 @@
 
 package com.alipay.antchain.bridge.relayer.cli.shell;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: ShellProvider.java, v 0.1 2017-06-17 下午5:41 honglin.qhl Exp $$
- */
 public interface ShellProvider {
 
     /**
