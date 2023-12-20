@@ -34,7 +34,7 @@ public abstract class GroovyScriptCommandNamespace extends CommandNamespaceImpl 
     private static String COMMAND_NAMESPACE_NAME = "name";
 
     /**
-     * 命名空间名称由子类实现
+     * Namespace names are implemented by subclasses
      *
      * @return
      */
@@ -47,7 +47,7 @@ public abstract class GroovyScriptCommandNamespace extends CommandNamespaceImpl 
     }
 
     /**
-     * 初始化:加载command,默认将子类所有方法解析为命令
+     * Initialization: Loads command, which resolves all methods of a subclass into commands by default
      */
     public void loadCommand() {
 
@@ -103,7 +103,7 @@ public abstract class GroovyScriptCommandNamespace extends CommandNamespaceImpl 
     }
 
     /**
-     * 查询api,供子类命令执行使用
+     * Query api for subclass command execution
      *
      * @param command
      * @param args
