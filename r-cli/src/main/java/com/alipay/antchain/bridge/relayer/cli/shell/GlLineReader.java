@@ -43,10 +43,6 @@ import org.jline.utils.AttributedString;
 import org.jline.utils.Levenshtein;
 import org.jline.utils.Log;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: GlLineReader.java, v 0.1 2017-06-15 上午11:39 honglin.qhl Exp $$
- */
 public class GlLineReader extends LineReaderImpl {
 
     public GlLineReader(Terminal terminal) throws IOException {

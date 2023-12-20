@@ -16,10 +16,6 @@
 
 package com.alipay.antchain.bridge.relayer.cli.command;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: CommandHandler.java, v 0.1 2017-06-17 下午5:58 honglin.qhl Exp $$
- */
 @FunctionalInterface
 public interface CommandHandler {
 

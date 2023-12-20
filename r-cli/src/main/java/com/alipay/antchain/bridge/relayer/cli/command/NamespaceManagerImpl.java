@@ -24,11 +24,6 @@ import com.alipay.antchain.bridge.relayer.cli.groovyshell.command.BlockchainMana
 import com.alipay.antchain.bridge.relayer.cli.groovyshell.command.RelayerCmdNamespace;
 import com.alipay.antchain.bridge.relayer.cli.groovyshell.command.ServiceManagerCmdNamespace;
 
-
-/**
- *  @author honglin.qhl
- *  @version $Id: NamespaceManagerImpl.java, v 0.1 2017-06-15 下午5:09 honglin.qhl Exp $$
- */
 public class NamespaceManagerImpl implements NamespaceManager {
 
     private List<CommandNamespace> commandNamespaces = new ArrayList<>();

@@ -19,12 +19,6 @@ package com.alipay.antchain.bridge.relayer.cli.command;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 命令类
- *
- * @author honglin.qhl
- * @version $Id: Command.java, v 0.1 2017-06-17 下午4:33 honglin.qhl Exp $$
- */
 public class Command {
 
     /**

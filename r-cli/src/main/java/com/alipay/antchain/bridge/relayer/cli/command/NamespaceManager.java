@@ -18,10 +18,6 @@ package com.alipay.antchain.bridge.relayer.cli.command;
 
 import java.util.List;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: NamespaceManager.java, v 0.1 2017-06-17 下午8:22 honglin.qhl Exp $$
- */
 public interface NamespaceManager {
 
     /**

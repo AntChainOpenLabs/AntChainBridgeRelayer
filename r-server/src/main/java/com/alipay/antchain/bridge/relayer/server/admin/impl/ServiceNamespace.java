@@ -85,7 +85,7 @@ public class ServiceNamespace extends AbstractNamespace {
         } catch (Exception e) {
             log.error("failed to create crosschain ACL item : ( grant_domain: {}, grant_id: {}, owner_domain: {}, owner_id: {} ) ",
                     grantDomain, grantIdentity, ownerDomain, ownerIdentity, e);
-            return "unexpected error : " + e.getMessage();
+            return "unexpected error : " + ObjectUtil.defaultIfNull(e.getCause(), e).getMessage();
         }
         return "success";
     }
