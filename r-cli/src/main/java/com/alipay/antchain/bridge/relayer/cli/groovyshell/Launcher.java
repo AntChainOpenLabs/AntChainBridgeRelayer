@@ -31,10 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.*;
 
 
-/**
- *  @author honglin.qhl
- *  @version $Id: Launcher.java, v 0.1 2017-06-15 下午8:17 honglin.qhl Exp $$
- */
 @Slf4j
 public class  Launcher {
 

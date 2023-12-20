@@ -19,10 +19,6 @@ package com.alipay.antchain.bridge.relayer.cli.groovyshell.command;
 import com.alipay.antchain.bridge.relayer.cli.command.ArgsConstraint;
 import com.alipay.antchain.bridge.relayer.cli.groovyshell.GroovyScriptCommandNamespace;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: OracleManagerCmdNamespace.java, v 0.1 2017-06-17 下午1:40 honglin.qhl Exp $$
- */
 public class ServiceManagerCmdNamespace extends GroovyScriptCommandNamespace {
 
     /**

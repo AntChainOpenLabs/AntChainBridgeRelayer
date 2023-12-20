@@ -35,10 +35,6 @@ import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: Shell.java, v 0.1 2017-06-15 下午2:22 honglin.qhl Exp $$
- */
 public class Shell {
 
     private static String PROMPT = "\033[0;37mrelayer> \033[0m";

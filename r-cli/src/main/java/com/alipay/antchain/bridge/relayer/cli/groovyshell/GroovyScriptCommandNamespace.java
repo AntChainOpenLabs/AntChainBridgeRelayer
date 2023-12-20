@@ -29,10 +29,6 @@ import com.alipay.antchain.bridge.relayer.core.grpc.admin.AdminRequest;
 import com.alipay.antchain.bridge.relayer.core.grpc.admin.AdminResponse;
 import com.google.common.collect.Lists;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: GroovyScriptCommandNamespace.java, v 0.1 2017-06-17 下午4:44 honglin.qhl Exp $$
- */
 public abstract class GroovyScriptCommandNamespace extends CommandNamespaceImpl {
 
     private static String COMMAND_NAMESPACE_NAME = "name";

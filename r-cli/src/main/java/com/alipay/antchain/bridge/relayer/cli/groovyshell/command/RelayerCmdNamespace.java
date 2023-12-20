@@ -35,8 +35,28 @@ public class RelayerCmdNamespace extends GroovyScriptCommandNamespace {
         return queryAPI("setLocalEndpoints", endpoints);
     }
 
+    Object getLocalEndpoints() {
+        return queryAPI("getLocalEndpoints");
+    }
+
+    Object getLocalRelayerId() {
+        return queryAPI("getLocalRelayerId");
+    }
+
+    Object getLocalRelayerCrossChainCertificate() {
+        return queryAPI("getLocalRelayerCrossChainCertificate");
+    }
+
+    Object getLocalDomainRouter(@ArgsConstraint(name = "domain") String domain) {
+        return queryAPI("getLocalDomainRouter", domain);
+    }
+
     Object getCrossChainChannel(@ArgsConstraint(name = "localDomain") String localDomain,
                                 @ArgsConstraint(name = "remoteDomain") String remoteDomain) {
         return queryAPI("getCrossChainChannel", localDomain, remoteDomain);
+    }
+
+    Object getRemoteRelayerInfo(@ArgsConstraint(name = "nodeId") String nodeId) {
+        return queryAPI("getRemoteRelayerInfo", nodeId);
     }
 }
