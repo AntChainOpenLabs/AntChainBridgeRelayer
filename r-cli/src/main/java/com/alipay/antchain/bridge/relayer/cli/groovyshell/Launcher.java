@@ -26,7 +26,6 @@ import com.alipay.antchain.bridge.relayer.cli.glclient.GrpcClient;
 import com.alipay.antchain.bridge.relayer.cli.shell.PromptCompleter;
 import com.alipay.antchain.bridge.relayer.cli.shell.Shell;
 import com.alipay.antchain.bridge.relayer.cli.shell.ShellProvider;
-import com.alipay.antchain.bridge.relayer.cli.util.CliConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.*;
 
@@ -64,7 +63,7 @@ public class  Launcher {
         }
 
         if (cmd.hasOption(OP_VERSION)) {
-            log.info("cliVersion : {}", CliConstant.CLI_VERSION);
+            log.info("cliVersion : {}", getVersion());
             return;
         }
 
