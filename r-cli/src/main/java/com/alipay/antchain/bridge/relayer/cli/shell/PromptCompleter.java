@@ -33,7 +33,7 @@ public class PromptCompleter implements Completer {
     private List<String> reservedWords = new ArrayList<>();
 
     /**
-     * 添加namespace
+     * add namespace
      *
      * @param namespaceManager
      */
@@ -43,7 +43,7 @@ public class PromptCompleter implements Completer {
     }
 
     /**
-     * 添加保留字
+     * add reserved word
      *
      * @param reservedWord
      */
@@ -58,10 +58,10 @@ public class PromptCompleter implements Completer {
 
         String buffer = commandLine.line().substring(0, commandLine.cursor());
 
-        //如果未输入.符号,则补全保留字与命令
+        // If you do not enter `.` Symbol, the reserved word and command are completed.
         if (!buffer.contains(".")) {
 
-            // 补全保留字
+            // Complete reserved word.
             reservedWords.forEach(reservedWord -> {
                 if (!buffer.isEmpty() && !reservedWord.startsWith(buffer)) {
                     return;
@@ -70,7 +70,7 @@ public class PromptCompleter implements Completer {
                 candidates.add(new Candidate(reservedWord, reservedWord, null, null, null, null, true));
             });
 
-            // 补全命令
+            // Complete command.
             namespaces.forEach(namespace -> {
 
                 if (!buffer.isEmpty() && !namespace.name().startsWith(buffer)) {
@@ -96,7 +96,8 @@ public class PromptCompleter implements Completer {
 
                 candidates.add(new Candidate(namespace.name() + ".", namespace.name(), null, null, null, null, true));
             });
-        } else if (buffer.contains("(")) {// 已输入完整的命令(判断是否已输入"("符号),则补全详细的参数字段
+        } else if (buffer.contains("(")) {
+            // If a complete command has been entered (check whether the `(` symbol has been entered), complete the detailed parameter fields.
 
             String[] buf = buffer.split("\\.");
 
@@ -117,9 +118,9 @@ public class PromptCompleter implements Completer {
                             cmd.getArgs().forEach(arg -> {
                                 sb.append("\n    " + arg.getType() + " " + arg.getName()).append(" ");
 
-                                if (!arg.getContraints().isEmpty()) {
+                                if (!arg.getConstraints().isEmpty()) {
                                     sb.append(" //");
-                                    arg.getContraints().forEach(contraint -> {
+                                    arg.getConstraints().forEach(contraint -> {
                                         sb.append(contraint).append(",");
                                     });
                                     sb.deleteCharAt(sb.length() - 1);
@@ -139,7 +140,8 @@ public class PromptCompleter implements Completer {
                     }
                 });
             });
-        } else { //已输入.符号,则补全匹配命令
+        } else {
+            // If the `.` symbol is entered, the matching command is completed.
             String[] buf = buffer.split("\\.");
 
             namespaces.forEach(namespace -> {
@@ -167,9 +169,9 @@ public class PromptCompleter implements Completer {
                             cmd.getArgs().forEach(arg -> {
                                 sb.append("\n    " + arg.getType() + " " + arg.getName()).append(" ");
 
-                                if (!arg.getContraints().isEmpty()) {
+                                if (!arg.getConstraints().isEmpty()) {
                                     sb.append(" //");
-                                    arg.getContraints().forEach(contraint -> {
+                                    arg.getConstraints().forEach(contraint -> {
                                         sb.append(contraint).append(",");
                                     });
                                     sb.deleteCharAt(sb.length() - 1);

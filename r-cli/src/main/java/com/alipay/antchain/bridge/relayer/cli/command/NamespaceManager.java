@@ -21,21 +21,21 @@ import java.util.List;
 public interface NamespaceManager {
 
     /**
-     * 添加namespace
+     * add namespace
      *
      * @param commandNamespace
      */
     void addNamespace(CommandNamespace commandNamespace);
 
     /**
-     * 获取所有namespace
+     * get all namespace
      *
      * @return
      */
     List<CommandNamespace> getCommandNamespaces();
 
     /**
-     * namespace快照
+     * namespace snapshot
      *
      * @return
      */

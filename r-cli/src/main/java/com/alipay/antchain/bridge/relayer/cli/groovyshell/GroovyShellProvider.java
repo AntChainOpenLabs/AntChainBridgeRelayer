@@ -52,7 +52,7 @@ public class GroovyShellProvider extends GroovyShell implements ShellProvider {
         Script shell = this.parse(cmd);
         Object scriptObject = InvokerHelper.createScript(shell.getClass(), this.getContext()).run();
 
-        // 周期清除缓存，防止OOM
+        // Periodically clear cache to prevent OOM
         if((++cleanCount) % CLEAN_PERIOD == 0) {
             getClassLoader().clearCache();
             ClassInfo.clearModifiedExpandos();
@@ -64,7 +64,7 @@ public class GroovyShellProvider extends GroovyShell implements ShellProvider {
     }
 
     @Override
-    public void shutdowm() {
+    public void shutdown() {
         // nothing
     }
 }

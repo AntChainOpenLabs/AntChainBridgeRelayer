@@ -22,17 +22,17 @@ import java.util.List;
 public class Command {
 
     /**
-     * 命令名称
+     * command name
      */
     private String name;
 
     /**
-     * 命令参数描述
+     * command args description
      */
     private List<Arg> args = new ArrayList<>();
 
     /**
-     * 使用命令名称构造命令
+     * create command with command name
      *
      * @param name
      */
@@ -41,17 +41,17 @@ public class Command {
     }
 
     /**
-     * 添加参数
+     * add args
      *
-     * @param argName    参数名称
-     * @param contraints 参数取值约束
+     * @param argName
+     * @param constraints: parameter value constraint
      */
-    public void addArgs(String argName, String type, List<String> contraints) {
+    public void addArgs(String argName, String type, List<String> constraints) {
 
         Arg item = new Arg();
         item.name = argName;
         item.type = type;
-        item.contraints = contraints;
+        item.constraints = constraints;
 
         this.args.add(item);
     }
@@ -75,12 +75,12 @@ public class Command {
     }
 
     /**
-     * 参数描述类
+     * Parameter description class
      */
     public class Arg {
         private String name;
         private String type;
-        private List<String> contraints;
+        private List<String> constraints;
 
         /**
          * Getter method for property <tt>name.</tt>.
@@ -92,12 +92,12 @@ public class Command {
         }
 
         /**
-         * Getter method for property <tt>contraints.</tt>.
+         * Getter method for property <tt>constraints.</tt>.
          *
-         * @return property value of contraints.
+         * @return property value of constraints.
          */
-        public List<String> getContraints() {
-            return contraints;
+        public List<String> getConstraints() {
+            return constraints;
         }
 
         /**

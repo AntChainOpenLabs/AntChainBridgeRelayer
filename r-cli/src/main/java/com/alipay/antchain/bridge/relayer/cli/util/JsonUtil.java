@@ -16,13 +16,9 @@
 
 package com.alipay.antchain.bridge.relayer.cli.util;
 
-/**
- *  @author honglin.qhl
- *  @version $Id: JsonUtil.java, v 0.1 2017-06-19 下午5:36 honglin.qhl Exp $$
- */
 public class JsonUtil {
     /**
-     * 得到格式化json数据  退格用\t 换行用\r
+     * Get formatted json data backspace with `\t` wrap with `\r`
      */
     public static String format(String jsonStr) {
         int level = 0;
