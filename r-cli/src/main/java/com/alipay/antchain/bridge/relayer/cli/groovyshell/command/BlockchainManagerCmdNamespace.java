@@ -42,7 +42,13 @@ public class BlockchainManagerCmdNamespace extends GroovyScriptCommandNamespace 
         return queryAPI("getBlockchain", product, blockchainId);
     }
 
-    Object addHeteroBlockchainAnchor(
+    Object getBlockchainContracts(@ArgsConstraint(name = "product") String product,
+                                  @ArgsConstraint(name = "blockchainId") String blockchainId) {
+
+        return queryAPI("getBlockchainContracts", product, blockchainId);
+    }
+
+    Object addBlockchainAnchor(
             @ArgsConstraint(name = "product") String product,
             @ArgsConstraint(name = "blockchainId") String blockchainId,
             @ArgsConstraint(name = "domain") String domain,
@@ -53,7 +59,7 @@ public class BlockchainManagerCmdNamespace extends GroovyScriptCommandNamespace 
     ) {
 
         return queryAPI(
-                "addHeteroBlockchainAnchor",
+                "addBlockchainAnchor",
                 product, blockchainId, domain, pluginServerId, alias, desc, heteroConfFilePath
         );
     }

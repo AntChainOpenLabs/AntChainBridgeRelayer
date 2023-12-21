@@ -27,6 +27,7 @@
             <outputDirectory>${file.separator}config</outputDirectory>
             <includes>
                 <include>application.yml</include>
+                <include>db${file.separator}ddl.sql</include>
             </includes>
         </fileSet>
         <fileSet>

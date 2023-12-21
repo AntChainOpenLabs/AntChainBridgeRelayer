@@ -177,8 +177,8 @@ public class BCDNSManagerTest extends TestBase {
                 new QueryDomainNameCertificateResponse(true, antchainDotCommCert)
         );
 
-        AbstractCrossChainCertificate certificate = bcdnsManager.queryAndSaveDomainCertificateFromBCDNS(
-                antChainDotComDomain, CrossChainDomain.ROOT_DOMAIN_SPACE
+        AbstractCrossChainCertificate certificate = bcdnsManager.queryDomainCertificateFromBCDNS(
+                antChainDotComDomain, CrossChainDomain.ROOT_DOMAIN_SPACE, true
         );
         Assert.assertNotNull(certificate);
         Assert.assertEquals(

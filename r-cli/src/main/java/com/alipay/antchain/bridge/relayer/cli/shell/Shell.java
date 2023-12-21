@@ -37,23 +37,19 @@ import org.jline.terminal.TerminalBuilder;
 
 public class Shell {
 
-    private static String PROMPT = "\033[0;37mrelayer> \033[0m";
+    private static final String PROMPT = "\n\033[0;37mrelayer> \033[0m";
 
-    private NamespaceManager namespaceManager;
-
-    private Terminal terminal;
+    private final NamespaceManager namespaceManager;
 
     private GlLineReader reader;
 
-    private Map<String, ReservedWord> reservedWord = new HashMap<>();
+    private final Map<String, ReservedWord> reservedWord = new HashMap<>();
 
-    private AtomicBoolean loopRunning = new AtomicBoolean(false);
+    private final AtomicBoolean loopRunning = new AtomicBoolean(false);
 
-    private ReentrantLock shellLock = new ReentrantLock();
+    private final ReentrantLock shellLock = new ReentrantLock();
 
-    private PromptCompleter completer;
-
-    private ShellProvider shellProvider;
+    private final ShellProvider shellProvider;
 
     public final static Runtime Runtime = new Runtime();
 
@@ -67,8 +63,7 @@ public class Shell {
         this.shellProvider = shellProvider;
         this.namespaceManager = namespaceManager;
 
-        this.completer = completer;
-        this.reservedWord.keySet().forEach(reservedWord -> this.completer.addReservedWord(reservedWord));
+        this.reservedWord.keySet().forEach(completer::addReservedWord);
 
         reader.setCompleter(completer);
 
@@ -78,6 +73,7 @@ public class Shell {
 
     void init() {
         // init term
+        Terminal terminal;
         try {
             terminal = TerminalBuilder.builder()
                     .system(true)

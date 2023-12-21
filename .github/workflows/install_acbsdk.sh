@@ -18,26 +18,8 @@
 
 CURR_DIR="$(cd `dirname $0`; pwd)"
 
-echo "install BID SDK ..."
-git clone -b release/1.0.0 https://github.com/caict-4iot-dev/BID-SDK-JAVA.git
-cd BID-SDK-JAVA/BID-SDK
-mvn install -Dmaven.test.skip=true
-cd -
-git clone -b release/1.0.2 https://github.com/caict-4iot-dev/BIF-Core-SDK.git
-cd BIF-Core-SDK/bif-chain-sdk
-mvn install -Dmaven.test.skip=true
-cd -
-echo "install BID SDK finished"
-
 echo "install ACB SDK ..."
-git clone -b feat/bcdns_support https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK.git
-cd AntChainBridgePluginSDK/antchain-bridge-commons
+git clone -b dev/v0.2.0-SNAPSHOT https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK.git
+cd AntChainBridgePluginSDK
 mvn install -Dmaven.test.skip=true
-cd -
-cd AntChainBridgePluginSDK/antchain-bridge-spi
-mvn install -Dmaven.test.skip=true
-cd -
-cd AntChainBridgePluginSDK/antchain-bridge-bcdns
-mvn install -Dmaven.test.skip=true
-cd -
 echo "install ACB SDK finished"

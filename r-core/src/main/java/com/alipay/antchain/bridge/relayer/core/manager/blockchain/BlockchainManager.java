@@ -294,6 +294,9 @@ public class BlockchainManager implements IBlockchainManager {
             }
 
             blockchainMeta.getProperties().setAnchorRuntimeStatus(BlockchainStateEnum.RUNNING);
+            if (ObjectUtil.isNull(blockchainMeta.getProperties().getAmServiceStatus())) {
+                blockchainMeta.getProperties().setAmServiceStatus(OnChainServiceStatusEnum.INIT);
+            }
             if (!updateBlockchainMeta(blockchainMeta)) {
                 throw new RuntimeException(
                         StrUtil.format(
