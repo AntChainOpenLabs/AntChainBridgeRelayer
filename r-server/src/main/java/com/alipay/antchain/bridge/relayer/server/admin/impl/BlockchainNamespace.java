@@ -62,7 +62,8 @@ public class BlockchainNamespace extends AbstractNamespace {
     public BlockchainNamespace() {
         addCommand("getBlockchainIdByDomain", this::getBlockchainIdByDomain);
         addCommand("getBlockchain", this::getBlockchain);
-        addCommand("addHeteroBlockchainAnchor", this::addHeteroBlockchainAnchor);
+        addCommand("getBlockchainContracts", this::getBlockchainContracts);
+        addCommand("addBlockchainAnchor", this::addBlockchainAnchor);
         addCommand("deployBBCContractsAsync", this::deployBBCContractsAsync);
         addCommand("updateBlockchainAnchor", this::updateBlockchainAnchor);
         addCommand("updateBlockchainProperty", this::updateBlockchainProperty);
@@ -107,7 +108,29 @@ public class BlockchainNamespace extends AbstractNamespace {
         return JSONObject.toJSONString(blockchainMeta, SerializerFeature.PrettyFormat);
     }
 
-    Object addHeteroBlockchainAnchor(String... args) {
+    /**
+     * 查询区块链
+     *
+     * @return
+     */
+    Object getBlockchainContracts(String... args) {
+        String product = args[0];
+        String blockchainId = args[1];
+
+        BlockchainMeta blockchainMeta = blockchainManager.getBlockchainMeta(product, blockchainId);
+        if (blockchainMeta == null) {
+            return "blockchain not exist.";
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("state", ObjectUtil.defaultIfNull(blockchainMeta.getProperties().getAmServiceStatus(), ""));
+        jsonObject.put("am_contract", ObjectUtil.defaultIfEmpty(blockchainMeta.getProperties().getAmClientContractAddress(), "empty"));
+        jsonObject.put("sdp_contract", ObjectUtil.defaultIfEmpty(blockchainMeta.getProperties().getSdpMsgContractAddress(), "empty"));
+
+        return jsonObject.toJSONString();
+    }
+
+    Object addBlockchainAnchor(String... args) {
         if (args.length != 7) {
             return "wrong number of arguments";
         }

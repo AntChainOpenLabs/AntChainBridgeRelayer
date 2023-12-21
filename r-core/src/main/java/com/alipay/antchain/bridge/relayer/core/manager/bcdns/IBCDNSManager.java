@@ -69,7 +69,7 @@ public interface IBCDNSManager {
 
     String applyDomainCertificate(String domainSpace, String domain, ObjectIdentity applicantOid, byte[] rawSubject);
 
-    AbstractCrossChainCertificate queryAndSaveDomainCertificateFromBCDNS(String domain, String domainSpace);
+    AbstractCrossChainCertificate queryDomainCertificateFromBCDNS(String domain, String domainSpace, boolean saveOrNot);
 
     List<DomainCertApplicationDO> getAllApplyingDomainCertApplications();
 

@@ -64,6 +64,7 @@ public class BCDNSNamespace extends AbstractNamespace {
         addCommand("applyDomainNameCert", this::applyDomainNameCert);
         addCommand("queryDomainCertApplicationState", this::queryDomainCertApplicationState);
         addCommand("fetchDomainNameCertFromBCDNS", this::fetchDomainNameCertFromBCDNS);
+        addCommand("queryDomainNameCertFromBCDNS", this::queryDomainNameCertFromBCDNS);
         addCommand("registerDomainRouter", this::registerDomainRouter);
         addCommand("queryDomainRouter", this::queryDomainRouter);
         addCommand("addBlockchainTrustAnchor", this::addBlockchainTrustAnchor);
@@ -214,7 +215,7 @@ public class BCDNSNamespace extends AbstractNamespace {
             return "your receipt is " + receipt;
         } catch (Throwable e) {
             log.error("failed to apply domain cert from domain space [{}]", args[0], e);
-            return "failed to restart BCDNS: " + e.getMessage();
+            return "failed to apply domain cert : " + e.getMessage();
         }
     }
 
@@ -235,7 +236,27 @@ public class BCDNSNamespace extends AbstractNamespace {
             return "your application not finished: " + domainCertApplicationDO.getState().getCode();
         } catch (Throwable e) {
             log.error("failed to query domain cert from BCDNS with domain space [{}]", args[0], e);
-            return "failed to restart BCDNS: " + e.getMessage();
+            return "failed to query domain cert: " + e.getMessage();
+        }
+    }
+
+    Object queryDomainNameCertFromBCDNS(String... args) {
+        if (args.length != 2) {
+            return "wrong number of arguments";
+        }
+
+        String domain = args[0];
+        String domainSpace = args[1];
+
+        try {
+            AbstractCrossChainCertificate certificate = bcdnsManager.queryDomainCertificateFromBCDNS(domain, domainSpace, false);
+            if (ObjectUtil.isNull(certificate)) {
+                return StrUtil.format("none cert found for domain {} on BCDNS {}", domain, domainSpace);
+            }
+            return "the cert is : \n" + CrossChainCertificateUtil.formatCrossChainCertificateToPem(certificate);
+        } catch (Throwable e) {
+            log.error("failed to query from BCDNS:", e);
+            return "failed to query from BCDNS: " + e.getMessage();
         }
     }
 
@@ -248,14 +269,14 @@ public class BCDNSNamespace extends AbstractNamespace {
         String domainSpace = args[1];
 
         try {
-            AbstractCrossChainCertificate certificate = bcdnsManager.queryAndSaveDomainCertificateFromBCDNS(domain, domainSpace);
+            AbstractCrossChainCertificate certificate = bcdnsManager.queryDomainCertificateFromBCDNS(domain, domainSpace, true);
             if (ObjectUtil.isNull(certificate)) {
                 return StrUtil.format("none cert found for domain {} on BCDNS {}", domain, domainSpace);
             }
             return "the cert is : \n" + CrossChainCertificateUtil.formatCrossChainCertificateToPem(certificate);
         } catch (Throwable e) {
             log.error("failed to query from BCDNS:", e);
-            return "failed to query from BCDNS: " + e.getMessage();
+            return "failed to query from BCDNS: " + ObjectUtil.defaultIfNull(e.getCause(), e).getMessage();
         }
     }
 

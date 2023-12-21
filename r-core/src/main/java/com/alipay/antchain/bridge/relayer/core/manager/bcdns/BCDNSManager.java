@@ -467,7 +467,7 @@ public class BCDNSManager implements IBCDNSManager {
     }
 
     @Override
-    public AbstractCrossChainCertificate queryAndSaveDomainCertificateFromBCDNS(String domain, String domainSpace) {
+    public AbstractCrossChainCertificate queryDomainCertificateFromBCDNS(String domain, String domainSpace, boolean saveOrNot) {
         log.info("try to get domain cert of {} from BCDNS {}", domain, domainSpace);
         try {
             IBlockChainDomainNameService bcdnsService = getBCDNSService(domainSpace);
@@ -499,7 +499,9 @@ public class BCDNSManager implements IBCDNSManager {
                             )
                     );
                 }
-                blockchainRepository.saveDomainCert(new DomainCertWrapper(response.getCertificate()));
+                if (saveOrNot) {
+                    blockchainRepository.saveDomainCert(new DomainCertWrapper(response.getCertificate()));
+                }
                 return response.getCertificate();
             }
             return null;
