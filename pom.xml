@@ -23,6 +23,7 @@
         <module>r-engine</module>
         <module>r-server</module>
         <module>r-commons</module>
+        <module>r-spring-cli</module>
     </modules>
 
     <properties>
@@ -45,6 +46,7 @@
         <grpc.version>1.42.2</grpc.version>
         <bouncycastle.version>1.76</bouncycastle.version>
         <commons-collections4.version>4.4</commons-collections4.version>
+        <spring-shell.version>2.1.15</spring-shell.version>
     </properties>
 
     <dependencyManagement>
@@ -206,6 +208,13 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-collections4</artifactId>
                 <version>${commons-collections4.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.shell</groupId>
+                <artifactId>spring-shell-dependencies</artifactId>
+                <version>${spring-shell.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
