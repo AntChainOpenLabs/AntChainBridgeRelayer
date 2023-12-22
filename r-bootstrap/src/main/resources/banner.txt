@@ -5,5 +5,5 @@ ${AnsiColor.BLUE}${AnsiStyle.BOLD}
  / ___ |/ /___ / /_/ /  / _, _// /___ / /___ / ___ | / // /___ / _, _/
 /_/  |_|\____//_____/  /_/ |_|/_____//_____//_/  |_|/_//_____//_/ |_|
 
-                             relayer v0.1
+                            relayer @project.version@
 ${AnsiColor.BLACK}
