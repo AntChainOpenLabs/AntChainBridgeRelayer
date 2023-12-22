@@ -242,6 +242,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         0,
+                                        new byte[]{},
                                         authMessagePositiveTrust
                                 ),
                                 "eth",
@@ -313,6 +314,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         0,
+                                        new byte[]{},
                                         authMessagePositiveTrust
                                 ),
                                 "eth",
@@ -340,6 +342,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         0,
+                                        new byte[]{},
                                         authMessagePositiveTrust
                                 ),
                                 "eth",
@@ -381,6 +384,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                         "am",
                                         AuthMsgProcessStateEnum.PENDING,
                                         0,
+                                        new byte[]{},
                                         authMessagePositiveTrust
                                 ),
                                 "eth",
@@ -512,6 +516,7 @@ public class CrossChainRepositoryTest extends TestBase {
                                     "am",
                                     AuthMsgProcessStateEnum.PENDING,
                                     0,
+                                    new byte[]{},
                                     authMessagePositiveTrust
                             ),
                             sdpMessage
