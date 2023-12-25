@@ -13,7 +13,7 @@
 
     <groupId>com.alipay.antchain.bridge</groupId>
     <artifactId>antchain-bridge-relayer</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1.0</version>
     <packaging>pom</packaging>
     <modules>
         <module>r-bootstrap</module>
