@@ -34,6 +34,7 @@ import com.alipay.antchain.bridge.relayer.commons.exception.AntChainBridgeRelaye
 import com.alipay.antchain.bridge.relayer.commons.exception.RelayerErrorCodeEnum;
 import com.alipay.antchain.bridge.relayer.commons.model.AnchorProcessHeights;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
+import com.alipay.antchain.bridge.relayer.commons.model.CrossChainMsgACLItem;
 import com.alipay.antchain.bridge.relayer.commons.model.DomainCertWrapper;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.AbstractBlockchainClient;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.BlockchainAnchorProcess;
@@ -499,9 +500,9 @@ public class BlockchainManager implements IBlockchainManager {
 
             return blockchainClient.getSDPMsgClientContract().querySDPMsgSeqOnChain(
                     senderDomain,
-                    from,
+                    CrossChainMsgACLItem.getIdentityHex(from),
                     blockchainClient.getDomain(),
-                    to
+                    CrossChainMsgACLItem.getIdentityHex(to)
             );
         } catch (AntChainBridgeRelayerException e) {
             throw e;
