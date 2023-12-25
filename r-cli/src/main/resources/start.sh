@@ -60,4 +60,4 @@ if [ $? -eq 1 ]; then
     exit 1
 fi
 
-java -jar ${CLI_HOME}/../lib/r-cli-release.jar -p ${SERVER_PORT:-8088} -H ${SERVER_HOST:-"localhost"}
+java -jar ${CLI_HOME}/../lib/r-cli.jar --port=${SERVER_PORT:-8088} --host=${SERVER_HOST:-"localhost"}

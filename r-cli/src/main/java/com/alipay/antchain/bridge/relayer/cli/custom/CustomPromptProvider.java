@@ -14,23 +14,17 @@
  * limitations under the License.
  */
 
-package com.alipay.antchain.bridge.relayer.cli.command;
+package com.alipay.antchain.bridge.relayer.cli.custom;
 
-import java.util.Map;
+import org.jline.utils.AttributedString;
+import org.jline.utils.AttributedStyle;
+import org.springframework.shell.jline.PromptProvider;
+import org.springframework.stereotype.Component;
 
-public interface CommandNamespace {
-
-    /**
-     * namespace name
-     *
-     * @return
-     */
-    public String name();
-
-    /**
-     * get all commands in the command namespace
-     *
-     * @return
-     */
-    public Map<String, Command> getCommands();
+@Component
+public class CustomPromptProvider implements PromptProvider {
+    @Override
+    public AttributedString getPrompt() {
+        return new AttributedString("relayer:> ", AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW));
+    }
 }
