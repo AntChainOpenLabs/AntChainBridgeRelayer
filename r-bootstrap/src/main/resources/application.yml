@@ -5,7 +5,7 @@ spring:
     active: env
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/openrelayer?serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+    url: jdbc:mysql://localhost:3306/relayer?serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
     password: Mychain123!@#
     username: root
   redis:
