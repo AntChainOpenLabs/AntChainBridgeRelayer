@@ -18,12 +18,11 @@
     <modules>
         <module>r-bootstrap</module>
         <module>r-dal</module>
-        <module>r-cli</module>
         <module>r-core</module>
         <module>r-engine</module>
         <module>r-server</module>
         <module>r-commons</module>
-        <module>r-spring-cli</module>
+        <module>r-cli</module>
     </modules>
 
     <properties>
@@ -218,5 +217,5 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    
+
 </project>

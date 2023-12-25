@@ -25,47 +25,39 @@ import com.alipay.antchain.bridge.relayer.core.grpc.admin.AdminResponse;
 import com.alipay.antchain.bridge.relayer.core.grpc.admin.AdministratorServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+@Component
+@Slf4j
 public class GrpcClient {
 
     private final ManagedChannel channel;
+
     private final AdministratorServiceGrpc.AdministratorServiceBlockingStub blockingStub;
 
-    String host = "localhost";
+    @Getter
+    private final String host;
 
-    private int port;
+    @Getter
+    private final int port;
 
-    public GrpcClient(int port) {
-        this(ManagedChannelBuilder.forAddress("127.0.0.1", port)
-                // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
-                // needing certificates.
-                .usePlaintext());
-
-        this.port = port;
-    }
-
-    public GrpcClient(String host, int port) {
-        this(ManagedChannelBuilder.forAddress(host, port)
-                // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
-                // needing certificates.
-                .usePlaintext());
-
-        this.port = port;
-        this.host = host;
-    }
-
-    public GrpcClient(ManagedChannelBuilder<?> channelBuilder) {
-        channel = channelBuilder.build();
+    public GrpcClient(
+            @Value("${host:localhost}") String host,
+            @Value("${port:8088}") int port
+    ) {
+        channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
         blockingStub = AdministratorServiceGrpc.newBlockingStub(channel);
+        this.host = host;
+        this.port = port;
     }
 
     public boolean checkServerStatus() {
-
         try {
             Socket socket = new Socket(host, port);
-
             socket.close();
-
             return true;
         } catch (IOException e) {
             return false;

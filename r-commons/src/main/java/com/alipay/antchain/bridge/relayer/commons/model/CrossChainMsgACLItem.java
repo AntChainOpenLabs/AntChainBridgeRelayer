@@ -39,6 +39,25 @@ public class CrossChainMsgACLItem {
 
     public static final String MEANS_ANY = "*";
 
+    public static String getIdentityHex(String identity) {
+        if (StrUtil.equals(MEANS_ANY, identity)) {
+            return null;
+        }
+        if (NumberUtil.isOdd(identity.length()) || !HexUtil.isHexNumber(identity)) {
+            return DigestUtil.sha256Hex(identity);
+        } else {
+            byte[] rawId = HexUtil.decodeHex(StrUtil.removePrefix(identity, "0x"));
+            if (ObjectUtil.isNull(rawId) || rawId.length > 32) {
+                throw new RuntimeException("Invalid identity over 32B: " + identity);
+            } else if (rawId.length < 32) {
+                byte[] data = new byte[32 - rawId.length];
+                Arrays.fill(data, (byte) 0);
+                return HexUtil.encodeHexStr(ArrayUtil.addAll(data, rawId));
+            }
+            return HexUtil.encodeHexStr(rawId);
+        }
+    }
+
     /**
      * 用户定义规则ID, bytes32 hex
      */
@@ -104,24 +123,6 @@ public class CrossChainMsgACLItem {
         this.grantIdentityHex = getIdentityHex(grantIdentity);
     }
 
-    private String getIdentityHex(String identity) {
-        if (StrUtil.equals(MEANS_ANY, identity)) {
-            return null;
-        }
-        if (NumberUtil.isOdd(identity.length()) || !HexUtil.isHexNumber(identity)) {
-            return DigestUtil.sha256Hex(identity);
-        } else {
-            byte[] rawId = HexUtil.decodeHex(StrUtil.removePrefix(identity, "0x"));
-            if (ObjectUtil.isNull(rawId) || rawId.length > 32) {
-                throw new RuntimeException("Invalid identity over 32B: " + identity);
-            } else if (rawId.length < 32) {
-                byte[] data = new byte[32 - rawId.length];
-                Arrays.fill(data, (byte) 0);
-                return HexUtil.encodeHexStr(ArrayUtil.addAll(data, rawId));
-            }
-            return HexUtil.encodeHexStr(rawId);
-        }
-    }
 
     @Override
     public boolean equals(Object o) {

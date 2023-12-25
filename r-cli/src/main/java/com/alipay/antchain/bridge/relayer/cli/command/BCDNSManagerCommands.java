@@ -18,12 +18,10 @@ package com.alipay.antchain.bridge.relayer.cli.command;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.util.StrUtil;
 import com.alipay.antchain.bridge.relayer.cli.glclient.GrpcClient;
 import lombok.Getter;
-import org.springframework.shell.standard.ShellCommandGroup;
-import org.springframework.shell.standard.ShellComponent;
-import org.springframework.shell.standard.ShellMethod;
-import org.springframework.shell.standard.ShellOption;
+import org.springframework.shell.standard.*;
 
 @Getter
 @ShellCommandGroup(value = "Commands about BCDNS")
@@ -42,18 +40,12 @@ public class BCDNSManagerCommands extends BaseCommands {
     Object registerBCDNSService(
             @ShellOption(help = "The domain space owned by the BCDNS") String domainSpace,
             @ShellOption(help = "The type of the BCDNS, e.g. embedded, bif") String bcdnsType,
-            @ShellOption(help = "The properties file path needed to initialize the service stub, e.g. /path/to/your/prop.json") String propFile
+            @ShellOption(valueProvider = FileValueProvider.class, help = "The properties file path needed to initialize the service stub, e.g. /path/to/your/prop.json") String propFile,
+            @ShellOption(valueProvider = FileValueProvider.class, help = "The path to BCDNS trust root certificate file if you have it",  defaultValue = "") String bcdnsCertPath
     ) {
-        return queryAPI("registerBCDNSService", domainSpace, bcdnsType, propFile);
-    }
-
-    @ShellMethod(value = "Register a new BCDNS bound with specified domain space into Relayer")
-    Object registerBCDNSServiceWithCert(
-            @ShellOption(help = "The domain space owned by the BCDNS") String domainSpace,
-            @ShellOption(help = "The type of the BCDNS, e.g. 0 for EMBEDDED, 1 for BIF") String bcdnsType,
-            @ShellOption(help = "The properties file path needed to initialize the service stub, e.g. /path/to/your/prop.json") String propFile,
-            @ShellOption(help = "The path to BCDNS trust root certificate file") String bcdnsCertPath
-    ) {
+        if (StrUtil.isEmpty(bcdnsCertPath)) {
+            return queryAPI("registerBCDNSService", domainSpace, bcdnsType, propFile);
+        }
         return queryAPI("registerBCDNSService", domainSpace, bcdnsType, propFile, bcdnsCertPath);
     }
 
@@ -88,7 +80,7 @@ public class BCDNSManagerCommands extends BaseCommands {
             @ShellOption(help = "The domain space bound with BCDNS") String domainSpace,
             @ShellOption(help = "The domain applying") String domain,
             @ShellOption(help = "The type for applicant subject, e.g. 0 for `X509_PUBLIC_KEY_INFO`, 1 for `BID`") String applicantOidType,
-            @ShellOption(help = "oidFilePath") String oidFilePath
+            @ShellOption(valueProvider = FileValueProvider.class, help = "The subject file like public key file in PEM or BID document file") String oidFilePath
     ) {
         return queryAPI("applyDomainNameCert", domainSpace, domain, applicantOidType, oidFilePath);
     }
