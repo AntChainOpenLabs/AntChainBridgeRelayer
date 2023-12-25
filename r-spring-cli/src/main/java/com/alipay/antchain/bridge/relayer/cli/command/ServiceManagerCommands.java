@@ -50,24 +50,39 @@ public class ServiceManagerCommands extends BaseCommands {
         return queryAPI("getCrossChainMsgACL", bizId);
     }
 
-    Object getMatchedCrossChainACLItems(String grantDomain, String grantIdentity, String ownerDomain, String ownerIdentity) {
+    @ShellMethod(value = "Get the ACL item matched the input")
+    Object getMatchedCrossChainACLItems(
+            @ShellOption(help = "Blockchain domain applying permission to send msg") String grantDomain,
+            @ShellOption(help = "Blockchain account identity applying permission to send msg") String grantIdentity,
+            @ShellOption(help = "Blockchain domain receiving msg") String ownerDomain,
+            @ShellOption(help = "Blockchain domain account identity receiving msg") String ownerIdentity
+    ) {
         return queryAPI("getCrossChainMsgACL", grantDomain, grantIdentity, ownerDomain, ownerIdentity);
     }
 
-    Object deleteCrossChainMsgACL(String bizId) {
+    @ShellMethod(value = "Delete the ACL item with the specified biz ID")
+    Object deleteCrossChainMsgACL(
+            @ShellOption(help = "You can get the ID by calling `getMatchedCrossChainACLItems`") String bizId
+    ) {
         return queryAPI("deleteCrossChainMsgACL", bizId);
     }
 
-
-    Object registerPluginServer(String pluginServerId, String address, String pluginServerCAPath) {
+    @ShellMethod(value = "Register a plugin server into Relayer")
+    Object registerPluginServer(
+            @ShellOption(help = "unique ID for your plugin server") String pluginServerId,
+            @ShellOption(help = "plugin server's URL e.g. 127.0.0.1:9090") String address,
+            @ShellOption(help = "file path for TLS CA for plugin server e.g. /path/to/your/server.crt") String pluginServerCAPath
+    ) {
         return queryAPI("registerPluginServer", pluginServerId, address, pluginServerCAPath);
     }
 
-    Object stopPluginServer(String pluginServerId) {
+    @ShellMethod(value = "Stop the plugin server")
+    Object stopPluginServer(@ShellOption(help = "ID of the plugin server you want to stop") String pluginServerId) {
         return queryAPI("stopPluginServer", pluginServerId);
     }
 
-    Object startPluginServer(String pluginServerId) {
+    @ShellMethod(value = "Start the plugin server from stop")
+    Object startPluginServer(@ShellOption(help = "ID of the plugin server you want to start") String pluginServerId) {
         return queryAPI("startPluginServer", pluginServerId);
     }
 }
