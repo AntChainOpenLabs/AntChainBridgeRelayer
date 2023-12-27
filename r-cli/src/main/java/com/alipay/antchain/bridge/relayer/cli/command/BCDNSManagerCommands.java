@@ -19,6 +19,7 @@ package com.alipay.antchain.bridge.relayer.cli.command;
 import javax.annotation.Resource;
 
 import cn.hutool.core.util.StrUtil;
+import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.relayer.cli.glclient.GrpcClient;
 import lombok.Getter;
 import org.springframework.shell.standard.*;
@@ -38,7 +39,7 @@ public class BCDNSManagerCommands extends BaseCommands {
 
     @ShellMethod(value = "Register a new BCDNS bound with specified domain space into Relayer")
     Object registerBCDNSService(
-            @ShellOption(help = "The domain space owned by the BCDNS") String domainSpace,
+            @ShellOption(help = "The domain space owned by the BCDNS, default the root space \"\"", defaultValue = CrossChainDomain.ROOT_DOMAIN_SPACE) String domainSpace,
             @ShellOption(help = "The type of the BCDNS, e.g. embedded, bif") String bcdnsType,
             @ShellOption(valueProvider = FileValueProvider.class, help = "The properties file path needed to initialize the service stub, e.g. /path/to/your/prop.json") String propFile,
             @ShellOption(valueProvider = FileValueProvider.class, help = "The path to BCDNS trust root certificate file if you have it",  defaultValue = "") String bcdnsCertPath
@@ -50,38 +51,42 @@ public class BCDNSManagerCommands extends BaseCommands {
     }
 
     @ShellMethod(value = "Get the BCDNS data bound with specified domain space")
-    Object getBCDNSService(@ShellOption(help = "The domain space bound with BCDNS") String domainSpace) {
+    Object getBCDNSService(@ShellOption(help = "The domain space bound with BCDNS, default the root space", defaultValue = CrossChainDomain.ROOT_DOMAIN_SPACE) String domainSpace) {
         return queryAPI("getBCDNSService", domainSpace);
     }
 
     @ShellMethod(value = "Delete the BCDNS bound with specified domain space")
-    Object deleteBCDNSService(@ShellOption(help = "The domain space bound with BCDNS") String domainSpace) {
+    Object deleteBCDNSService(@ShellOption(help = "The domain space bound with BCDNS, default the root space", defaultValue = CrossChainDomain.ROOT_DOMAIN_SPACE) String domainSpace) {
         return queryAPI("deleteBCDNSService", domainSpace);
     }
 
     @ShellMethod(value = "Get the BCDNS trust root certificate bound with specified domain space")
-    Object getBCDNSCertificate(@ShellOption(help = "The domain space bound with BCDNS") String domainSpace) {
+    Object getBCDNSCertificate(@ShellOption(help = "The domain space bound with BCDNS, default the root space", defaultValue = CrossChainDomain.ROOT_DOMAIN_SPACE) String domainSpace) {
         return queryAPI("getBCDNSCertificate", domainSpace);
     }
 
     @ShellMethod(value = "Stop the local BCDNS service stub")
-    Object stopBCDNSService(@ShellOption(help = "The domain space bound with BCDNS") String domainSpace) {
+    Object stopBCDNSService(@ShellOption(help = "The domain space bound with BCDNS, default the root space", defaultValue = CrossChainDomain.ROOT_DOMAIN_SPACE) String domainSpace) {
         return queryAPI("stopBCDNSService", domainSpace);
     }
 
     @ShellMethod(value = "Restart the local BCDNS service stub from stop")
-    Object restartBCDNSService(@ShellOption(help = "domainSpace") String domainSpace) {
-
+    Object restartBCDNSService(@ShellOption(help = "domain space, default the root space", defaultValue = CrossChainDomain.ROOT_DOMAIN_SPACE) String domainSpace) {
         return queryAPI("restartBCDNSService", domainSpace);
     }
 
     @ShellMethod(value = "Apply a domain certificate for a blockchain from the BCDNS with specified domain space")
     Object applyDomainNameCert(
-            @ShellOption(help = "The domain space bound with BCDNS") String domainSpace,
+            @ShellOption(help = "The domain space bound with BCDNS, default the root space", defaultValue = CrossChainDomain.ROOT_DOMAIN_SPACE) String domainSpace,
             @ShellOption(help = "The domain applying") String domain,
-            @ShellOption(help = "The type for applicant subject, e.g. 0 for `X509_PUBLIC_KEY_INFO`, 1 for `BID`") String applicantOidType,
+            @ShellOption(help = "The type for applicant subject, e.g. `X509_PUBLIC_KEY_INFO` or `BID`", defaultValue = "BID") String applicantOidType,
             @ShellOption(valueProvider = FileValueProvider.class, help = "The subject file like public key file in PEM or BID document file") String oidFilePath
     ) {
+        if (StrUtil.equalsIgnoreCase(applicantOidType, "bid")) {
+            applicantOidType = "1";
+        } else {
+            applicantOidType = "0";
+        }
         return queryAPI("applyDomainNameCert", domainSpace, domain, applicantOidType, oidFilePath);
     }
 
@@ -93,7 +98,7 @@ public class BCDNSManagerCommands extends BaseCommands {
     @ShellMethod(value = "Fetch the certificate for a specified blockchain domain from the BCDNS with the domain space")
     Object fetchDomainNameCertFromBCDNS(
             @ShellOption(help = "The specified domain") String domain,
-            @ShellOption(help = "The BCDNS domain space") String domainSpace
+            @ShellOption(help = "The BCDNS domain space, default the root space", defaultValue = CrossChainDomain.ROOT_DOMAIN_SPACE) String domainSpace
     ) {
 
         return queryAPI("fetchDomainNameCertFromBCDNS", domain, domainSpace);
@@ -102,7 +107,7 @@ public class BCDNSManagerCommands extends BaseCommands {
     @ShellMethod(value = "Query the domain name certificate from the BCDNS with the domain space")
     Object queryDomainNameCertFromBCDNS(
             @ShellOption(help = "The specified domain") String domain,
-            @ShellOption(help = "The BCDNS domain space") String domainSpace
+            @ShellOption(help = "The BCDNS domain space, default the root space", defaultValue = CrossChainDomain.ROOT_DOMAIN_SPACE) String domainSpace
     ) {
         return queryAPI("queryDomainNameCertFromBCDNS", domain, domainSpace);
     }
@@ -115,9 +120,8 @@ public class BCDNSManagerCommands extends BaseCommands {
     @ShellMethod(value = "Query the domain router for the domain from the BCDNS with the domain space")
     Object queryDomainRouter(
             @ShellOption(help = "The specified domain") String domain,
-            @ShellOption(help = "The BCDNS domain space") String domainSpace
+            @ShellOption(help = "The BCDNS domain space, default the root space", defaultValue = CrossChainDomain.ROOT_DOMAIN_SPACE) String domainSpace
     ) {
-
         return queryAPI("queryDomainRouter", domainSpace, domain);
     }
 
