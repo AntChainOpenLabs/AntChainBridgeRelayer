@@ -56,6 +56,14 @@ public class BlockchainManagerCommands extends BaseCommands {
         return queryAPI("getBlockchainContracts", product, blockchainId);
     }
 
+    @ShellMethod(value = "Get the local blockchain heights where anchor service runs on")
+    Object getBlockchainHeights(
+            @ShellOption(help = "Product type for blockchain, e.g. mychain010") String product,
+            @ShellOption(help = "Local blockchain ID") String blockchainId
+    ) {
+        return queryAPI("getBlockchainHeights", product, blockchainId);
+    }
+
     @ShellMethod(value = "Add a specified blockchain configuration to start the anchor service")
     Object addBlockchainAnchor(
             @ShellOption(help = "Product type for blockchain, e.g. mychain010") String product,

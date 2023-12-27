@@ -314,6 +314,9 @@ public class ScheduleRepository implements IScheduleRepository {
     }
 
     public void markForDomainRouterQuery(String senderDomain, String receiverDomain) {
+        if (!StrUtil.isAllNotEmpty(senderDomain, receiverDomain)) {
+            throw new RuntimeException(StrUtil.format("empty sender domain {} or receiver domain {}", senderDomain, receiverDomain));
+        }
         String uniqueKey = DomainRouterQueryMarkDTTask.generateDomainRouterQueryTaskUniqueKey(senderDomain, receiverDomain);
         log.info("try to start a mark task for domain router query: {} ", uniqueKey);
         if (hasMarkDTTask(MarkDTTaskTypeEnum.DOMAIN_ROUTER_QUERY, uniqueKey)) {

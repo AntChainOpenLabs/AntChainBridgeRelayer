@@ -33,7 +33,9 @@ ACB Relayer将功能实现分为两部分，分别为通信和可信，目前ACB
 
 ## 编译
 
-在项目根目录运行maven命令即可：
+*由于AntChainBridgePluginSDK没有发布到maven仓库，因此可以参考[文档](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK?tab=readme-ov-file#%E5%AE%89%E8%A3%85)本地安装，或者直接clone对应Relayer依赖版本的源码，版本可[见](./pom.xml)的标签`<acb-sdk.version>`*
+
+在Relayer项目根目录运行maven命令即可编译：
 
 ```
 mvn package -Dmaven.test.skip=true
@@ -91,13 +93,9 @@ docker run -itd --name redis-test -p 6379:6379 redis --requirepass 'YOUR_PWD' --
 
 ## 配置
 
-### 数据库
-
-在开始之前，需要初始化中继的数据库，这里提供一个[DDL](r-bootstrap/src/main/resources/db/ddl.sql)，或者解压之后在路径`config/db/ddl.sql`找到，在MySQL执行即可生成数据库`relayer`。
-
 ### TLS
 
-这里初始化中继的TLS证书，会在`tls_certs`路径下生成`relayer.crt`和`relayer.key`。
+首先，初始化中继的TLS证书，会在`tls_certs`路径下生成`relayer.crt`和`relayer.key`。
 
 ```
 bin/init_tls_certs.sh 

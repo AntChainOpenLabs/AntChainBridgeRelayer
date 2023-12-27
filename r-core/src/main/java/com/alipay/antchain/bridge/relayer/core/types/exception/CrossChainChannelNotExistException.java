@@ -23,11 +23,13 @@ import lombok.Getter;
 @Getter
 public class CrossChainChannelNotExistException extends AntChainBridgeRelayerException {
 
-    private String senderDomain;
+    private final String senderDomain;
 
-    private String receiverDomain;
+    private final String receiverDomain;
 
     public CrossChainChannelNotExistException(String senderDomain, String receiverDomain, String message) {
         super(RelayerErrorCodeEnum.CORE_UNKNOWN_RELAYER_FOR_DEST_DOMAIN, message);
+        this.senderDomain = senderDomain;
+        this.receiverDomain = receiverDomain;
     }
 }
