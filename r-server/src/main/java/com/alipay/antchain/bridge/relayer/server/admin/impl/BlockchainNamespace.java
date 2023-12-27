@@ -34,6 +34,7 @@ import com.alipay.antchain.bridge.relayer.commons.constant.Constants;
 import com.alipay.antchain.bridge.relayer.commons.model.BlockchainMeta;
 import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
+import com.alipay.antchain.bridge.relayer.core.types.blockchain.BlockchainAnchorProcess;
 import com.alipay.antchain.bridge.relayer.dal.repository.ISystemConfigRepository;
 import com.alipay.antchain.bridge.relayer.server.admin.AbstractNamespace;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +64,7 @@ public class BlockchainNamespace extends AbstractNamespace {
         addCommand("getBlockchainIdByDomain", this::getBlockchainIdByDomain);
         addCommand("getBlockchain", this::getBlockchain);
         addCommand("getBlockchainContracts", this::getBlockchainContracts);
+        addCommand("getBlockchainHeights", this::getBlockchainHeights);
         addCommand("addBlockchainAnchor", this::addBlockchainAnchor);
         addCommand("deployBBCContractsAsync", this::deployBBCContractsAsync);
         addCommand("updateBlockchainAnchor", this::updateBlockchainAnchor);
@@ -128,6 +130,23 @@ public class BlockchainNamespace extends AbstractNamespace {
         jsonObject.put("sdp_contract", ObjectUtil.defaultIfEmpty(blockchainMeta.getProperties().getSdpMsgContractAddress(), "empty"));
 
         return jsonObject.toJSONString();
+    }
+
+    Object getBlockchainHeights(String... args) {
+        String product = args[0];
+        String blockchainId = args[1];
+
+        BlockchainMeta blockchainMeta = blockchainManager.getBlockchainMeta(product, blockchainId);
+        if (blockchainMeta == null) {
+            return "blockchain not exist.";
+        }
+
+        BlockchainAnchorProcess anchorProcess = blockchainManager.getBlockchainAnchorProcess(product, blockchainId);
+        if (ObjectUtil.isNull(anchorProcess)) {
+            return "none heights found";
+        }
+
+        return JSON.toJSONString(anchorProcess, SerializerFeature.PrettyFormat);
     }
 
     Object addBlockchainAnchor(String... args) {
