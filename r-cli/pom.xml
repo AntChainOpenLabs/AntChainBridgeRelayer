@@ -84,6 +84,10 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>com.alipay.antchain.bridge</groupId>
+            <artifactId>antchain-bridge-bcdns</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
         </dependency>
