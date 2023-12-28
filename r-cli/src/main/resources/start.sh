@@ -6,7 +6,7 @@ CLI_HOME=`cd "$bin"; pwd`
 Help=$(
   cat <<-"HELP"
 
- start.sh - Start the ACB Relayer Command Line Interface Tool
+ start.sh - Start the AntChain Bridge Relayer Command Line Interface Tool
 
  Usage:
    start.sh <params>
