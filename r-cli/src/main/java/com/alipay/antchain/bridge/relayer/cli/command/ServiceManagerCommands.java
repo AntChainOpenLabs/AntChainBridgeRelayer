@@ -85,4 +85,9 @@ public class ServiceManagerCommands extends BaseCommands {
     Object startPluginServer(@ShellOption(help = "ID of the plugin server you want to start") String pluginServerId) {
         return queryAPI("startPluginServer", pluginServerId);
     }
+
+    @ShellMethod(value = "Query the nodes status of local relayer")
+    Object queryCurrActiveNodes() {
+        return queryAPI("queryCurrActiveNodes");
+    }
 }

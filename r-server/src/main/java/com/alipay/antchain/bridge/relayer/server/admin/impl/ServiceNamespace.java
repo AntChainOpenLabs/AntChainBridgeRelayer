@@ -27,12 +27,18 @@ import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.alipay.antchain.bridge.relayer.commons.model.ActiveNode;
 import com.alipay.antchain.bridge.relayer.commons.model.CrossChainMsgACLItem;
 import com.alipay.antchain.bridge.relayer.commons.model.PluginServerDO;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
 import com.alipay.antchain.bridge.relayer.core.manager.gov.IGovernManager;
+import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import com.alipay.antchain.bridge.relayer.server.admin.AbstractNamespace;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -45,6 +51,12 @@ public class ServiceNamespace extends AbstractNamespace {
     @Resource
     private IBBCPluginManager bbcPluginManager;
 
+    @Resource
+    private IScheduleRepository scheduleRepository;
+
+    @Value("#{dispatcher.nodeTimeToLive}")
+    private long nodeTimeToLive;
+
     public ServiceNamespace() {
         addCommand("addCrossChainMsgACL", this::addCrossChainMsgACL);
         addCommand("getCrossChainMsgACL", this::getCrossChainMsgACL);
@@ -53,6 +65,8 @@ public class ServiceNamespace extends AbstractNamespace {
         addCommand("registerPluginServer", this::registerPluginServer);
         addCommand("stopPluginServer", this::stopPluginServer);
         addCommand("startPluginServer", this::startPluginServer);
+
+        addCommand("queryCurrActiveNodes", this::queryCurrActiveNodes);
     }
 
     Object addCrossChainMsgACL(String... args) {
@@ -187,5 +201,19 @@ public class ServiceNamespace extends AbstractNamespace {
         }
 
         return "success";
+    }
+
+    Object queryCurrActiveNodes(String... args) {
+        List<ActiveNode> nodes = scheduleRepository.getAllActiveNodes();
+        JSONArray onlineNodesJson = new JSONArray();
+        for (ActiveNode node : nodes) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("node_id", node.getNodeId());
+            jsonObject.put("node_ip", node.getNodeIp());
+            jsonObject.put("active", node.ifActive(nodeTimeToLive));
+            jsonObject.put("last_active_time", node.getLastActiveTime());
+            onlineNodesJson.add(jsonObject);
+        }
+        return JSON.toJSONString(onlineNodesJson, SerializerFeature.PrettyFormat);
     }
 }

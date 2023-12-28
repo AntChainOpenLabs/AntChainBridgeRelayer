@@ -19,6 +19,7 @@ import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainMan
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import lombok.Getter;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +44,7 @@ public class Dispatcher {
     @Value("#{duty.timeSliceLength}")
     private long timeSliceLength;
 
+    @Getter
     @Value("${relayer.engine.schedule.activate.ttl:5000}")
     private long nodeTimeToLive;
 

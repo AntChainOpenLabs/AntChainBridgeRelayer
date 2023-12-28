@@ -41,7 +41,7 @@ public class RelayerCommands extends BaseCommands {
     }
 
     @ShellMethod(value = "Set the endpoints represents the local relayer in network")
-    Object setLocalEndpoints(@ShellOption(value = "Endpoints for local relayer, e.g. https://127.0.0.1:8082") String[] endpoints) {
+    Object setLocalEndpoints(@ShellOption(help = "Endpoints for local relayer, e.g. https://127.0.0.1:8082") String[] endpoints) {
         return queryAPI("setLocalEndpoints", StrUtil.join(",", ListUtil.toList(endpoints)));
     }
 
