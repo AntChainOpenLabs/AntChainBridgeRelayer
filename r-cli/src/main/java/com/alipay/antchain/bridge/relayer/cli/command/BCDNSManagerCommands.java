@@ -41,7 +41,7 @@ public class BCDNSManagerCommands extends BaseCommands {
             @ShellOption(help = "The domain space owned by the BCDNS, default the root space \"\"", defaultValue = "") String domainSpace,
             @ShellOption(help = "The type of the BCDNS, e.g. embedded, bif") String bcdnsType,
             @ShellOption(valueProvider = FileValueProvider.class, help = "The properties file path needed to initialize the service stub, e.g. /path/to/your/prop.json") String propFile,
-            @ShellOption(valueProvider = FileValueProvider.class, help = "The path to BCDNS trust root certificate file if you have it",  defaultValue = "") String bcdnsCertPath
+            @ShellOption(valueProvider = FileValueProvider.class, help = "The path to BCDNS trust root certificate file if you have it", defaultValue = "") String bcdnsCertPath
     ) {
         if (StrUtil.isEmpty(bcdnsCertPath)) {
             return queryAPI("registerBCDNSService", domainSpace, bcdnsType, propFile);
@@ -116,6 +116,7 @@ public class BCDNSManagerCommands extends BaseCommands {
     Object registerDomainRouter(@ShellOption(help = "The specified domain") String domain) {
         return queryAPI("registerDomainRouter", domain);
     }
+
     @ShellMethod(value = "Query the domain router for the domain from the BCDNS with the domain space")
     Object queryDomainRouter(
             @ShellOption(help = "The specified domain") String domain,

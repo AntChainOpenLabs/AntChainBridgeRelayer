@@ -17,7 +17,7 @@
   </p>
 </div>
 
-# 介绍
+## 介绍
 
 蚂蚁链跨链桥中继（AntChain Bridge Relayer, ACB Relayer）是蚂蚁链跨链开源项目的重要组件，负责连接区块链、区块链域名服务（BCDNS）和证明转化组件（PTC），完成可信信息的流转与证明，实现区块链互操作。
 
@@ -27,15 +27,13 @@ ACB Relayer将功能实现分为两部分，分别为通信和可信，目前ACB
 
 
 
-# 快速开始
+## 快速开始
 
 **在开始之前，请您确保安装了maven和JDK，这里推荐使用[openjdk-1.8](https://adoptium.net/zh-CN/temurin/releases/?version=8)版本*
 
-## 编译
+### 编译
 
-*由于AntChainBridgePluginSDK没有发布到maven仓库，因此可以参考[文档](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK?tab=readme-ov-file#%E5%AE%89%E8%A3%85)本地安装，或者直接clone对应Relayer依赖版本的源码，版本可[见](./pom.xml)的标签`<acb-sdk.version>`*
-
-在Relayer项目根目录运行maven命令即可编译：
+在项目根目录运行maven命令即可：
 
 ```
 mvn package -Dmaven.test.skip=true
@@ -67,7 +65,7 @@ tree .
 
 
 
-## 环境
+### 环境
 
 ACB Relayer使用了MySQL和Redis，这里建议使用docker快速安装依赖。
 
@@ -91,11 +89,15 @@ docker run -itd --name redis-test -p 6379:6379 redis --requirepass 'YOUR_PWD' --
 
 
 
-## 配置
+### 配置
 
-### TLS
+#### 数据库
 
-首先，初始化中继的TLS证书，会在`tls_certs`路径下生成`relayer.crt`和`relayer.key`。
+在开始之前，需要初始化中继的数据库，这里提供一个[DDL](r-bootstrap/src/main/resources/db/ddl.sql)，或者解压之后在路径`config/db/ddl.sql`找到，在MySQL执行即可生成数据库`relayer`。
+
+#### TLS
+
+这里初始化中继的TLS证书，会在`tls_certs`路径下生成`relayer.crt`和`relayer.key`。
 
 ```
 bin/init_tls_certs.sh 
@@ -110,7 +112,7 @@ bin/init_tls_certs.sh
 [ INFO ]_[ 2023-12-25 20:32:17.170 ] : generate relayer.crt successfully
 ```
 
-### 中间件
+#### 中间件
 
 然后，找到`config/application.yml`，配置MySQL和Redis信息到配置文件：
 
@@ -131,7 +133,7 @@ spring:
     password: YOUR_PWD
 ```
 
-### 跨链身份
+#### 跨链身份
 
 最后，需要向BCDNS服务申请中继身份证书，用于与BCDNS和其他中继进行交互，这里推荐搭建信通院基于星火链实现的[BCDNS]()服务，目前没有提供测试网服务，需要开发者自行运行该服务。
 
@@ -173,7 +175,7 @@ relayer:
 
 
 
-## 运行
+### 运行
 
 通过运行`bin/start.sh -h`，可以看到运行方式。
 
@@ -210,7 +212,78 @@ ACB Relayer提供了一个命令行交互工具，详情请见使用[文档]()�
 
 
 
-# 社区治理
+## 进阶操作
+
+### 启动集群
+
+Relayer可以启动多个节点，以实现水平拓展。
+
+启动第一个节点之后，在第二台机器解压程序安装包，并将配置文件、TLS证书密钥、跨链证书密钥拷贝到对应的路径，启动程序即可。
+
+多节点启动之后，可以使用CLI工具查询当前节点状态：
+
+```
+relayer:> query-curr-active-nodes
+[
+	{
+		"last_active_time":1703737607000,
+		"node_ip":"172.16.0.49",
+		"active":true,
+		"node_id":"172.16.0.49"
+	},
+	{
+		"last_active_time":1703737607000,
+		"node_ip":"172.16.0.50",
+		"active":true,
+		"node_id":"172.16.0.50"
+	}
+]
+```
+
+节点的ID默认使用机器IP，此外还可以配置为UUID模式，更改配置重启Relayer进程即可：
+
+```
+relayer:
+  engine:
+    node_id_mode: UUID
+```
+
+### Relayer交互
+
+不同的Relayer之间可以互相转发跨链消息，具体流程为：
+
+- 本地Relayer收到域名A发往域名B的跨链消息，但是域名B的路由信息在本地Relayer不存在，则需要先挂起该方向的跨链消息；
+- 本地Relayer向BCDNS查询该域名的路由信息，找到网络中对接该链的Relayer；
+- 本地Relayer发起“握手”流程，建立于网络中的Relayer的可信连接；
+- 两个Relayer之间建立域名A和域名B的可信通道；
+- 本地Relayer将挂起的跨链消息发送到网络Relayer，并提交到域名B链上。
+
+在可以被发现之前，本地Relayer需要完成：
+
+- 设置本地网络地址，该地址目前支持http和https，后续考虑支持grpcs等方式，比如`https://localhost:8082`，也可以设置多个，用","隔开即可。
+
+  ```
+  relayer:> set-local-endpoints --endpoints https://172.16.0.49:8082
+  ```
+
+  可以通过`get-local-endpoints`查询当前endpoints信息。
+
+- 对本地启动过Anchor服务的区块链，将其域名注册到BCDNS，使得网络中其他Relayer可以发现并向本地Relayer转发跨链消息。
+
+  ```
+  relayer:> register-domain-router --domain domain.web3.net
+  ```
+
+  可以通过下面请求获取到BCDNS的路由信息：
+
+  ```
+  relayer:> query-domain-router --domain domain.web3.net
+  {"destDomain":{"domain":"domain.web3.net","domainSpace":false},"destRelayer":{"netAddressList":["https://localhost:8082"],"relayerCert":{"credentialSubject":"AADVAAAAAAAD...hNDRjY2UifV19","credentialSubjectInstance":{"applicant":{"rawId":"ZGlkOmJpZDplZmJ...1b1FHWDZMVUd3Zw==","type":"BID"},"name":"relay","rawSubjectPublicKey":"r2Ze5VBjX...yWnSkTM4=","subject":"eyJwdWJsaWNLZXkiO...jZSJ9XX0=","subjectInfo":"eyJwd...J9XX0=","subjectPublicKey":{"algorithm":"Ed25519","encoded":"MCowBQYDK2V...qJKDyWnSkTM4=","format":"X.509","pointEncoding":"r2Ze5V...ifV19","expirationDate":1733811853,"id":"did:bid:efGeAv4Jr7V2FSyun77m4xTFmTDfG8nh","issuanceDate":1702275853,"issuer":{"rawId":"ZGlkOmJpZDpl...NTdtRENwQw==","type":"BID"},"proof":{"certHash":"Gaw4gcwXzn2i...K6HaPWBxXM=","hashAlgo":"SM3","rawProof":"kMZ/tvT19Tk...TQ4IVYlXkYjSBw==","sigAlgo":"Ed25519"},"type":"RELAYER_CERTIFICATE","version":"1"},"relayerCertId":"did:bid:efGeAv4Jr7V2FSyun77m4xTFmTDfG8nh"}}
+  ```
+
+  
+
+## 社区治理
 
 AntChain Bridge 欢迎您以任何形式参与社区建设。
 
@@ -224,6 +297,6 @@ AntChain Bridge 欢迎您以任何形式参与社区建设。
 
 发送邮件到`antchainbridge@service.alipay.com`
 
-# License
+## License
 
 详情参考[LICENSE](./LICENSE)。
