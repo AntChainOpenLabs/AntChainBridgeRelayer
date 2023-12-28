@@ -19,11 +19,11 @@
 
 ## 介绍
 
-蚂蚁链跨链桥中继（AntChain Bridge Relayer, ACB Relayer）是蚂蚁链跨链开源项目的重要组件，负责连接区块链、区块链域名服务（BCDNS）和证明转化组件（PTC），完成可信信息的流转与证明，实现区块链互操作。
+蚂蚁链跨链桥中继（AntChain Bridge Relayer）是蚂蚁链跨链开源项目的重要组件，负责连接区块链、区块链域名服务（BCDNS）和证明转化组件（PTC），完成可信信息的流转与证明，实现区块链互操作。
 
-ACB Relayer是从蚂蚁链跨链产品[ODATS](https://antdigital.com/products/odats)中开源出来的组件，并按照[IEEE 3205](https://antchainbridge.oss-cn-shanghai.aliyuncs.com/antchainbridge/document/ieee/p3205/IEEE_3205-2023_Final.pdf)对跨链逻辑进行了升级，目前开源版本已经支持协议中通信相关的基本流程，包括统一跨链数据包（Unified Crosschain Packet, UCP）、可认证消息（Authentic Message, AM）、智能合约数据报（Smartcontract Datagram Protocol, SDP）等消息的处理，以及基于BCDNS的实现了区块链身份管理流程和区块链之间的消息寻址功能，目前支持中国信息通信研究院基于星火链开发的BCDNS服务。
+AntChain Bridge Relayer是从蚂蚁链跨链产品[ODATS](https://antdigital.com/products/odats)中开源出来的组件，并按照[IEEE 3205](https://antchainbridge.oss-cn-shanghai.aliyuncs.com/antchainbridge/document/ieee/p3205/IEEE_3205-2023_Final.pdf)对跨链逻辑进行了升级，目前开源版本已经支持协议中通信相关的基本流程，包括统一跨链数据包（Unified Crosschain Packet, UCP）、可认证消息（Authentic Message, AM）、智能合约数据报（Smartcontract Datagram Protocol, SDP）等消息的处理，以及基于BCDNS的实现了区块链身份管理流程和区块链之间的消息寻址功能，目前支持中国信息通信研究院基于星火链开发的BCDNS服务。
 
-ACB Relayer将功能实现分为两部分，分别为通信和可信，目前ACB Relayer已经实现区块链合约之间的通信功能，在2024年将实现基于PTC和BCDNS的可信链路，最终提供灵活可靠的区块链互操作能力。
+AntChain Bridge Relayer将功能实现分为两部分，分别为通信和可信，目前AntChain Bridge Relayer已经实现区块链合约之间的通信功能，在2024年将实现基于PTC和BCDNS的可信链路，最终提供灵活可靠的区块链互操作能力。
 
 
 
@@ -67,7 +67,7 @@ tree .
 
 ### 环境
 
-ACB Relayer使用了MySQL和Redis，这里建议使用docker快速安装依赖。
+AntChain Bridge Relayer使用了MySQL和Redis，这里建议使用docker快速安装依赖。
 
 首先通过脚本安装docker，或者在[官网](https://docs.docker.com/get-docker/)下载。
 
@@ -135,9 +135,9 @@ spring:
 
 #### 跨链身份
 
-最后，需要向BCDNS服务申请中继身份证书，用于与BCDNS和其他中继进行交互，这里推荐搭建信通院基于星火链实现的[BCDNS]()服务，目前没有提供测试网服务，需要开发者自行运行该服务。
+最后，需要向BCDNS服务申请中继身份证书，用于与BCDNS和其他中继进行交互，这里推荐搭建信通院基于星火链实现的[BCDNS](https://git.xinghuo.space/xinghuo-open-source/DLT/bcdns)服务，目前没有提供测试网服务，需要开发者自行运行该服务。
 
-使用CLI工具（请参考CLI[文档]()）为中继生成私钥、公钥。
+使用CLI工具（请参考CLI[文档](r-cli/README.md)）为中继生成私钥、公钥。
 
 ```
     ___    ______ ____     ____   ______ __     ___ __  __ ______ ____
@@ -162,7 +162,7 @@ file is : /path/to/bid_document.json
 
 如果仅需要将程序运行起来，或者进行某些测试，可以使用测试用例中提供的[证书](r-bootstrap/src/test/resources/cc_certs/relayer.crt)和[密钥](r-bootstrap/src/test/resources/cc_certs/private_key.pem)，请不要将该证书与密钥用于生产。
 
-在获得中继证书和密钥之后，将其配置到文件中，这里假设将证书和密钥分别放在`cc_certs/relayer.crt`和`cc_certs/private_key.pem：`
+在获得中继证书和密钥之后，将其配置到文件中，这里假设将证书和密钥分别放在`cc_certs/relayer.crt`和`cc_certs/private_key.pem`：
 
 ```
 relayer:
@@ -186,7 +186,7 @@ relayer:
 ```
 bin/start.sh -h
 
- start.sh - Start the ACB Relayer
+ start.sh - Start the AntChain Bridge Relayer
 
  Usage:
    start.sh <params>
@@ -208,7 +208,7 @@ bin/start.sh -h
 
 ## 命令行交互工具（CLI）
 
-ACB Relayer提供了一个命令行交互工具，详情请见使用[文档]()。
+AntChain Bridge Relayer提供了一个命令行交互工具，详情请见使用[文档](r-cli/README.md)。
 
 
 

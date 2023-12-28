@@ -19,7 +19,7 @@
 Help=$(
   cat <<-"HELP"
 
- start.sh - Start the ACB Relayer
+ start.sh - Start the AntChain Bridge Relayer
 
  Usage:
    start.sh <params>
