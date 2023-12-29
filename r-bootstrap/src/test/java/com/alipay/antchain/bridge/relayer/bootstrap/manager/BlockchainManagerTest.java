@@ -16,12 +16,19 @@
 
 package com.alipay.antchain.bridge.relayer.bootstrap.manager;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.alipay.antchain.bridge.pluginserver.service.CrossChainServiceGrpc;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
 import com.alipay.antchain.bridge.relayer.commons.constant.BlockchainStateEnum;
@@ -72,6 +79,43 @@ public class BlockchainManagerTest extends TestBase {
         Assert.assertEquals(PS_ID, blockchainMeta.getPluginServerId());
 
         Assert.assertNotNull(blockchainManager.getBlockchainMeta(antChainDotComProduct, antChainDotComBlockchainId));
+    }
+
+    @Test
+    public void testUpdateBlockchainAnchor() throws IOException {
+
+        Assert.assertTrue(blockchainManager.hasBlockchain(antChainDotComDomain));
+
+        BlockchainMeta blockchainMeta = blockchainManager.getBlockchainMetaByDomain(antChainDotComDomain);
+        String amAddr = "{\\\"evm\\\":\\\"AM_EVM_CONTRACT_bccb26ef-4179-42cf-aabb-082f83c4082e\\\", \\\"wasm\\\":\\\"AM_WASM_CONTRACT_9643c28d-6aac-4ef8-b7a7-edc81a402442\\\"}";
+        blockchainMeta.getProperties().setAmClientContractAddress(amAddr);
+        String clientConfig = JSONObject.toJSONString(blockchainMeta.getProperties(), SerializerFeature.PrettyFormat);
+        if (!JSONUtil.isTypeJSON(clientConfig.trim())) {
+            clientConfig = new String(Files.readAllBytes(Paths.get(clientConfig)));
+        }
+
+        blockchainManager.updateBlockchain(
+                antChainDotComProduct,
+                antChainDotComBlockchainId,
+                "",
+                blockchainMeta.getAlias(),
+                blockchainMeta.getDesc(),
+                JSONObject.parseObject(clientConfig)
+                        .entrySet().stream().collect(
+                                Collectors.toMap(
+                                        Map.Entry::getKey,
+                                        entry -> entry.getValue().toString()
+                                )
+                        )
+        );
+
+        blockchainMeta = blockchainManager.getBlockchainMetaByDomain(antChainDotComDomain);
+
+        Assert.assertNotNull(blockchainMeta);
+        Assert.assertEquals(amAddr, blockchainMeta.getProperties().getAmClientContractAddress());
+        Assert.assertEquals(antChainDotComProduct, blockchainMeta.getProduct());
+        Assert.assertEquals(antChainDotComBlockchainId, blockchainMeta.getBlockchainId());
+        Assert.assertEquals(PS_ID, blockchainMeta.getPluginServerId());
     }
 
     @Test

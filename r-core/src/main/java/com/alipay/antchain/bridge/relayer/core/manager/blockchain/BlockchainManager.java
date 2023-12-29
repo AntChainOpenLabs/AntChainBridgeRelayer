@@ -164,7 +164,7 @@ public class BlockchainManager implements IBlockchainManager {
             blockchainMeta.setAlias(alias);
             blockchainMeta.setDesc(desc);
             blockchainMeta.updateProperties(blockchainProperties);
-            if (updateBlockchainMeta(new BlockchainMeta(product, blockchainId, alias, desc, blockchainProperties))) {
+            if (!updateBlockchainMeta(new BlockchainMeta(product, blockchainId, alias, desc, blockchainProperties))) {
                 throw new RuntimeException(
                         StrUtil.format(
                                 "failed to update meta for blockchain {} - {} into DB",
@@ -180,7 +180,7 @@ public class BlockchainManager implements IBlockchainManager {
             throw new AntChainBridgeRelayerException(
                     RelayerErrorCodeEnum.CORE_BLOCKCHAIN_ERROR,
                     e,
-                    "failed to add new blockchain {} - {} with plugin server {}",
+                    "failed to update blockchain {} - {}",
                     product, blockchainId
             );
         }
