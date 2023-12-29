@@ -238,7 +238,7 @@ public class BlockchainNamespace extends AbstractNamespace {
                             .entrySet().stream().collect(
                                     Collectors.toMap(
                                             Map.Entry::getKey,
-                                            entry -> (String) entry.getValue()
+                                            entry -> entry.getValue().toString()
                                     )
                             )
             );
