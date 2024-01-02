@@ -94,7 +94,7 @@ public class BlockchainManagerCommands extends BaseCommands {
             @ShellOption(help = "Local blockchain ID") String blockchainId,
             @ShellOption(help = "Alias for blockchain", defaultValue = "") String alias,
             @ShellOption(help = "Description for blockchain", defaultValue = "") String desc,
-            @ShellOption(help = "The configuration value in string") String clientConfig
+            @ShellOption(help = "The configuration value in JSON string") String clientConfig
     ) {
         return queryAPI("updateBlockchainAnchor", product, blockchainId, alias, desc, clientConfig);
     }
