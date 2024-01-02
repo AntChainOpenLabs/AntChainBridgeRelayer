@@ -71,7 +71,7 @@ public class ServiceManagerCommands extends BaseCommands {
     Object registerPluginServer(
             @ShellOption(help = "unique ID for your plugin server") String pluginServerId,
             @ShellOption(help = "plugin server's URL e.g. 127.0.0.1:9090") String address,
-            @ShellOption(valueProvider = FileValueProvider.class, help = "file path for TLS CA for plugin server e.g. /path/to/your/server.crt") String pluginServerCAPath
+            @ShellOption(valueProvider = FileValueProvider.class, help = "file path for TLS CA for plugin server e.g. /path/to/certs/server.crt") String pluginServerCAPath
     ) {
         return queryAPI("registerPluginServer", pluginServerId, address, pluginServerCAPath);
     }

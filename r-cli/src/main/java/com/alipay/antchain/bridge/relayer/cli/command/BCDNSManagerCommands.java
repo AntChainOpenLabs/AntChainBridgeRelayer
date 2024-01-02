@@ -40,7 +40,7 @@ public class BCDNSManagerCommands extends BaseCommands {
     Object registerBCDNSService(
             @ShellOption(help = "The domain space owned by the BCDNS, default the root space \"\"", defaultValue = "") String domainSpace,
             @ShellOption(help = "The type of the BCDNS, e.g. embedded, bif") String bcdnsType,
-            @ShellOption(valueProvider = FileValueProvider.class, help = "The properties file path needed to initialize the service stub, e.g. /path/to/your/prop.json") String propFile,
+            @ShellOption(valueProvider = FileValueProvider.class, help = "The properties file path needed to initialize the service stub, e.g. /path/to/bif_bcdns_conf.json") String propFile,
             @ShellOption(valueProvider = FileValueProvider.class, help = "The path to BCDNS trust root certificate file if you have it", defaultValue = "") String bcdnsCertPath
     ) {
         if (StrUtil.isEmpty(bcdnsCertPath)) {
