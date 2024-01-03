@@ -346,7 +346,7 @@ relayer:> query-domain-router --domain mychain004ly.bif
 - `--desc`：（可选）区块链描述，可自定义，默认为空字符串；
 - `--confFile`：（必选）区块链配置信息路径，具体配置信息要求根据插件服务中相应链类型的插件要求。
 
-用法如下： 
+用法如下：
 
 ```shell
 relayer:> add-blockchain-anchor --product mychain010 --domain mychain006ly.bif --blockchainId mychain006ly.id --pluginServerId testps --confFile /path/to/mychain010.json
