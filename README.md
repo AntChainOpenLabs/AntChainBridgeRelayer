@@ -75,10 +75,10 @@ AntChain Bridge Relayer使用了MySQL和Redis，这里建议使用docker快速�
 wget -qO- https://get.docker.com/ | bash
 ```
 
-然后下载MySQL镜像并启动容器：
+然后下载MySQL镜像并启动容器，注意这里指定了时区为`+08:00`，请修改为您的时区。
 
 ```
-docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD='YOUR_PWD' mysql --default-authentication-plugin=mysql_native_password
+docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD='YOUR_PWD' mysql --default-authentication-plugin=mysql_native_password --default_time_zone +08:00
 ```
 
 然后下载Redis镜像并启动容器：
