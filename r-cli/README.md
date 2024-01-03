@@ -105,7 +105,7 @@ success
 
 命令参数如下：
 
-`--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串。
+- `--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串。
 
 用法如下：
 
@@ -121,7 +121,7 @@ relayer:> get-bcdnsservice
 
 命令参数如下：
 
-`--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串。
+- `--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串。
 
 用法如下：
 ```shell
@@ -140,7 +140,7 @@ not found
 
 命令参数如下：
 
-`--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串。
+- `--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串。
 
 用法如下：
 
@@ -160,7 +160,7 @@ pp1tvNQJKwumjAw=
 
 命令参数如下：
 
-`--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串。
+- `--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串。
 
 用法如下：
 
@@ -180,7 +180,7 @@ relayer:> get-bcdnsservice
 
 命令参数如下：
 
-`--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串。
+- `--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串。
 
 用法如下：
 
@@ -201,10 +201,10 @@ relayer:> get-bcdnsservice
 
 命令参数如下：
 
-`--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串；
-`--domain`：（必选）待申请的区块链域名，域名可自定义但不可重复；
-`--applicantOidType`：（可选）申请域名证书的类型，目前提供`BID`和`X509_PUBLIC_KEY_INFO`两种域名证书类型，默认为`BID`类型；
-`--oidFilePath`：（必选）申请域名证书需要申请主体身份相关文件路径，目前申请均为中继发起，故申请主体为中继。申请`BID`类型证书需要提供BID文件（文件生成参见`5.2 generate-bid-document`命令），申请`X509_PUBLIC_KEY_INFO`类型证书需要提供x509公钥文件。
+- `--domainSpace`：（可选）中继的域名空间名，该项默认为空字符串；
+- `--domain`：（必选）待申请的区块链域名，域名可自定义但不可重复；
+- `--applicantOidType`：（可选）申请域名证书的类型，目前提供`BID`和`X509_PUBLIC_KEY_INFO`两种域名证书类型，默认为`BID`类型；
+- `--oidFilePath`：（必选）申请域名证书需要申请主体身份相关文件路径，目前申请均为中继发起，故申请主体为中继。申请`BID`类型证书需要提供BID文件（文件生成参见`5.2 generate-bid-document`命令），申请`X509_PUBLIC_KEY_INFO`类型证书需要提供x509公钥文件。
 
 用法如下：
 
@@ -217,7 +217,7 @@ your receipt is f49431cf0512d5c3ae8254126a12be52
 ### 1.8 query-domain-cert-application-state 查询域名证书申请状态
 
 用于查询域名证书的申请状态。
-执行完1.7`apply-domain-name-cert`命令后可以执行该命令查询申请是否通过。
+执行完`1.7 apply-domain-name-cert`命令后可以执行该命令查询申请是否通过。
 
 命令参数如下：
 
@@ -346,7 +346,7 @@ relayer:> query-domain-router --domain mychain004ly.bif
 - `--desc`：（可选）区块链描述，可自定义，默认为空字符串；
 - `--confFile`：（必选）区块链配置信息路径，具体配置信息要求根据插件服务中相应链类型的插件要求。
 
-用法如下： 
+用法如下：
 
 ```shell
 relayer:> add-blockchain-anchor --product mychain010 --domain mychain006ly.bif --blockchainId mychain006ly.id --pluginServerId testps --confFile /path/to/mychain010.json
@@ -359,8 +359,8 @@ success
 
 参数如下：
 
-`--product`：（必选）区块链类型，如`mychain010`；
-`--blockchainId`：（必选）区块链标识ID。
+- `--product`：（必选）区块链类型，如`mychain010`；
+- `--blockchainId`：（必选）区块链标识ID。
 
 用法如下：
 
@@ -407,7 +407,6 @@ success
 
 ！！！配置信息因链而异较复杂，非相关链插件开发人员不建议使用当前命令进行完整配置更新操作！！！
 
-如果只需要修改别名或描述信息，配置信息可以直接使用`2.9 get-blockchain`命令查询获取。
 
 参数如下：
 
@@ -419,7 +418,7 @@ success
 
 ！！！注意`--clientConfig`参数与`2.1 add-blockchain-anchor`命令中的`--confFile`参数不是同一个文件！！！
 
-建议建议使用`2.9 get-blockchain`命令先查询区块链当前信息，取`properties`字段值根据需要进行修改，再作为`--clientConfig`参数内容进行更新。
+建议使用`2.9 get-blockchain`命令先查询区块链当前信息，取`properties`字段值根据需要进行修改，再作为`--clientConfig`参数内容进行更新。
 
 用法如下：
 
@@ -979,7 +978,6 @@ $ cat bid_document.json
 
 命令参数如下：
 
-SDK文档
 - `--relayerPrivateKeyFile`：（必选）Relayer跨链证书持有者的私钥路径，私钥为PEM格式的PKCS#8的私钥，可使用`5.2 generate-relayer-account`命令生成；
 - `--relayerCrossChainCertFile`：（必选）Relayer的跨链证书路径，需要提前从BCDNS处获取；
 - `--relayerSigAlgo`：（必选）`relayerPrivateKeyFile`私钥的签名算法，目前仅支持`Ed25519`算法，默认为`Ed25519`；
