@@ -25,6 +25,8 @@
 
 **在开始之前，请您确保安装了maven和JDK，这里推荐使用[openjdk-1.8](https://adoptium.net/zh-CN/temurin/releases/?version=8)版本**
 
+**确保安装了AntChain Bridge Plugin SDK，详情请[见](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK?tab=readme-ov-file#%E6%9E%84%E5%BB%BA)**
+
 在r-cli模块根目录运行maven命令即可：
 
 ```shell
@@ -47,7 +49,29 @@ target/r-cli
 
 ## 启动
 
-执行编译生成包中的执行脚本即可启动中继CLI工具，命令执行情况如下：
+查看脚本帮助信息：
+
+```shell
+$ ./r-cli/bin/start.sh -h
+
+start.sh - Start the AntChain Bridge Relayer Command Line Interface Tool
+
+ Usage:
+   start.sh <params>
+
+ Examples:
+  1. start with the default server address `localhost` and default port `8088`：
+   start.sh
+  2. start with specific server address and port:
+   start.sh -H 0.0.0.0 -p 8088
+
+ Options:
+   -H         admin server host of relayer.
+   -p         admin server port of relayer.
+   -h         print help information.
+```
+
+命令执行情况如下：
 
 ```shell
 $ ./r-cli/bin/start.sh
@@ -998,3 +1022,39 @@ $ cat bid_document.json
 relayer:> generate-bif-bcdns-conf --relayerPrivateKeyFile /path/to/private_key.pem --relayerCrossChainCertFile /path/to/relayer.crt --certServerUrl http://localhost:8112 --bifChainRpcUrl http://test.bifcore.bitfactory.cn --bifDomainGovernContract did:bid:efjQKy4HEshTueHGKzrJPATKoFeNgHKo --bifRelayerGovernContract did:bid:efSnvCFJSnpWiQiVhnh8Eimgyi4RoNpA --bifPtcGovernContract did:bid:efgTq9DtP2zHAhmKp7M4BhN6AVYMVWV2
 file is : /path/to/bif_bcdns_conf.json
 ```
+
+### 5.4 convert-cross-chain-cert-to-pem 转换跨链证书为PEM格式
+
+用于将跨链证书从Base64字符串转换为PEM格式。
+
+命令参数如下：
+
+- `--base64Input`：（必选）跨链证书序列化的Base64字符串；
+- `--outDir`：（可选）PEM证书的保存路径（文件夹），默认输出到命令行，否则为类似`output_1704359604268.crt`的文件；
+
+用法如下：
+
+```
+relayer:> convert-cross-chain-cert-to-pem --base64Input AAAIAgAAAAABAAAAMQEAKAAAAGRpZDpiaWQ6ZWY5OVJ6OFRpN3g0aTZ6eUNyUHlGaXk5dXRzV0JKVVcCAAEAAAADAwA7AAAAAAA1AAAAAAABAAAAAQEAKAAAAGRpZDpiaWQ6ZWZLTDJ3Tm5xV2ZyOWJ5amRib3hQM2tIckFmQWR0bzkEAAgAAABrZpZlAAAAAAUACAAAAOuZd2cAAAAABgDbAAAAAADVAAAAAAADAAAAMS4wAQAFAAAAcmVsYXkDADsAAAAAADUAAAAAAAEAAAABAQAoAAAAZGlkOmJpZDplZm5KaWZqYlJVcXdrajd3UnZVc053d0FGZWluYjRmSgQAegAAAHsicHVibGljS2V5IjpbeyJ0eXBlIjoiRUQyNTUxOSIsInB1YmxpY0tleUhleCI6ImIwNjU2NjkzYTA1YTBmZDhmYWVmZDQ3OTMxZTIxYTIxYjI3YzBlYmEwMWZmNmM2OGZmZjEyYmQzY2VmZDViM2VlODVjMWIifV19BwCIAAAAAACCAAAAAAADAAAAU00zAQAgAAAANSyaAeb+N8q0mRncA7uGGG2cTmF+4QlxLUp70uRK43ECAAcAAABFZDI1NTE5AwBAAAAAbA8zkKXCI4Iwp6KBERXOqKlnJT/qn36in7+iU6SsNEz0rsJpmEvVRT6adNVY7zS/ni35JwWf/zi60DKnQ7xaCA==
+-----BEGIN RELAYER CERTIFICATE-----
+AAAIAgAAAAABAAAAMQEAKAAAAGRpZDpiaWQ6ZWY5OVJ6OFRpN3g0aTZ6eUNyUHlG
+aXk5dXRzV0JKVVcCAAEAAAADAwA7AAAAAAA1AAAAAAABAAAAAQEAKAAAAGRpZDpi
+aWQ6ZWZLTDJ3Tm5xV2ZyOWJ5amRib3hQM2tIckFmQWR0bzkEAAgAAABrZpZlAAAA
+AAUACAAAAOuZd2cAAAAABgDbAAAAAADVAAAAAAADAAAAMS4wAQAFAAAAcmVsYXkD
+ADsAAAAAADUAAAAAAAEAAAABAQAoAAAAZGlkOmJpZDplZm5KaWZqYlJVcXdrajd3
+UnZVc053d0FGZWluYjRmSgQAegAAAHsicHVibGljS2V5IjpbeyJ0eXBlIjoiRUQy
+NTUxOSIsInB1YmxpY0tleUhleCI6ImIwNjU2NjkzYTA1YTBmZDhmYWVmZDQ3OTMx
+ZTIxYTIxYjI3YzBlYmEwMWZmNmM2OGZmZjEyYmQzY2VmZDViM2VlODVjMWIifV19
+BwCIAAAAAACCAAAAAAADAAAAU00zAQAgAAAANSyaAeb+N8q0mRncA7uGGG2cTmF+
+4QlxLUp70uRK43ECAAcAAABFZDI1NTE5AwBAAAAAbA8zkKXCI4Iwp6KBERXOqKln
+JT/qn36in7+iU6SsNEz0rsJpmEvVRT6adNVY7zS/ni35JwWf/zi60DKnQ7xaCA==
+-----END RELAYER CERTIFICATE-----
+```
+
+或者导出到文件：
+
+```
+relayer:> convert-cross-chain-cert-to-pem --base64Input AAAIAgAAAAABAAAAMQEAKAAAAGRpZDpiaWQ6ZWY5OVJ6OFRpN3g0aTZ6eUNyUHlGaXk5dXRzV0JKVVcCAAEAAAADAwA7AAAAAAA1AAAAAAABAAAAAQEAKAAAAGRpZDpiaWQ6ZWZLTDJ3Tm5xV2ZyOWJ5amRib3hQM2tIckFmQWR0bzkEAAgAAABrZpZlAAAAAAUACAAAAOuZd2cAAAAABgDbAAAAAADVAAAAAAADAAAAMS4wAQAFAAAAcmVsYXkDADsAAAAAADUAAAAAAAEAAAABAQAoAAAAZGlkOmJpZDplZm5KaWZqYlJVcXdrajd3UnZVc053d0FGZWluYjRmSgQAegAAAHsicHVibGljS2V5IjpbeyJ0eXBlIjoiRUQyNTUxOSIsInB1YmxpY0tleUhleCI6ImIwNjU2NjkzYTA1YTBmZDhmYWVmZDQ3OTMxZTIxYTIxYjI3YzBlYmEwMWZmNmM2OGZmZjEyYmQzY2VmZDViM2VlODVjMWIifV19BwCIAAAAAACCAAAAAAADAAAAU00zAQAgAAAANSyaAeb+N8q0mRncA7uGGG2cTmF+4QlxLUp70uRK43ECAAcAAABFZDI1NTE5AwBAAAAAbA8zkKXCI4Iwp6KBERXOqKlnJT/qn36in7+iU6SsNEz0rsJpmEvVRT6adNVY7zS/ni35JwWf/zi60DKnQ7xaCA== --outDir ./
+certificate in pem saved here: /path/to/output_1704359604268.crt
+```
+
