@@ -173,7 +173,6 @@ aXk5dXRzV0JKVVcCAAEAAAADAwA7AAAAAAA1AAAAAAABAAAAAQEAKAAAAGRpZDpi
 4QlxLUp70uRK43ECAAcAAABFZDI1NTE5AwBAAAAAbA8zkKXCI4Iwp6KBERXOqKln
 JT/qn36in7+iU6SsNEz0rsJpmEvVRT6adNVY7zS/ni35JwWf/zi60DKnQ7xaCA==
 -----END RELAYER CERTIFICATE-----
-
 ```
 
 在获得PEM格式的中继证书和密钥之后，将其配置到文件中，这里假设将证书和密钥分别放在`cc_certs/relayer.crt`和`cc_certs/private_key.pem`：
