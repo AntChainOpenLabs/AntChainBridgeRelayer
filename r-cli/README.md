@@ -71,7 +71,7 @@ start.sh - Start the AntChain Bridge Relayer Command Line Interface Tool
    -h         print help information.
 ```
 
-命令执行情况如下：
+启动命令执行情况如下：
 
 ```shell
 $ ./r-cli/bin/start.sh
@@ -91,7 +91,7 @@ relayer:>
 
 # 命令操作详情
 
-中继CLI工具目前累计支持`48`条交互命令，分别应用于BCDNS管理、区块链管理、中继器管理、服务管理及其他工具功能。
+中继CLI工具目前累计支持`51`条交互命令，分别应用于BCDNS管理、区块链管理、中继器管理、服务管理及其他工具功能。
 
 - 直接输入`help`可以查看支持命令概况
 - 直接输入`version`可以查看当前中继CLI工具版本
@@ -943,6 +943,28 @@ relayer:> get-cross-chain-msg-acl --bizId 57168a55-aeb1-41f9-aedc-0534db81ab41
 # 查询不存在的跨链授权，已删除的跨链授权将不存在
 relayer:> get-cross-chain-msg-acl --bizId a3b56eea-3a31-43cd-9002-e656f6c3b521
 not found
+```
+
+
+### 4.8 query-curr-active-nodes 查询中继节点
+
+用于查询当前中继的节点列表信息，注意用于查询节点活跃状态，
+每个节点的信息包括最近活跃时间戳、是否活跃以及节点IP和节点ID（默认为节点IP）。
+可以通过当前命令查询中继节点是否正常活跃可用。
+
+用法如下：
+
+```shell
+relayer:> query-curr-active-nodes
+# 当前中继服务只有一个节点，节点活跃状态正常
+[
+	{
+		"last_active_time":1704366281000,
+		"node_ip":"30.75.64.168",
+		"active":true,
+		"node_id":"30.75.64.168"
+	}
+]
 ```
 
 ## 5 其他工具命令
