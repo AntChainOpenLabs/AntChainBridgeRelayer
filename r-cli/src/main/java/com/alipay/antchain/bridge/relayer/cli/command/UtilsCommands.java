@@ -34,6 +34,7 @@ import cn.bif.module.encryption.key.PrivateKeyManager;
 import cn.bif.module.encryption.key.PublicKeyManager;
 import cn.bif.module.encryption.model.KeyMember;
 import cn.bif.module.encryption.model.KeyType;
+import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -188,6 +189,24 @@ public class UtilsCommands {
             Files.write(path, JSON.toJSONString(config, SerializerFeature.PrettyFormat).getBytes());
 
             return "file is : " + path.toAbsolutePath();
+        } catch (Exception e) {
+            throw new RuntimeException("unexpected error please input stacktrace to check the detail", e);
+        }
+    }
+
+    @ShellMethod(value = "Convert the crosschain certificate from other format to PEM")
+    public String convertCrossChainCertToPem(
+            @ShellOption(help = "Base64 format string of crosschain certificate") String base64Input,
+            @ShellOption(valueProvider = FileValueProvider.class, help = "Directory path to save the output", defaultValue = "") String outDir
+    ) {
+        try {
+            AbstractCrossChainCertificate crossChainCertificate = CrossChainCertificateFactory.createCrossChainCertificate(Base64.decode(base64Input));
+            if (StrUtil.isNotEmpty(outDir)) {
+                Path path = Paths.get(outDir, StrUtil.format("output_{}.crt", System.currentTimeMillis()));
+                Files.write(path, CrossChainCertificateUtil.formatCrossChainCertificateToPem(crossChainCertificate).getBytes());
+                return StrUtil.format("certificate in pem saved here: {}", path.toAbsolutePath().toString());
+            }
+            return CrossChainCertificateUtil.formatCrossChainCertificateToPem(crossChainCertificate);
         } catch (Exception e) {
             throw new RuntimeException("unexpected error please input stacktrace to check the detail", e);
         }

@@ -99,7 +99,7 @@ public class HeteroBlockchainClient extends AbstractBlockchainClient {
         boolean ifAMPrepared = ContractStatusEnum.CONTRACT_READY == bbcContext.getAuthMessageContract().getStatus();
         if (!ifAMPrepared) {
             log.info(
-                    "AM contract of heterogeneous blockchain client ( product: {} , domain: {} ) is {} but ready",
+                    "AM contract of heterogeneous blockchain client ( product: {} , domain: {} ) is {} instead of ready",
                     getBlockchainMeta().getProduct(), getDomain(), bbcContext.getAuthMessageContract().getStatus()
             );
             return false;

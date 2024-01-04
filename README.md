@@ -31,6 +31,8 @@ AntChain Bridge Relayer将功能实现分为两部分，分别为通信和可信
 
 **在开始之前，请您确保安装了maven和JDK，这里推荐使用[openjdk-1.8](https://adoptium.net/zh-CN/temurin/releases/?version=8)版本*
 
+**确保安装了AntChain Bridge Plugin SDK，详情请[见](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK?tab=readme-ov-file#%E6%9E%84%E5%BB%BA)*
+
 ### 编译
 
 在项目根目录运行maven命令即可：
@@ -160,9 +162,20 @@ relayer:> generate-bid-document --publicKeyPath /path/to/public_key.pem
 file is : /path/to/bid_document.json
 ```
 
-如果仅需要将程序运行起来，或者进行某些测试，可以使用测试用例中提供的[证书](r-bootstrap/src/test/resources/cc_certs/relayer.crt)和[密钥](r-bootstrap/src/test/resources/cc_certs/private_key.pem)，请不要将该证书与密钥用于生产。
+如果BCDNS返回的是Base64格式的证书，可以使用CLI工具转换成PEM格式，以用于Relayer。
 
-在获得中继证书和密钥之后，将其配置到文件中，这里假设将证书和密钥分别放在`cc_certs/relayer.crt`和`cc_certs/private_key.pem`：
+```
+relayer:> convert-cross-chain-cert-to-pem --base64Input AAAIAgAAAAABAAAAMQEAK...wWf/zi60DKnQ7xaCA==
+-----BEGIN RELAYER CERTIFICATE-----
+AAAIAgAAAAABAAAAMQEAKAAAAGRpZDpiaWQ6ZWY5OVJ6OFRpN3g0aTZ6eUNyUHlG
+aXk5dXRzV0JKVVcCAAEAAAADAwA7AAAAAAA1AAAAAAABAAAAAQEAKAAAAGRpZDpi
+...
+4QlxLUp70uRK43ECAAcAAABFZDI1NTE5AwBAAAAAbA8zkKXCI4Iwp6KBERXOqKln
+JT/qn36in7+iU6SsNEz0rsJpmEvVRT6adNVY7zS/ni35JwWf/zi60DKnQ7xaCA==
+-----END RELAYER CERTIFICATE-----
+```
+
+在获得PEM格式的中继证书和密钥之后，将其配置到文件中，这里假设将证书和密钥分别放在`cc_certs/relayer.crt`和`cc_certs/private_key.pem`：
 
 ```
 relayer:
@@ -173,7 +186,7 @@ relayer:
       private_key_path: file:cc_certs/private_key.pem
 ```
 
-
+如果仅需要将程序运行起来，或者进行某些测试，可以使用测试用例中提供的[证书](r-bootstrap/src/test/resources/cc_certs/relayer.crt)和[密钥](r-bootstrap/src/test/resources/cc_certs/private_key.pem)，请不要将该证书与密钥用于生产。
 
 ### 运行
 
