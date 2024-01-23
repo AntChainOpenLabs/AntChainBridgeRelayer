@@ -27,16 +27,6 @@
             <artifactId>spring-boot-starter-data-jdbc</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>protobuf-java</artifactId>
-                    <groupId>com.google.protobuf</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>com.alipay.antchain.bridge</groupId>
             <artifactId>r-engine</artifactId>
         </dependency>

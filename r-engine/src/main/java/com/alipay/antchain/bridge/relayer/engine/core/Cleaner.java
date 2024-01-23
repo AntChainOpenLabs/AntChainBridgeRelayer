@@ -44,16 +44,16 @@ public class Cleaner {
         List<BlockchainMeta> stopBlockchains = getStopBlockchains();
 
         for (BlockchainMeta blockchain : stopBlockchains) {
-            log.info("begin to clean the stopped blockchain {}-{}", blockchain.getProduct(), blockchain.getBlockchainId());
+            log.debug("begin to clean the stopped blockchain {}-{}", blockchain.getProduct(), blockchain.getBlockchainId());
             try {
                 boolean ifRunning = blockchainClientPool.hasClient(blockchain.getProduct(), blockchain.getBlockchainId());
-                log.info("blockchain's client {} is running or not: {} ", blockchain.getBlockchainId(), ifRunning);
+                log.debug("blockchain's client {} is running or not: {} ", blockchain.getBlockchainId(), ifRunning);
                 if (!ifRunning) {
                     continue;
                 }
 
+                log.info("begin to clean the stopped blockchain {}-{}", blockchain.getProduct(), blockchain.getBlockchainId());
                 blockchainClientPool.shutdownClient(blockchain.getProduct(), blockchain.getBlockchainId());
-
                 log.info("blockchain's client {} shutdown success.", blockchain.getBlockchainId());
             } catch (Throwable e) {
                 log.error("clean stopped blockchain {} fail.", blockchain.getBlockchainId(), e);
