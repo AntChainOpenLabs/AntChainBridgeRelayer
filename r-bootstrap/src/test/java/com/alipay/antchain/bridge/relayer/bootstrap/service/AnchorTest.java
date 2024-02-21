@@ -35,11 +35,12 @@ import com.alipay.antchain.bridge.relayer.dal.repository.IBlockchainRepository;
 import com.google.protobuf.ByteString;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.Ignore;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+@Ignore
 public class AnchorTest extends TestBase {
 
     @Resource
@@ -59,10 +60,10 @@ public class AnchorTest extends TestBase {
 
     public MockedStatic<CrossChainServiceGrpc> mockedStaticCrossChainServiceGrpc = Mockito.mockStatic(CrossChainServiceGrpc.class);
 
-    @Test
-    public void test() throws Exception {
-        Thread.sleep(300_000);
-    }
+//    @Test
+//    public void test() throws Exception {
+//        Thread.sleep(300_000);
+//    }
 
     @Before
     public void initAntChainDotCom() {
