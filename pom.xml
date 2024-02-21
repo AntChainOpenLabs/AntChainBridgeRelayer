@@ -42,7 +42,7 @@
         <embeded-redis.version>0.7.3</embeded-redis.version>
         <protobuf-plugin.version>0.6.1</protobuf-plugin.version>
         <protobuf.version>3.19.1</protobuf.version>
-        <grpc.version>1.42.2</grpc.version>
+        <grpc.version>1.53.0</grpc.version>
         <bouncycastle.version>1.76</bouncycastle.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <spring-shell.version>2.1.15</spring-shell.version>
