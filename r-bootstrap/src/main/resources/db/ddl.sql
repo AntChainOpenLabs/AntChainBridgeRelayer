@@ -111,15 +111,15 @@ CREATE INDEX domain_space_cert_owner_oid_hex
 drop table if exists ucp_pool;
 CREATE TABLE `ucp_pool`
 (
-    `id`                 int(11)              NOT NULL AUTO_INCREMENT,
-    `ucp_id`             VARBINARY(64) UNIQUE NOT NULL,
+    `id`                 int(11)            NOT NULL AUTO_INCREMENT,
+    `ucp_id`             VARCHAR(64) UNIQUE NOT NULL,
     `blockchain_product` varchar(64) BINARY   DEFAULT NULL,
     `blockchain_id`      varchar(128) BINARY  DEFAULT NULL,
     `version`            int(11)              DEFAULT NULL,
     `src_domain`         varchar(128) BINARY  DEFAULT NULL,
     `blockhash`          varchar(66)          DEFAULT NULL,
     `txhash`             varchar(66)          DEFAULT NULL,
-    `ledger_time`        TIMESTAMP            DEFAULT NULL,
+    `ledger_time`        TIMESTAMP,
     `udag_path`          varchar(1024) BINARY DEFAULT NULL,
     `protocol_type`      int(11)              DEFAULT NULL,
     `raw_message`        mediumblob,
@@ -139,8 +139,8 @@ CREATE TABLE `ucp_pool`
 drop table if exists auth_msg_pool;
 CREATE TABLE `auth_msg_pool`
 (
-    `id`                        int(11)              NOT NULL AUTO_INCREMENT,
-    `ucp_id`                    VARBINARY(64) UNIQUE NOT NULL,
+    `id`                        int(11)            NOT NULL AUTO_INCREMENT,
+    `ucp_id`                    VARCHAR(64) UNIQUE NOT NULL,
     `blockchain_product`        varchar(64) BINARY  DEFAULT NULL,
     `blockchain_id`             varchar(128)        DEFAULT NULL,
     `domain_name`               varchar(128) BINARY DEFAULT NULL,
@@ -265,8 +265,8 @@ CREATE TABLE `relayer_node`
 drop table if exists auth_msg_archive;
 CREATE TABLE `auth_msg_archive`
 (
-    `id`                        int(11)              NOT NULL AUTO_INCREMENT,
-    `ucp_id`                    VARBINARY(64) UNIQUE NOT NULL,
+    `id`                        int(11)            NOT NULL AUTO_INCREMENT,
+    `ucp_id`                    VARCHAR(64) UNIQUE NOT NULL,
     `blockchain_product`        varchar(64) BINARY  DEFAULT NULL,
     `blockchain_id`             varchar(128)        DEFAULT NULL,
     `domain_name`               varchar(128) BINARY DEFAULT NULL,
