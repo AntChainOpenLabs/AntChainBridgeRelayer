@@ -2,6 +2,8 @@ package com.alipay.antchain.bridge.relayer.facade.admin;
 
 import cn.ac.caict.bid.model.BIDDocumentOperation;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.relayer.facade.admin.types.CrossChainMsgACLItem;
+import com.alipay.antchain.bridge.relayer.facade.admin.types.SysContractsInfo;
 
 public interface IRelayerAdminClient {
 
@@ -9,11 +11,11 @@ public interface IRelayerAdminClient {
 
     AbstractCrossChainCertificate queryDomainNameCertFromBCDNS(String domainName, String domainSpace);
 
-    void addBlockchainAnchor(String domain, byte[] config);
+    void addBlockchainAnchor(String product, String blockchainId, String domain, String pluginServerId, byte[] config);
 
     void startBlockchainAnchor(String domain);
 
-    String getBlockchainContracts(String domain);
+    SysContractsInfo getBlockchainContracts(String domain);
 
     String getBlockchainHeights(String domain);
 
@@ -21,7 +23,7 @@ public interface IRelayerAdminClient {
 
     String addCrossChainMsgACL(String grantDomain, String grantIdentity, String ownerDomain, String ownerIdentity);
 
-    String getCrossChainMsgACL(String bizId);
+    CrossChainMsgACLItem getCrossChainMsgACL(String bizId);
 
     void deleteCrossChainMsgACL(String bizId);
 
