@@ -86,9 +86,10 @@ public class ServiceNamespace extends AbstractNamespace {
                 return "existed rules matched";
             }
 
+            String bizId = UUID.randomUUID().toString();
             governManager.addCrossChainMsgACL(
                     new CrossChainMsgACLItem(
-                            UUID.randomUUID().toString(),
+                            bizId,
                             ownerDomain,
                             ownerIdentity,
                             grantDomain,
@@ -96,12 +97,13 @@ public class ServiceNamespace extends AbstractNamespace {
                             0
                     )
             );
+
+            return bizId;
         } catch (Exception e) {
             log.error("failed to create crosschain ACL item : ( grant_domain: {}, grant_id: {}, owner_domain: {}, owner_id: {} ) ",
                     grantDomain, grantIdentity, ownerDomain, ownerIdentity, e);
             return "unexpected error : " + ObjectUtil.defaultIfNull(e.getCause(), e).getMessage();
         }
-        return "success";
     }
 
     Object getCrossChainMsgACL(String... args) {

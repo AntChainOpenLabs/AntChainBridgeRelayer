@@ -22,6 +22,10 @@
             <groupId>com.alipay.antchain.bridge</groupId>
             <artifactId>r-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.alipay.antchain.bridge</groupId>
+            <artifactId>r-facade</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
