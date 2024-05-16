@@ -17,12 +17,14 @@
 package com.alipay.antchain.bridge.relayer.server.admin.impl;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -160,10 +162,16 @@ public class BlockchainNamespace extends AbstractNamespace {
         String pluginServerId = args[3];
         String alias = args[4];
         String desc = args[5];
-        String heteroConfFilePath = args[6];
+        String heteroConf = args[6];
 
         try {
-            byte[] rawConf = Files.readAllBytes(Paths.get(heteroConfFilePath));
+            byte[] rawConf;
+            Path confPath = Paths.get(heteroConf);
+            if (FileUtil.isFile(confPath, false)) {
+                rawConf = Files.readAllBytes(confPath);
+            } else {
+                rawConf = heteroConf.getBytes();
+            }
 
             DefaultBBCContext bbcContext = new DefaultBBCContext();
             bbcContext.setConfForBlockchainClient(rawConf);

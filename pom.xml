@@ -23,6 +23,7 @@
         <module>r-server</module>
         <module>r-commons</module>
         <module>r-cli</module>
+        <module>r-facade</module>
     </modules>
 
     <properties>
