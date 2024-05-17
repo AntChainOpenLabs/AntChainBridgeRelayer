@@ -1,10 +1,12 @@
 package com.alipay.antchain.bridge.relayer.facade.admin;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import cn.ac.caict.bid.model.BIDDocumentOperation;
 import cn.bif.common.JsonUtils;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -245,6 +247,33 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
             );
         }
         return !StrUtil.equals("not found", result);
+    }
+
+    @Override
+    public List<String> getMatchedCrossChainACLBizIds(String grantDomain, String grantIdentity, String ownerDomain, String ownerIdentity) {
+        String result = queryAPI(
+                BLOCKCHAIN, "getCrossChainMsgACL",
+                grantDomain, grantIdentity, ownerDomain, ownerIdentity
+        );
+        if (StrUtil.isEmpty(result) || StrUtil.startWith(result, "unexpected")) {
+            throw new FacadeException(
+                    StrUtil.format(
+                            "failed to get matched ACL for ({} - {} : {} - {}): ",
+                            grantDomain, grantIdentity, ownerDomain, ownerIdentity
+                    ) + result
+            );
+        }
+
+        if (StrUtil.equals(result, "not found")) {
+            return ListUtil.empty();
+        }
+
+        return ListUtil.toList(
+                StrUtil.split(
+                        StrUtil.removePrefix(result, "your input matched ACL rules : "),
+                        StrUtil.COMMA
+                )
+        );
     }
 
     private BlockchainId getBlockchainId(String domain) {

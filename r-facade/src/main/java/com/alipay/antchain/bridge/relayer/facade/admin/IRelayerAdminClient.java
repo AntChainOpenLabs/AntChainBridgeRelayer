@@ -1,5 +1,7 @@
 package com.alipay.antchain.bridge.relayer.facade.admin;
 
+import java.util.List;
+
 import cn.ac.caict.bid.model.BIDDocumentOperation;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.relayer.facade.admin.types.CrossChainMsgACLItem;
@@ -28,4 +30,6 @@ public interface IRelayerAdminClient {
     void deleteCrossChainMsgACL(String bizId);
 
     boolean hasMatchedCrossChainACLItems(String grantDomain, String grantIdentity, String ownerDomain, String ownerIdentity);
+
+    List<String> getMatchedCrossChainACLBizIds(String grantDomain, String grantIdentity, String ownerDomain, String ownerIdentity);
 }
