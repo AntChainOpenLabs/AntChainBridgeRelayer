@@ -280,7 +280,13 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
         if (blockchainIdCache.containsKey(domain)) {
             return blockchainIdCache.get(domain);
         }
-        BlockchainId blockchainId = JSON.parseObject(queryAPI(BLOCKCHAIN, "getBlockchainIdByDomain", domain), BlockchainId.class);
+
+        String result = queryAPI(BLOCKCHAIN, "getBlockchainIdByDomain", domain);
+        if (StrUtil.equals(result, "none blockchain found")) {
+            return null;
+        }
+
+        BlockchainId blockchainId = JSON.parseObject(result, BlockchainId.class);
         if (ObjectUtil.isNotNull(blockchainId)) {
             blockchainIdCache.put(domain, blockchainId);
             return blockchainId;
