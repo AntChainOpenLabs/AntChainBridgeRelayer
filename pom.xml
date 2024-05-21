@@ -13,7 +13,7 @@
 
     <groupId>com.alipay.antchain.bridge</groupId>
     <artifactId>antchain-bridge-relayer</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <packaging>pom</packaging>
     <modules>
         <module>r-bootstrap</module>
@@ -36,7 +36,7 @@
         <redisson-spring.version>3.23.5</redisson-spring.version>
         <spring-boot.version>2.7.16</spring-boot.version>
         <mysql-connector.version>8.0.33</mysql-connector.version>
-        <acb-sdk.version>0.2.0</acb-sdk.version>
+        <acb-sdk.version>0.2.3</acb-sdk.version>
         <hutool.version>5.8.22</hutool.version>
         <junit.version>4.13.2</junit.version>
         <h2.version>2.2.224</h2.version>

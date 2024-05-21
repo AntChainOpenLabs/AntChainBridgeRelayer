@@ -34,6 +34,7 @@ import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateTypeEnum;
 import com.alipay.antchain.bridge.commons.bcdns.DomainNameCredentialSubject;
 import com.alipay.antchain.bridge.commons.core.am.*;
 import com.alipay.antchain.bridge.commons.core.base.*;
+import com.alipay.antchain.bridge.commons.core.sdp.AtomicFlagEnum;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV1;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV2;
 import com.alipay.antchain.bridge.relayer.commons.model.CrossChainChannelDO;
@@ -211,7 +212,7 @@ public class ConvertUtil {
             message.setSequence(sdpMsgPoolEntity.getMsgSequence().intValue());
             message.setTargetDomain(new CrossChainDomain(sdpMsgPoolEntity.getReceiverDomainName()));
             message.setTargetIdentity(new CrossChainIdentity(HexUtil.decodeHex(sdpMsgPoolEntity.getReceiverId())));
-            message.setAtomic(sdpMsgPoolEntity.getAtomic());
+            message.setAtomicFlag(sdpMsgPoolEntity.getAtomic() ? AtomicFlagEnum.ATOMIC_REQUEST: AtomicFlagEnum.NONE_ATOMIC);
             wrapper.setSdpMessage(message);
         } else {
             throw new RuntimeException("Invalid version of sdp message: " + sdpMsgPoolEntity.getVersion());
