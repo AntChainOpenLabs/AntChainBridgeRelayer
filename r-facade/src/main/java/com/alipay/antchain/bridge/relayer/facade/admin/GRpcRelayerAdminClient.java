@@ -213,6 +213,9 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
                 SERVICE, "getCrossChainMsgACL",
                 bizId
         );
+        if (StrUtil.equals("not found", result)) {
+            return null;
+        }
         if (!JSONUtil.isTypeJSON(result)) {
             throw new FacadeException(
                     StrUtil.format("failed to get ACL {}: ", bizId) + result
