@@ -36,6 +36,8 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
 
     private static final String BLOCKCHAIN = "blockchain";
 
+    private static final String SERVICE = "service";
+
     private Map<String, BlockchainId> blockchainIdCache = new ConcurrentHashMap<>();
 
     public GRpcRelayerAdminClient(String address) {
@@ -196,7 +198,7 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
     @Override
     public String addCrossChainMsgACL(String grantDomain, String grantIdentity, String ownerDomain, String ownerIdentity) {
         String result = queryAPI(
-                BLOCKCHAIN, "addCrossChainMsgACL",
+                SERVICE, "addCrossChainMsgACL",
                 grantDomain, grantIdentity, ownerDomain, ownerIdentity
         );
         if (result.startsWith("unexpected")) {
@@ -208,7 +210,7 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
     @Override
     public CrossChainMsgACLItem getCrossChainMsgACL(String bizId) {
         String result = queryAPI(
-                BLOCKCHAIN, "getCrossChainMsgACL",
+                SERVICE, "getCrossChainMsgACL",
                 bizId
         );
         if (!JSONUtil.isTypeJSON(result)) {
@@ -222,7 +224,7 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
     @Override
     public void deleteCrossChainMsgACL(String bizId) {
         String result = queryAPI(
-                BLOCKCHAIN, "deleteCrossChainMsgACL",
+                SERVICE, "deleteCrossChainMsgACL",
                 bizId
         );
         if (!StrUtil.equalsIgnoreCase("success", result)) {
@@ -235,7 +237,7 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
     @Override
     public boolean hasMatchedCrossChainACLItems(String grantDomain, String grantIdentity, String ownerDomain, String ownerIdentity) {
         String result = queryAPI(
-                BLOCKCHAIN, "getCrossChainMsgACL",
+                SERVICE, "getCrossChainMsgACL",
                 grantDomain, grantIdentity, ownerDomain, ownerIdentity
         );
         if (StrUtil.isEmpty(result) || StrUtil.startWith(result, "unexpected")) {
@@ -252,7 +254,7 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
     @Override
     public List<String> getMatchedCrossChainACLBizIds(String grantDomain, String grantIdentity, String ownerDomain, String ownerIdentity) {
         String result = queryAPI(
-                BLOCKCHAIN, "getCrossChainMsgACL",
+                SERVICE, "getCrossChainMsgACL",
                 grantDomain, grantIdentity, ownerDomain, ownerIdentity
         );
         if (StrUtil.isEmpty(result) || StrUtil.startWith(result, "unexpected")) {
