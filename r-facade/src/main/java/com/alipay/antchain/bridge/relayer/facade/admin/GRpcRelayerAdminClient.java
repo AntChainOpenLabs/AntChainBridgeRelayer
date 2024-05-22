@@ -1,10 +1,12 @@
 package com.alipay.antchain.bridge.relayer.facade.admin;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import cn.ac.caict.bid.model.BIDDocumentOperation;
 import cn.bif.common.JsonUtils;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -33,6 +35,8 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
     private static final String BCDNS = "bcdns";
 
     private static final String BLOCKCHAIN = "blockchain";
+
+    private static final String SERVICE = "service";
 
     private Map<String, BlockchainId> blockchainIdCache = new ConcurrentHashMap<>();
 
@@ -194,7 +198,7 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
     @Override
     public String addCrossChainMsgACL(String grantDomain, String grantIdentity, String ownerDomain, String ownerIdentity) {
         String result = queryAPI(
-                BLOCKCHAIN, "addCrossChainMsgACL",
+                SERVICE, "addCrossChainMsgACL",
                 grantDomain, grantIdentity, ownerDomain, ownerIdentity
         );
         if (result.startsWith("unexpected")) {
@@ -206,9 +210,12 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
     @Override
     public CrossChainMsgACLItem getCrossChainMsgACL(String bizId) {
         String result = queryAPI(
-                BLOCKCHAIN, "getCrossChainMsgACL",
+                SERVICE, "getCrossChainMsgACL",
                 bizId
         );
+        if (StrUtil.equals("not found", result)) {
+            return null;
+        }
         if (!JSONUtil.isTypeJSON(result)) {
             throw new FacadeException(
                     StrUtil.format("failed to get ACL {}: ", bizId) + result
@@ -220,7 +227,7 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
     @Override
     public void deleteCrossChainMsgACL(String bizId) {
         String result = queryAPI(
-                BLOCKCHAIN, "deleteCrossChainMsgACL",
+                SERVICE, "deleteCrossChainMsgACL",
                 bizId
         );
         if (!StrUtil.equalsIgnoreCase("success", result)) {
@@ -233,7 +240,7 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
     @Override
     public boolean hasMatchedCrossChainACLItems(String grantDomain, String grantIdentity, String ownerDomain, String ownerIdentity) {
         String result = queryAPI(
-                BLOCKCHAIN, "getCrossChainMsgACL",
+                SERVICE, "getCrossChainMsgACL",
                 grantDomain, grantIdentity, ownerDomain, ownerIdentity
         );
         if (StrUtil.isEmpty(result) || StrUtil.startWith(result, "unexpected")) {
@@ -247,11 +254,44 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
         return !StrUtil.equals("not found", result);
     }
 
+    @Override
+    public List<String> getMatchedCrossChainACLBizIds(String grantDomain, String grantIdentity, String ownerDomain, String ownerIdentity) {
+        String result = queryAPI(
+                SERVICE, "getCrossChainMsgACL",
+                grantDomain, grantIdentity, ownerDomain, ownerIdentity
+        );
+        if (StrUtil.isEmpty(result) || StrUtil.startWith(result, "unexpected")) {
+            throw new FacadeException(
+                    StrUtil.format(
+                            "failed to get matched ACL for ({} - {} : {} - {}): ",
+                            grantDomain, grantIdentity, ownerDomain, ownerIdentity
+                    ) + result
+            );
+        }
+
+        if (StrUtil.equals(result, "not found")) {
+            return ListUtil.empty();
+        }
+
+        return ListUtil.toList(
+                StrUtil.split(
+                        StrUtil.removePrefix(result, "your input matched ACL rules : "),
+                        StrUtil.COMMA
+                )
+        );
+    }
+
     private BlockchainId getBlockchainId(String domain) {
         if (blockchainIdCache.containsKey(domain)) {
             return blockchainIdCache.get(domain);
         }
-        BlockchainId blockchainId = JSON.parseObject(queryAPI(BLOCKCHAIN, "getBlockchainIdByDomain", domain), BlockchainId.class);
+
+        String result = queryAPI(BLOCKCHAIN, "getBlockchainIdByDomain", domain);
+        if (StrUtil.equals(result, "none blockchain found")) {
+            return null;
+        }
+
+        BlockchainId blockchainId = JSON.parseObject(result, BlockchainId.class);
         if (ObjectUtil.isNotNull(blockchainId)) {
             blockchainIdCache.put(domain, blockchainId);
             return blockchainId;
