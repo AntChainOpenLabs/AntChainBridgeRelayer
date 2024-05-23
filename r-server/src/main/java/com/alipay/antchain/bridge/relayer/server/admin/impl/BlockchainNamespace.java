@@ -183,6 +183,10 @@ public class BlockchainNamespace extends AbstractNamespace {
         String heteroConf = args[6];
 
         try {
+            if (blockchainManager.hasBlockchain(domain)) {
+                return "blockchain already exist";
+            }
+
             byte[] rawConf;
             Path confPath = Paths.get(heteroConf);
             if (FileUtil.isFile(confPath, false)) {

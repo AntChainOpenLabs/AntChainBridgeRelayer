@@ -34,6 +34,7 @@ import com.alipay.antchain.bridge.relayer.commons.model.ActiveNode;
 import com.alipay.antchain.bridge.relayer.commons.model.CrossChainMsgACLItem;
 import com.alipay.antchain.bridge.relayer.commons.model.PluginServerDO;
 import com.alipay.antchain.bridge.relayer.core.manager.bbc.IBBCPluginManager;
+import com.alipay.antchain.bridge.relayer.core.manager.blockchain.BlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.manager.gov.IGovernManager;
 import com.alipay.antchain.bridge.relayer.dal.repository.IScheduleRepository;
 import com.alipay.antchain.bridge.relayer.server.admin.AbstractNamespace;
@@ -50,6 +51,9 @@ public class ServiceNamespace extends AbstractNamespace {
 
     @Resource
     private IBBCPluginManager bbcPluginManager;
+
+    @Resource
+    private BlockchainManager blockchainManager;
 
     @Resource
     private IScheduleRepository scheduleRepository;
@@ -80,6 +84,9 @@ public class ServiceNamespace extends AbstractNamespace {
         String ownerIdentity = args[3];
 
         try {
+            if (!blockchainManager.hasBlockchain(ownerDomain)) {
+                return "no such receiver blockchain: " + ownerDomain;
+            }
             if (ObjectUtil.isNotEmpty(
                     governManager.getMatchedCrossChainACLItems(ownerDomain, ownerIdentity, grantDomain, grantIdentity)
             )) {
@@ -140,6 +147,9 @@ public class ServiceNamespace extends AbstractNamespace {
         try {
             if (args.length == 1) {
                 String bizId = args[0];
+                if (!governManager.hasCrossChainMsgACL(bizId)) {
+                    return "no such acl with bizId: " + bizId;
+                }
                 governManager.delCrossChainMsgACL(bizId);
                 return "success";
             }

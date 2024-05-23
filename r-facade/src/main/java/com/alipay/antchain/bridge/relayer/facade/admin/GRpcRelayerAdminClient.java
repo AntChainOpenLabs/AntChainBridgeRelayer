@@ -201,7 +201,7 @@ public class GRpcRelayerAdminClient implements IRelayerAdminClient {
                 SERVICE, "addCrossChainMsgACL",
                 grantDomain, grantIdentity, ownerDomain, ownerIdentity
         );
-        if (result.startsWith("unexpected")) {
+        if (result.startsWith("unexpected") || result.startsWith("no such receiver blockchain")) {
             throw new FacadeException("call addCrossChainMsgACL failed: " + result);
         }
         return result;
