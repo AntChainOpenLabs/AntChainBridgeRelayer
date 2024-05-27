@@ -31,6 +31,7 @@ import com.alipay.antchain.bridge.commons.core.am.AuthMessageTrustLevelEnum;
 import com.alipay.antchain.bridge.commons.core.am.AuthMessageV2;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainIdentity;
+import com.alipay.antchain.bridge.commons.core.sdp.AtomicFlagEnum;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV2;
 import com.alipay.antchain.bridge.pluginserver.service.*;
 import com.alipay.antchain.bridge.relayer.bootstrap.basic.BlockchainModelsTest;
@@ -278,7 +279,7 @@ public abstract class TestBase {
     @BeforeClass
     public static void beforeTest() throws Exception {
 
-        sdpMessageV2.setAtomic(false);
+        sdpMessageV2.setAtomicFlag(AtomicFlagEnum.NONE_ATOMIC);
         sdpMessageV2.setSequence(-1);
         sdpMessageV2.setSdpPayload("test"::getBytes);
         sdpMessageV2.setTargetDomain(new CrossChainDomain(catChainDotComDomain));
