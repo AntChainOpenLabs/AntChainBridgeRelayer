@@ -32,6 +32,7 @@ import com.alipay.antchain.bridge.commons.core.am.IAuthMessage;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainIdentity;
 import com.alipay.antchain.bridge.commons.core.sdp.AbstractSDPMessage;
+import com.alipay.antchain.bridge.commons.core.sdp.AtomicFlagEnum;
 import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV2;
 import com.alipay.antchain.bridge.relayer.bootstrap.TestBase;
 import com.alipay.antchain.bridge.relayer.commons.constant.AuthMsgProcessStateEnum;
@@ -83,7 +84,7 @@ public class CrossChainRepositoryTest extends TestBase {
         authMessageZeroTrust = authMessageV2Zero;
 
         SDPMessageV2 sdpMessageV2 = new SDPMessageV2();
-        sdpMessageV2.setAtomic(true);
+        sdpMessageV2.setAtomicFlag(AtomicFlagEnum.ATOMIC_REQUEST);
         sdpMessageV2.setSdpPayload(new SDPMessageV2.SDPPayloadV2("".getBytes()));
         sdpMessageV2.setTargetDomain(new CrossChainDomain("dest"));
         sdpMessageV2.setSequence(100);

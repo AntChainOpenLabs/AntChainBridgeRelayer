@@ -13,7 +13,7 @@
 
     <groupId>com.alipay.antchain.bridge</groupId>
     <artifactId>antchain-bridge-relayer</artifactId>
-    <version>0.1.1</version>
+    <version>0.2.0</version>
     <packaging>pom</packaging>
     <modules>
         <module>r-bootstrap</module>
@@ -47,6 +47,7 @@
         <bouncycastle.version>1.76</bouncycastle.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <spring-shell.version>2.1.15</spring-shell.version>
+        <jasypt-starter.version>3.0.5</jasypt-starter.version>
     </properties>
 
     <dependencyManagement>
@@ -225,6 +226,11 @@
                 <version>${spring-shell.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.ulisesbocchio</groupId>
+                <artifactId>jasypt-spring-boot-starter</artifactId>
+                <version>${jasypt-starter.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
