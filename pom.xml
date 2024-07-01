@@ -13,7 +13,7 @@
 
     <groupId>com.alipay.antchain.bridge</groupId>
     <artifactId>antchain-bridge-relayer</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <packaging>pom</packaging>
     <modules>
         <module>r-bootstrap</module>
@@ -23,6 +23,7 @@
         <module>r-server</module>
         <module>r-commons</module>
         <module>r-cli</module>
+        <module>r-facade</module>
     </modules>
 
     <properties>
@@ -35,7 +36,7 @@
         <redisson-spring.version>3.23.5</redisson-spring.version>
         <spring-boot.version>2.7.16</spring-boot.version>
         <mysql-connector.version>8.0.33</mysql-connector.version>
-        <acb-sdk.version>0.2.0</acb-sdk.version>
+        <acb-sdk.version>0.2.3</acb-sdk.version>
         <hutool.version>5.8.22</hutool.version>
         <junit.version>4.13.2</junit.version>
         <h2.version>2.2.224</h2.version>
@@ -46,6 +47,7 @@
         <bouncycastle.version>1.76</bouncycastle.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <spring-shell.version>2.1.15</spring-shell.version>
+        <jasypt-starter.version>3.0.5</jasypt-starter.version>
     </properties>
 
     <dependencyManagement>
@@ -194,6 +196,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.alipay.antchain.bridge</groupId>
+                <artifactId>r-facade</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
@@ -219,6 +226,11 @@
                 <version>${spring-shell.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.ulisesbocchio</groupId>
+                <artifactId>jasypt-spring-boot-starter</artifactId>
+                <version>${jasypt-starter.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

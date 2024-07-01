@@ -56,7 +56,7 @@ public class AuthMsgPackage {
                 sdpMsgWrapper -> authMsgPackage.addAmMsg(
                         Base64.getEncoder().encodeToString(
                                 ObjectUtil.isNull(ptcProofResult) ?
-                                        PTCProofResult.generateEmptyProofForAM( // for now, we generate empty proof utils PTC is ready
+                                        PTCProofResult.generateEmptyProofForAM( // for now, we generate empty proof until PTC is ready
                                                 sdpMsgWrapper.getAuthMsgWrapper()
                                         ).getPtcProof()
                                         : ptcProofResult.getPtcProof()

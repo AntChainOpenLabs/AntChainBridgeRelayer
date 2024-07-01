@@ -188,6 +188,42 @@ relayer:
 
 如果仅需要将程序运行起来，或者进行某些测试，可以使用测试用例中提供的[证书](r-bootstrap/src/test/resources/cc_certs/relayer.crt)和[密钥](r-bootstrap/src/test/resources/cc_certs/private_key.pem)，请不要将该证书与密钥用于生产。
 
+#### 配置加密
+
+Relayer支持使用[Jasypt](https://github.com/ulisesbocchio/jasypt-spring-boot)加密配置。
+
+- 找到你的配置文件`/path/to/your/application.yml`，将所有你想要加密的配置改成`DEC(...)`格式的文本。
+
+  ```
+    datasource:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://localhost:3306/relayer?serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+      #比如这里
+      password: DEC(password)
+      username: root
+  ```
+
+- 进入项目的r-bootstrap目录，使用maven[插件](https://github.com/ulisesbocchio/jasypt-spring-boot?tab=readme-ov-file#encryption)对配置文件进行加密。
+
+  ```
+  mvn jasypt:encrypt -Djasypt.plugin.path="file:/path/to/your/application.yml" -Djasypt.encryptor.password=the_password
+  ```
+
+  **忽略执行时的`ClassNotFoundException`。*
+
+- 将得到下面配置文件：
+
+  ```
+    datasource:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://localhost:3306/relayer?serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+      #比如这里
+      password: ENC(DLDD9/HtY1mBx3ez1f6k9iCTt8VFANfx7n3g7gtweJ1DNI5GgdNUu8SUXYegWLbB)
+      username: root
+  ```
+
+- 使用加密之后的配置文件启动服务即可。
+
 ### 运行
 
 通过运行`bin/start.sh -h`，可以看到运行方式。
@@ -196,9 +232,9 @@ relayer:
 
 - 可以通过运行`start.sh -s`作为系统服务启动，支持自动重启等功能。
 
-```
-bin/start.sh -h
+- 如果配置文件进行了加密，则使用`start.sh -P the_password`启动。
 
+```
  start.sh - Start the AntChain Bridge Relayer
 
  Usage:
@@ -209,9 +245,12 @@ bin/start.sh -h
    start.sh -s
   2. start in application mode:
    start.sh
+  3. start with configuration encrypted:
+   start.sh -P your_jasypt_password
 
  Options:
    -s         run in system service mode.
+   -P         your jasypt password.
    -h         print help information.
 ```
 

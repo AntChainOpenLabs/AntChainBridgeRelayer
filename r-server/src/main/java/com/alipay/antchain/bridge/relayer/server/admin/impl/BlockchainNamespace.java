@@ -17,12 +17,14 @@
 package com.alipay.antchain.bridge.relayer.server.admin.impl;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -36,6 +38,8 @@ import com.alipay.antchain.bridge.relayer.core.manager.bcdns.IBCDNSManager;
 import com.alipay.antchain.bridge.relayer.core.manager.blockchain.IBlockchainManager;
 import com.alipay.antchain.bridge.relayer.core.types.blockchain.BlockchainAnchorProcess;
 import com.alipay.antchain.bridge.relayer.dal.repository.ISystemConfigRepository;
+import com.alipay.antchain.bridge.relayer.facade.admin.types.BlockchainId;
+import com.alipay.antchain.bridge.relayer.facade.admin.types.SysContractsInfo;
 import com.alipay.antchain.bridge.relayer.server.admin.AbstractNamespace;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -85,8 +89,14 @@ public class BlockchainNamespace extends AbstractNamespace {
             if (ObjectUtils.isEmpty(blockchainMeta)) {
                 return "none blockchain found";
             }
-            return StrUtil.format("( product: {} , blockchain_id: {} )",
-                    blockchainMeta.getProduct(), blockchainMeta.getBlockchainId());
+            BlockchainId blockchainId = new BlockchainId();
+            blockchainId.setBlockchainId(
+                    blockchainMeta.getBlockchainId()
+            );
+            blockchainId.setProduct(
+                    blockchainMeta.getProduct()
+            );
+            return JSON.toJSONString(blockchainId);
         } catch (Throwable e) {
             log.error("failed to get blockchain id for domain {}", domain, e);
             return "get blockchain id failed: " + e.getMessage();
@@ -124,12 +134,22 @@ public class BlockchainNamespace extends AbstractNamespace {
             return "blockchain not exist.";
         }
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("state", ObjectUtil.defaultIfNull(blockchainMeta.getProperties().getAmServiceStatus(), ""));
-        jsonObject.put("am_contract", ObjectUtil.defaultIfEmpty(blockchainMeta.getProperties().getAmClientContractAddress(), "empty"));
-        jsonObject.put("sdp_contract", ObjectUtil.defaultIfEmpty(blockchainMeta.getProperties().getSdpMsgContractAddress(), "empty"));
+        SysContractsInfo sysContractsInfo = new SysContractsInfo();
+        sysContractsInfo.setAmContract(
+                ObjectUtil.defaultIfEmpty(
+                        blockchainMeta.getProperties().getAmClientContractAddress(), "empty"
+                )
+        );
+        sysContractsInfo.setSdpContract(
+                ObjectUtil.defaultIfEmpty(
+                        blockchainMeta.getProperties().getSdpMsgContractAddress(), "empty"
+                )
+        );
+        sysContractsInfo.setState(
+                ObjectUtil.defaultIfNull(blockchainMeta.getProperties().getAmServiceStatus().name(), "")
+        );
 
-        return jsonObject.toJSONString();
+        return JSON.toJSONString(sysContractsInfo);
     }
 
     Object getBlockchainHeights(String... args) {
@@ -160,10 +180,20 @@ public class BlockchainNamespace extends AbstractNamespace {
         String pluginServerId = args[3];
         String alias = args[4];
         String desc = args[5];
-        String heteroConfFilePath = args[6];
+        String heteroConf = args[6];
 
         try {
-            byte[] rawConf = Files.readAllBytes(Paths.get(heteroConfFilePath));
+            if (blockchainManager.hasBlockchain(domain)) {
+                return "blockchain already exist";
+            }
+
+            byte[] rawConf;
+            Path confPath = Paths.get(heteroConf);
+            if (FileUtil.isFile(confPath, false)) {
+                rawConf = Files.readAllBytes(confPath);
+            } else {
+                rawConf = heteroConf.getBytes();
+            }
 
             DefaultBBCContext bbcContext = new DefaultBBCContext();
             bbcContext.setConfForBlockchainClient(rawConf);

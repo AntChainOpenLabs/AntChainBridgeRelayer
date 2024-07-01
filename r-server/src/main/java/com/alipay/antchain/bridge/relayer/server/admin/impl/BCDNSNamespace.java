@@ -23,6 +23,7 @@ import java.security.PublicKey;
 import javax.annotation.Resource;
 
 import cn.ac.caict.bid.model.BIDDocumentOperation;
+import cn.hutool.core.io.file.PathUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.KeyUtil;
@@ -183,17 +184,23 @@ public class BCDNSNamespace extends AbstractNamespace {
         String domainSpace = args[0];
         String domain = args[1];
         int applicantOidType = Integer.parseInt(args[2]);
-        String oidFilePath = args[3];
 
         if (StrUtil.length(domain) >= DomainLengthRule.MAX_DOMAIN_LENGTH) {
             return "your domain should less than max length " + DomainLengthRule.MAX_DOMAIN_LENGTH;
         }
         try {
+            byte[] rawContent;
+            if (PathUtil.isFile(Paths.get(args[3]), false)) {
+                rawContent = Files.readAllBytes(Paths.get(args[3]));
+            } else {
+                rawContent = args[3].getBytes();
+            }
+
             byte[] rawSubject = null;
             ObjectIdentity oid = null;
             if (ObjectIdentityType.parseFromValue(applicantOidType) == ObjectIdentityType.BID) {
-                rawSubject = Files.readAllBytes(Paths.get(oidFilePath));
-                BIDDocumentOperation bidDocumentOperation = BIDHelper.getBIDDocumentFromRawSubject(rawSubject);
+                rawSubject = rawContent;
+                BIDDocumentOperation bidDocumentOperation = BIDHelper.getBIDDocumentFromRawSubject(rawContent);
                 oid = new BIDInfoObjectIdentity(
                         BIDHelper.encAddress(
                                 bidDocumentOperation.getPublicKey()[0].getType(),
@@ -201,7 +208,7 @@ public class BCDNSNamespace extends AbstractNamespace {
                         )
                 );
             } else if (ObjectIdentityType.parseFromValue(applicantOidType) == ObjectIdentityType.X509_PUBLIC_KEY_INFO) {
-                PublicKey publicKey = readPublicKeyFromPem(Files.readAllBytes(Paths.get(oidFilePath)));
+                PublicKey publicKey = readPublicKeyFromPem(rawContent);
                 oid = new X509PubkeyInfoObjectIdentity(publicKey.getEncoded());
                 rawSubject = new byte[]{};
             }
