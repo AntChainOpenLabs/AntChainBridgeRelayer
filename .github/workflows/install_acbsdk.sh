@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #
 # Copyright 2023 Ant Group
 #
@@ -14,12 +16,8 @@
 # limitations under the License.
 #
 
-#!/bin/bash
-
-CURR_DIR="$(cd `dirname $0`; pwd)"
-
 echo "install ACB SDK ..."
-git clone -b release/v0.2.0 https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK.git
+git clone -b release/v0.2.3 https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK.git
 cd AntChainBridgePluginSDK
 mvn install -Dmaven.test.skip=true
 echo "install ACB SDK finished"
