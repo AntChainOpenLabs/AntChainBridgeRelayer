@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.alipay.antchain.bridge</groupId>
         <artifactId>antchain-bridge-relayer</artifactId>
-        <version>0.1.0</version>
+        <version>0.2.0</version>
     </parent>
 
     <artifactId>r-server</artifactId>
@@ -21,6 +21,10 @@
         <dependency>
             <groupId>com.alipay.antchain.bridge</groupId>
             <artifactId>r-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alipay.antchain.bridge</groupId>
+            <artifactId>r-facade</artifactId>
         </dependency>
     </dependencies>
 

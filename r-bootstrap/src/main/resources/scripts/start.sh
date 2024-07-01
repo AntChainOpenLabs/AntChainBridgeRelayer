@@ -29,9 +29,12 @@ Help=$(
    start.sh -s
   2. start in application mode:
    start.sh
+  3. start with configuration encrypted:
+   start.sh -P your_jasypt_password
 
  Options:
    -s         run in system service mode.
+   -P         your jasypt password.
    -h         print help information.
 
 HELP
@@ -42,7 +45,7 @@ CURR_DIR="$(
   pwd
 )"
 
-while getopts "hs" opt; do
+while getopts "hsP:" opt; do
   case "$opt" in
   "h")
     echo "$Help"
@@ -50,6 +53,9 @@ while getopts "hs" opt; do
     ;;
   "s")
     IF_SYS_MODE="on"
+    ;;
+  "P")
+    JASYPT_PASSWD=$OPTARG
     ;;
   "?")
     echo "invalid arguments. "
@@ -67,6 +73,10 @@ source ${CURR_DIR}/print.sh
 print_title
 
 JAR_FILE=$(ls ${CURR_DIR}/../lib/ | grep '.jar')
+
+if [[ -n "${JASYPT_PASSWD}" ]]; then
+  JASYPT_FLAG="--jasypt.encryptor.password=${JASYPT_PASSWD}"
+fi
 
 if [ "$IF_SYS_MODE" == "on" ]; then
   if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -87,7 +97,7 @@ if [ "$IF_SYS_MODE" == "on" ]; then
     log_error "install jdk before start"
     exit 1
   fi
-  START_CMD="${JAVA_BIN} -jar -Dlogging.file.path=${CURR_DIR}/../log ${CURR_DIR}/../lib/${JAR_FILE} --spring.config.location=file:${CURR_DIR}/../config/application.yml"
+  START_CMD="${JAVA_BIN} -jar -Dlogging.file.path=${CURR_DIR}/../log ${CURR_DIR}/../lib/${JAR_FILE} --spring.config.location=file:${CURR_DIR}/../config/application.yml ${JASYPT_FLAG}"
   WORK_DIR="$(
     cd ${CURR_DIR}/..
     pwd
@@ -119,7 +129,7 @@ else
   log_info "start acb-relayer now..."
 
   cd ${CURR_DIR}/..
-  java -jar -Dlogging.file.path=${CURR_DIR}/../log ${CURR_DIR}/../lib/${JAR_FILE} --spring.config.location=file:${CURR_DIR}/../config/application.yml >/dev/null 2>&1 &
+  java -jar -Dlogging.file.path=${CURR_DIR}/../log ${CURR_DIR}/../lib/${JAR_FILE} --spring.config.location=file:${CURR_DIR}/../config/application.yml ${JASYPT_FLAG} >/dev/null 2>&1 &
   if [ $? -ne 0 ]; then
     log_error "failed to start acb-relayer"
     exit 1

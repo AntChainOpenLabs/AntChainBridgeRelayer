@@ -31,7 +31,7 @@ import com.alipay.antchain.bridge.commons.core.am.AuthMessageTrustLevelEnum;
 import com.alipay.antchain.bridge.commons.core.am.AuthMessageV2;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainDomain;
 import com.alipay.antchain.bridge.commons.core.base.CrossChainIdentity;
-import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV2;
+import com.alipay.antchain.bridge.commons.core.sdp.SDPMessageV1;
 import com.alipay.antchain.bridge.pluginserver.service.*;
 import com.alipay.antchain.bridge.relayer.bootstrap.basic.BlockchainModelsTest;
 import com.alipay.antchain.bridge.relayer.bootstrap.utils.MyRedisServer;
@@ -175,7 +175,7 @@ public abstract class TestBase {
 
     public static AuthMessageV2 authMessageV2 = new AuthMessageV2();
 
-    public static SDPMessageV2 sdpMessageV2 = new SDPMessageV2();
+    public static SDPMessageV1 sdpMessageV1 = new SDPMessageV1();
 
     @MockBean
     public Cache<String, RelayerNodeInfo> relayerNodeInfoCache;
@@ -278,16 +278,15 @@ public abstract class TestBase {
     @BeforeClass
     public static void beforeTest() throws Exception {
 
-        sdpMessageV2.setAtomic(false);
-        sdpMessageV2.setSequence(-1);
-        sdpMessageV2.setSdpPayload("test"::getBytes);
-        sdpMessageV2.setTargetDomain(new CrossChainDomain(catChainDotComDomain));
-        sdpMessageV2.setTargetIdentity(new CrossChainIdentity(DigestUtil.sha256("receiver".getBytes())));
+        sdpMessageV1.setSequence(-1);
+        sdpMessageV1.setSdpPayload("test"::getBytes);
+        sdpMessageV1.setTargetDomain(new CrossChainDomain(catChainDotComDomain));
+        sdpMessageV1.setTargetIdentity(new CrossChainIdentity(DigestUtil.sha256("receiver".getBytes())));
 
         authMessageV2.setTrustLevel(AuthMessageTrustLevelEnum.NEGATIVE_TRUST);
         authMessageV2.setIdentity(new CrossChainIdentity(DigestUtil.sha256("sender".getBytes())));
         authMessageV2.setUpperProtocol(UpperProtocolTypeBeyondAMEnum.SDP.getCode());
-        authMessageV2.setPayload(sdpMessageV2.encode());
+        authMessageV2.setPayload(sdpMessageV1.encode());
 
         // if the embedded redis can't start correctly,
         // try to use local redis server binary to start it.

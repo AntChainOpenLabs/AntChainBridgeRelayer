@@ -31,7 +31,7 @@ public class MyRedisServer extends RedisServer {
 
     @Override
     protected String redisReadyPattern() {
-        if (SystemUtil.getOsInfo().isMac() && StrUtil.equalsIgnoreCase(SystemUtil.getOsInfo().getArch(), "x86_64")) {
+        if (SystemUtil.getOsInfo().isMac() && StrUtil.equalsAnyIgnoreCase(SystemUtil.getOsInfo().getArch(), "x86_64", "aarch64")) {
             return ".*Ready to accept connections tcp.*";
         }
         return super.redisReadyPattern();

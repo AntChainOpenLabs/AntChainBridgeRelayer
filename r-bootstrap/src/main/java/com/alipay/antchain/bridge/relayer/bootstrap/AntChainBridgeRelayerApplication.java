@@ -18,6 +18,7 @@ package com.alipay.antchain.bridge.relayer.bootstrap;
 
 import java.security.Security;
 
+import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.WebApplicationType;
@@ -26,6 +27,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 
 @SpringBootApplication(scanBasePackages = {"com.alipay.antchain.bridge.relayer"})
 @MapperScan("com.alipay.antchain.bridge.relayer.dal.mapper")
+@EnableEncryptableProperties
 public class AntChainBridgeRelayerApplication {
 
     public static void main(String[] args) {
