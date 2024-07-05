@@ -137,7 +137,7 @@ spring:
 
 #### 跨链身份
 
-最后，需要向BCDNS服务申请中继身份证书，用于与BCDNS和其他中继进行交互，这里推荐搭建信通院基于星火链实现的[BCDNS](https://git.xinghuo.space/xinghuo-open-source/DLT/bcdns)服务，目前没有提供测试网服务，需要开发者自行运行该服务。
+最后，需要向BCDNS服务申请中继身份证书，用于与BCDNS和其他中继进行交互，这里推荐搭建信通院基于星火链实现的[BCDNS](https://github.com/caict-4iot-dev/BCDNS)服务，目前没有提供测试网服务，需要开发者自行运行该服务。
 
 使用CLI工具（请参考CLI[文档](r-cli/README.md)）为中继生成私钥、公钥。
 
