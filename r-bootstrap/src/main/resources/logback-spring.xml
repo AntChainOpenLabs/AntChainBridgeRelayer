@@ -62,6 +62,27 @@
             <onMismatch>ACCEPT</onMismatch>
         </filter>
     </appender>
+    <appender name="embeddedBcdnsAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logging.path}/${APP_NAME}/embedded-bcdns.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} -
+                %msg%n
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${logging.path}/${APP_NAME}/embedded-bcdns.log.%d{yyyy-MM-dd}.%i</FileNamePattern>
+            <maxHistory>7</maxHistory>
+            <maxFileSize>50MB</maxFileSize>
+            <totalSizeCap>2GB</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>ACCEPT</onMismatch>
+        </filter>
+    </appender>
     <appender name="full-application" class="ch.qos.logback.classic.AsyncAppender">
         <!-- 不丢失日志.默认的,如果队列的80%已满,则会丢弃TRACT、DEBUG、INFO级别的日志 -->
         <discardingThreshold>0</discardingThreshold>
@@ -84,6 +105,10 @@
             <!--<onMismatch>DENY</onMismatch>-->
         </filter>
     </appender>
+
+    <logger name="com.alipay.antchain.bridge.bcdns.embedded.server" level="INFO" additivity="false">
+        <appender-ref ref="embeddedBcdnsAppender"/>
+    </logger>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>

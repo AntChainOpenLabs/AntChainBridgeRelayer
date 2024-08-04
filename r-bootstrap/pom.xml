@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.alipay.antchain.bridge</groupId>
         <artifactId>antchain-bridge-relayer</artifactId>
-        <version>0.2.0</version>
+        <version>0.3.0</version>
     </parent>
 
     <artifactId>r-bootstrap</artifactId>
@@ -52,7 +52,7 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
+<!--            <scope>test</scope>-->
         </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>
@@ -85,6 +85,16 @@
         <dependency>
             <groupId>com.github.ulisesbocchio</groupId>
             <artifactId>jasypt-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alipay.antchain.bridge</groupId>
+            <artifactId>embedded-bcdns-state-jdbc-spring-boot-starter</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alipay.antchain.bridge</groupId>
+            <artifactId>embedded-bcdns-spring-boot-starter</artifactId>
+            <version>0.1.0</version>
         </dependency>
     </dependencies>
 
