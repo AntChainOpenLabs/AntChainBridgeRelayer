@@ -89,12 +89,10 @@
         <dependency>
             <groupId>com.alipay.antchain.bridge</groupId>
             <artifactId>embedded-bcdns-state-jdbc-spring-boot-starter</artifactId>
-            <version>0.1.0</version>
         </dependency>
         <dependency>
             <groupId>com.alipay.antchain.bridge</groupId>
             <artifactId>embedded-bcdns-spring-boot-starter</artifactId>
-            <version>0.1.0</version>
         </dependency>
     </dependencies>
 
