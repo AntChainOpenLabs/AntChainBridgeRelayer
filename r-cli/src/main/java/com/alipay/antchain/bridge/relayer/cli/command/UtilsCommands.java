@@ -21,11 +21,9 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.PublicKey;
-import java.security.Security;
+import java.security.*;
 import java.security.interfaces.ECPublicKey;
+import java.util.Date;
 
 import cn.ac.caict.bid.model.BIDDocumentOperation;
 import cn.ac.caict.bid.model.BIDpublicKeyOperation;
@@ -35,6 +33,7 @@ import cn.bif.module.encryption.key.PublicKeyManager;
 import cn.bif.module.encryption.model.KeyMember;
 import cn.bif.module.encryption.model.KeyType;
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -48,8 +47,17 @@ import com.alipay.antchain.bridge.bcdns.impl.bif.conf.BifBCNDSConfig;
 import com.alipay.antchain.bridge.bcdns.impl.bif.conf.BifCertificationServiceConfig;
 import com.alipay.antchain.bridge.bcdns.impl.bif.conf.BifChainConfig;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
+import com.alipay.antchain.bridge.commons.bcdns.BCDNSTrustRootCredentialSubject;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
+import com.alipay.antchain.bridge.commons.bcdns.utils.BIDHelper;
 import com.alipay.antchain.bridge.commons.bcdns.utils.CrossChainCertificateUtil;
+import com.alipay.antchain.bridge.commons.core.base.BIDInfoObjectIdentity;
+import com.alipay.antchain.bridge.commons.core.base.ObjectIdentity;
+import com.alipay.antchain.bridge.commons.core.base.ObjectIdentityType;
+import com.alipay.antchain.bridge.commons.core.base.X509PubkeyInfoObjectIdentity;
+import com.alipay.antchain.bridge.commons.core.ptc.PTCTypeEnum;
+import com.alipay.antchain.bridge.commons.utils.crypto.HashAlgoEnum;
+import com.alipay.antchain.bridge.commons.utils.crypto.SignAlgoEnum;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -69,6 +77,14 @@ public class UtilsCommands {
         Security.addProvider(new BouncyCastleProvider());
     }
 
+    private static final String EMBEDDED_BCDNS_PUBKEY_DEFAULT_FILENAME = "embedded-bcdns-root-pubkey.key";
+
+    private static final String EMBEDDED_BCDNS_PRIVATE_KEY_DEFAULT_FILENAME = "embedded-bcdns-root-private-key.key";
+
+    private static final String EMBEDDED_BCDNS_ROOT_CERT = "embedded-bcdns-root.crt";
+
+    private static final String EMBEDDED_BCDNS_ROOT_BID_DOCUMENT = "embedded-bcdns-root-bid-document.json";
+
     @ShellMethod(value = "Generate PEM files for the relayer private and public key")
     public String generateRelayerAccount(
             @ShellOption(help = "Key algorithm, default Ed25519", defaultValue = "Ed25519") String keyAlgo,
@@ -84,24 +100,136 @@ public class UtilsCommands {
             KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
             // dump the private key into pem
-            StringWriter stringWriter = new StringWriter(256);
-            JcaPEMWriter jcaPEMWriter = new JcaPEMWriter(stringWriter);
-            jcaPEMWriter.writeObject(keyPair.getPrivate());
-            jcaPEMWriter.close();
-            String privatePem = stringWriter.toString();
             Path privatePath = Paths.get(outDir, "private_key.pem");
-            Files.write(privatePath, privatePem.getBytes());
+            writePrivateKey(keyPair.getPrivate(), privatePath);
 
             // dump the public key into pem
-            stringWriter = new StringWriter(256);
-            jcaPEMWriter = new JcaPEMWriter(stringWriter);
-            jcaPEMWriter.writeObject(keyPair.getPublic());
-            jcaPEMWriter.close();
-            String pubkeyPem = stringWriter.toString();
             Path publicPath = Paths.get(outDir, "public_key.pem");
-            Files.write(publicPath, pubkeyPem.getBytes());
+            writePublicKey(keyPair.getPublic(), publicPath);
 
             return StrUtil.format("private key path: {}\npublic key path: {}", privatePath.toAbsolutePath(), publicPath.toAbsolutePath());
+        } catch (Exception e) {
+            throw new RuntimeException("unexpected error please input stacktrace to check the detail", e);
+        }
+    }
+
+    @ShellMethod(value = "Generate the relayer certificate sign request in Base64 format")
+    public String generateRelayerCSR(
+            @ShellOption(
+                    help = "Version of relayer crosschain certificate to apply",
+                    defaultValue = CrossChainCertificateFactory.DEFAULT_VERSION
+            ) String certVersion,
+            @ShellOption(help = "Name of relayer credential subject for crosschain certificate", defaultValue = "myrelayer") String credSubjectName,
+            @ShellOption(
+                    valueProvider = EnumValueProvider.class,
+                    help = "Type of object identity who owned the relayer crosschain certificate",
+                    defaultValue = "X509_PUBLIC_KEY_INFO"
+            ) ObjectIdentityType oidType,
+            @ShellOption(
+                    valueProvider = FileValueProvider.class,
+                    help = "Path to relayer public key who apply the certificate"
+            ) String pubkeyFile
+    ) {
+        try {
+            ObjectIdentity oid;
+            byte[] rootSubjectInfo = new byte[]{};
+            PublicKey publicKey;
+            Path pubkeyFilePath = Paths.get(pubkeyFile);
+            if (Files.isReadable(pubkeyFilePath)) {
+                publicKey = readPublicKeyFromPem(Files.readAllBytes(pubkeyFilePath));
+            } else {
+                return "please input the path to the correct applicant public key file";
+            }
+
+            if (oidType == ObjectIdentityType.X509_PUBLIC_KEY_INFO) {
+                oid = new X509PubkeyInfoObjectIdentity(publicKey.getEncoded());
+            } else {
+                BIDDocumentOperation bidDocumentOperation = getBid(publicKey);
+                oid = new BIDInfoObjectIdentity(
+                        BIDHelper.encAddress(
+                                bidDocumentOperation.getPublicKey()[0].getType(),
+                                BIDHelper.getRawPublicKeyFromBIDDocument(bidDocumentOperation)
+                        )
+                );
+                rootSubjectInfo = JsonUtils.toJSONString(bidDocumentOperation).getBytes();
+            }
+
+            return StrUtil.format(
+                    "your CSR is \n{}",
+                    Base64.encode(
+                            CrossChainCertificateFactory.createRelayerCertificateSigningRequest(
+                                    certVersion,
+                                    credSubjectName,
+                                    oid,
+                                    rootSubjectInfo
+                            ).encode()
+                    )
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException("unexpected error please input stacktrace to check the detail", e);
+        }
+    }
+
+    @ShellMethod(value = "Generate the ptc certificate sign request in Base64 format")
+    public String generatePtcCSR(
+            @ShellOption(
+                    help = "Version of ptc crosschain certificate to apply",
+                    defaultValue = CrossChainCertificateFactory.DEFAULT_VERSION
+            ) String certVersion,
+            @ShellOption(help = "Name of ptc credential subject for crosschain certificate", defaultValue = "myptc") String credSubjectName,
+            @ShellOption(
+                    valueProvider = EnumValueProvider.class,
+                    help = "Type of object identity who owned the ptc crosschain certificate",
+                    defaultValue = "X509_PUBLIC_KEY_INFO"
+            ) ObjectIdentityType oidType,
+            @ShellOption(
+                    valueProvider = EnumValueProvider.class,
+                    help = "Type of ptc to own the crosschain certificate",
+                    defaultValue = "BLOCKCHAIN"
+            ) PTCTypeEnum ptcType,
+            @ShellOption(
+                    valueProvider = FileValueProvider.class,
+                    help = "Path to ptc public key who apply the certificate"
+            ) String pubkeyFile
+    ) {
+        try {
+            ObjectIdentity oid;
+            byte[] rootSubjectInfo = new byte[]{};
+            PublicKey publicKey;
+            Path pubkeyFilePath = Paths.get(pubkeyFile);
+            if (Files.isReadable(pubkeyFilePath)) {
+                publicKey = readPublicKeyFromPem(Files.readAllBytes(pubkeyFilePath));
+            } else {
+                return "please input the path to the correct applicant public key file";
+            }
+
+            if (oidType == ObjectIdentityType.X509_PUBLIC_KEY_INFO) {
+                oid = new X509PubkeyInfoObjectIdentity(publicKey.getEncoded());
+            } else {
+                BIDDocumentOperation bidDocumentOperation = getBid(publicKey);
+                oid = new BIDInfoObjectIdentity(
+                        BIDHelper.encAddress(
+                                bidDocumentOperation.getPublicKey()[0].getType(),
+                                BIDHelper.getRawPublicKeyFromBIDDocument(bidDocumentOperation)
+                        )
+                );
+                rootSubjectInfo = JsonUtils.toJSONString(bidDocumentOperation).getBytes();
+            }
+
+            return StrUtil.format(
+                    "your CSR is \n{}",
+                    Base64.encode(
+                            CrossChainCertificateFactory.createPTCCertificateSigningRequest(
+                                    certVersion,
+                                    credSubjectName,
+                                    ptcType,
+                                    oid,
+                                    rootSubjectInfo
+                            ).encode()
+                    )
+            );
+
         } catch (Exception e) {
             throw new RuntimeException("unexpected error please input stacktrace to check the detail", e);
         }
@@ -212,6 +340,120 @@ public class UtilsCommands {
         }
     }
 
+    @ShellMethod(value = "Generate self-signed BCDNS root crosschain certificate in PEM")
+    public String generateBcdnsRootCert(
+            @ShellOption(
+                    help = "Version of crosschain certificate to generate",
+                    defaultValue = CrossChainCertificateFactory.DEFAULT_VERSION
+            ) String certVersion,
+            @ShellOption(help = "ID for crosschain certificate", defaultValue = "mybcdns") String certId,
+            @ShellOption(help = "Name of credential subject for crosschain certificate", defaultValue = "mybcdns") String credSubjectName,
+            @ShellOption(
+                    valueProvider = EnumValueProvider.class,
+                    help = "Hash algorithm of issue proof for bcdns root crosschain certificate to generate",
+                    defaultValue = "KECCAK_256"
+            ) HashAlgoEnum hashAlgo,
+            @ShellOption(
+                    valueProvider = EnumValueProvider.class,
+                    help = "Signature algorithm of crosschain certificate to generate",
+                    defaultValue = "KECCAK256_WITH_SECP256K1"
+            ) SignAlgoEnum signAlgo,
+            @ShellOption(
+                    valueProvider = EnumValueProvider.class,
+                    help = "Type of object identity who owned the crosschain certificate",
+                    defaultValue = "X509_PUBLIC_KEY_INFO"
+            ) ObjectIdentityType oidType,
+            @ShellOption(
+                    valueProvider = FileValueProvider.class,
+                    help = "Path to root public key for embedded BCDNS, default generate new public key with filename \"embedded-bcdns-root-pubkey.key\"",
+                    defaultValue = ""
+            ) String pubkeyFile,
+            @ShellOption(
+                    valueProvider = FileValueProvider.class,
+                    help = "Path to root private key for embedded BCDNS, default generate new private key with filename \"embedded-bcdns-root-private-key.key\"",
+                    defaultValue = ""
+            ) String privateKeyFile,
+            @ShellOption(
+                    valueProvider = FileValueProvider.class,
+                    help = "Directory path to save the files default current directory. Certificate would save as \"embedded-bcdns-root.crt\"",
+                    defaultValue = ""
+            ) String outDir
+    ) {
+        try {
+            if (oidType == ObjectIdentityType.BID && SignAlgoEnum.ED25519 != signAlgo) {
+                return "BID object identity only support Ed25519 for now";
+            }
+
+            ObjectIdentity oid;
+            byte[] rootSubjectInfo = new byte[]{};
+            PrivateKey privateKey;
+            PublicKey publicKey;
+            if (StrUtil.isAllNotEmpty(pubkeyFile, privateKeyFile)) {
+                privateKey = signAlgo.getSigner().readPemPrivateKey(Files.readAllBytes(Paths.get(privateKeyFile)));
+                publicKey = readPublicKeyFromPem(Files.readAllBytes(Paths.get(pubkeyFile)));
+            } else {
+                KeyPair keyPair = signAlgo.getSigner().generateKeyPair();
+                privateKey = keyPair.getPrivate();
+                publicKey = keyPair.getPublic();
+                writePrivateKey(privateKey, Paths.get(outDir, EMBEDDED_BCDNS_PRIVATE_KEY_DEFAULT_FILENAME));
+                writePublicKey(publicKey, Paths.get(outDir, EMBEDDED_BCDNS_PUBKEY_DEFAULT_FILENAME));
+            }
+
+            if (oidType == ObjectIdentityType.X509_PUBLIC_KEY_INFO) {
+                oid = new X509PubkeyInfoObjectIdentity(publicKey.getEncoded());
+            } else {
+                BIDDocumentOperation bidDocumentOperation = getBid(publicKey);
+                oid = new BIDInfoObjectIdentity(
+                        BIDHelper.encAddress(
+                                bidDocumentOperation.getPublicKey()[0].getType(),
+                                BIDHelper.getRawPublicKeyFromBIDDocument(bidDocumentOperation)
+                        )
+                );
+                rootSubjectInfo = JsonUtils.toJSONString(bidDocumentOperation).getBytes();
+                Files.write(Paths.get(outDir, EMBEDDED_BCDNS_ROOT_BID_DOCUMENT), rootSubjectInfo);
+            }
+
+            AbstractCrossChainCertificate certificate = CrossChainCertificateFactory.createCrossChainCertificate(
+                    certVersion,
+                    certId,
+                    oid,
+                    DateUtil.currentSeconds(),
+                    DateUtil.offsetDay(new Date(), 365).getTime() / 1000,
+                    new BCDNSTrustRootCredentialSubject(
+                            credSubjectName, oid, rootSubjectInfo
+                    )
+            );
+
+            certificate.setProof(
+                    new AbstractCrossChainCertificate.IssueProof(
+                            hashAlgo.getName(),
+                            hashAlgo.hash(certificate.getEncodedToSign()),
+                            signAlgo.getName(),
+                            signAlgo.getSigner().sign(privateKey, certificate.getEncodedToSign())
+                    )
+            );
+            String rootCertPem = CrossChainCertificateUtil.formatCrossChainCertificateToPem(certificate);
+            Files.write(Paths.get(outDir, EMBEDDED_BCDNS_ROOT_CERT), rootCertPem.getBytes());
+            return StrUtil.format(
+                    "your bcdns root cert is:\n{}{}{}",
+                    rootCertPem,
+                    StrUtil.format(
+                            "your bcdns root cert file is {}{}",
+                            Paths.get(outDir, EMBEDDED_BCDNS_ROOT_CERT).toAbsolutePath().toString(),
+                            StrUtil.isAllEmpty(pubkeyFile, privateKeyFile) ? StrUtil.format(
+                                    "\nyour bcdns root private key file is {}\n" +
+                                            "your bcdns root public key file is {}",
+                                    Paths.get(outDir, EMBEDDED_BCDNS_PRIVATE_KEY_DEFAULT_FILENAME).toAbsolutePath().toString(),
+                                    Paths.get(outDir, EMBEDDED_BCDNS_PUBKEY_DEFAULT_FILENAME).toAbsolutePath().toString()
+                            ) : ""
+                    ), oidType == ObjectIdentityType.BID ?
+                            StrUtil.format("\nyour bid document is {}", Paths.get(outDir, EMBEDDED_BCDNS_ROOT_BID_DOCUMENT).toAbsolutePath().toString()) : ""
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("unexpected error please input stacktrace to check the detail", e);
+        }
+    }
+
     private String convertToBIFAddress(byte[] rawPublicKey) {
         PublicKeyManager publicKeyManager = new PublicKeyManager();
         publicKeyManager.setRawPublicKey(rawPublicKey);
@@ -279,5 +521,27 @@ public class UtilsCommands {
         bidDocumentOperation.setPublicKey(biDpublicKeyOperation);
 
         return bidDocumentOperation;
+    }
+
+    @SneakyThrows
+    private void writePrivateKey(PrivateKey privateKey, Path outputFile) {
+        // dump the private key into pem
+        StringWriter stringWriter = new StringWriter(256);
+        JcaPEMWriter jcaPEMWriter = new JcaPEMWriter(stringWriter);
+        jcaPEMWriter.writeObject(privateKey);
+        jcaPEMWriter.close();
+        String privatePem = stringWriter.toString();
+        Files.write(outputFile, privatePem.getBytes());
+    }
+
+    @SneakyThrows
+    private void writePublicKey(PublicKey publicKey, Path outputFile) {
+        // dump the public key into pem
+        StringWriter stringWriter = new StringWriter(256);
+        JcaPEMWriter jcaPEMWriter = new JcaPEMWriter(stringWriter);
+        jcaPEMWriter.writeObject(publicKey);
+        jcaPEMWriter.close();
+        String pubkeyPem = stringWriter.toString();
+        Files.write(outputFile, pubkeyPem.getBytes());
     }
 }
