@@ -80,7 +80,7 @@ wget -qO- https://get.docker.com/ | bash
 然后下载MySQL镜像并启动容器，注意这里指定了时区为`+08:00`，请修改为您的时区。
 
 ```
-docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD='YOUR_PWD' mysql --mysql-native-password=ON --default_time_zone +08:00
+docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD='YOUR_PWD' mysql:8 --mysql-native-password=ON --default_time_zone +08:00
 ```
 
 然后下载Redis镜像并启动容器：
