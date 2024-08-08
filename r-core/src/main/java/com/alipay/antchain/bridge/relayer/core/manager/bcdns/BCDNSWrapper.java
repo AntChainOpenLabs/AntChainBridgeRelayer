@@ -18,7 +18,7 @@ package com.alipay.antchain.bridge.relayer.core.manager.bcdns;
 
 import java.util.concurrent.locks.Lock;
 
-import com.alipay.antchain.bridge.bcdns.impl.BlockChainDomainNameServiceFactory;
+import com.alipay.antchain.bridge.bcdns.factory.BlockChainDomainNameServiceFactory;
 import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
 import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;
 import com.alipay.antchain.bridge.bcdns.types.exception.AntChainBridgeBCDNSException;

@@ -13,7 +13,7 @@
 
     <groupId>com.alipay.antchain.bridge</groupId>
     <artifactId>antchain-bridge-relayer</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
     <packaging>pom</packaging>
     <modules>
         <module>r-bootstrap</module>
@@ -36,7 +36,8 @@
         <redisson-spring.version>3.23.5</redisson-spring.version>
         <spring-boot.version>2.7.16</spring-boot.version>
         <mysql-connector.version>8.0.33</mysql-connector.version>
-        <acb-sdk.version>0.2.3</acb-sdk.version>
+        <acb-sdk.version>0.3.0</acb-sdk.version>
+        <acb-embedded-bcdns.version>0.1.0</acb-embedded-bcdns.version>
         <hutool.version>5.8.22</hutool.version>
         <junit.version>4.13.2</junit.version>
         <h2.version>2.2.224</h2.version>
@@ -116,8 +117,18 @@
             </dependency>
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
-                <artifactId>antchain-bridge-bcdns</artifactId>
+                <artifactId>antchain-bridge-bcdns-factory</artifactId>
                 <version>${acb-sdk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alipay.antchain.bridge</groupId>
+                <artifactId>embedded-bcdns-state-jdbc-spring-boot-starter</artifactId>
+                <version>${acb-embedded-bcdns.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alipay.antchain.bridge</groupId>
+                <artifactId>embedded-bcdns-spring-boot-starter</artifactId>
+                <version>${acb-embedded-bcdns.version}</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>
@@ -198,7 +209,7 @@
             <dependency>
                 <groupId>com.alipay.antchain.bridge</groupId>
                 <artifactId>r-facade</artifactId>
-                <version>${project.version}</version>
+                <version>0.2.0</version>
             </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>

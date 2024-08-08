@@ -2,19 +2,18 @@
 
 ## Branch Strategy
 
-We recommend that developers following the rules [here](https://jeffkreeftmeijer.com/git-flow/git-flow.png).
+We recommend that developers following the `Trunk-based development` rules [here](https://trunkbaseddevelopment.com/).
 
-- Branch `main` with stable code and tags on it.
-- Branch `develop` for "next release" development.
+- Trunk branch `main` with stable code.
 - Feature branches start with prefix `feat/`
 - Release branches start with prefix `release/`
-- Hotfix branches start with prefix `hotfix/`
+- Hotfix branches start with prefix `hotfix/` or `fix/`
 
 ## Contributing
 
 - Fork the repository or create branches.
 - Checkout your branch like a feature or bugfix.
-- Make a pull request to the `develop` branch of this repository.
+- Make a pull request to the `main` branch of this repository.
 - Wait for review and PR merged.
 
 ---

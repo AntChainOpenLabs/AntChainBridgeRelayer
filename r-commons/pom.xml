@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.alipay.antchain.bridge</groupId>
         <artifactId>antchain-bridge-relayer</artifactId>
-        <version>0.2.0</version>
+        <version>0.3.0</version>
     </parent>
 
     <artifactId>r-commons</artifactId>
@@ -36,7 +36,7 @@
         </dependency>
         <dependency>
             <groupId>com.alipay.antchain.bridge</groupId>
-            <artifactId>antchain-bridge-bcdns</artifactId>
+            <artifactId>antchain-bridge-bcdns-factory</artifactId>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>

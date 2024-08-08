@@ -333,7 +333,31 @@ relayer:
   {"destDomain":{"domain":"domain.web3.net","domainSpace":false},"destRelayer":{"netAddressList":["https://localhost:8082"],"relayerCert":{"credentialSubject":"AADVAAAAAAAD...hNDRjY2UifV19","credentialSubjectInstance":{"applicant":{"rawId":"ZGlkOmJpZDplZmJ...1b1FHWDZMVUd3Zw==","type":"BID"},"name":"relay","rawSubjectPublicKey":"r2Ze5VBjX...yWnSkTM4=","subject":"eyJwdWJsaWNLZXkiO...jZSJ9XX0=","subjectInfo":"eyJwd...J9XX0=","subjectPublicKey":{"algorithm":"Ed25519","encoded":"MCowBQYDK2V...qJKDyWnSkTM4=","format":"X.509","pointEncoding":"r2Ze5V...ifV19","expirationDate":1733811853,"id":"did:bid:efGeAv4Jr7V2FSyun77m4xTFmTDfG8nh","issuanceDate":1702275853,"issuer":{"rawId":"ZGlkOmJpZDpl...NTdtRENwQw==","type":"BID"},"proof":{"certHash":"Gaw4gcwXzn2i...K6HaPWBxXM=","hashAlgo":"SM3","rawProof":"kMZ/tvT19Tk...TQ4IVYlXkYjSBw==","sigAlgo":"Ed25519"},"type":"RELAYER_CERTIFICATE","version":"1"},"relayerCertId":"did:bid:efGeAv4Jr7V2FSyun77m4xTFmTDfG8nh"}}
   ```
 
-  
+
+### 启动Embedded BCDNS
+
+> [!IMPORTANT]  
+> Relayer从0.3.0版本开始支持启动内嵌的BCDNS服务
+
+Embedded BCDNS是内嵌在服务内部的BCDNS，提供中心化的权威服务，会使用一把私钥为跨链网络提供认证、准入等功能，按照服务端要求可以通过简单配置接入BCDNS，具体内容可以参考[这里](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK/tree/main/bcdns-services/embedded-bcdns/README.md)。
+
+通过在中继的配置增加下面一项，重启即可启动Embedded BCDNS，详细的配置可以参考AntChain Bridge SDK关于如何使用Embedded的README。
+
+```yaml
+acb:
+  bcdns:
+    embedded:
+      server-on: true
+```
+
+启动日志中会看到：
+
+```
+INFO 63164 --- [           main] .EmbeddedBcdnsJdbcStateAutoConfiguration : start jdbc bcdns state
+INFO 63164 --- [           main] b.b.e.s.a.EmbeddedBcdnsAutoConfiguration : start embedded bcdns server on 0.0.0.0:8090
+```
+
+
 
 ## 社区治理
 
