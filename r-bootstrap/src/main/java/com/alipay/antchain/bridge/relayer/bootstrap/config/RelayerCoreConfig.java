@@ -25,6 +25,7 @@ import java.util.concurrent.*;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.PemUtil;
 import com.alipay.antchain.bridge.commons.bcdns.AbstractCrossChainCertificate;
 import com.alipay.antchain.bridge.commons.bcdns.CrossChainCertificateFactory;
@@ -44,6 +45,7 @@ import com.alipay.antchain.bridge.relayer.dal.repository.IPluginServerRepository
 import com.alipay.antchain.bridge.relayer.server.network.WSRelayerServer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.BeanInitializationException;
@@ -55,6 +57,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.support.TransactionTemplate;
 
+@Slf4j
 @Configuration
 public class RelayerCoreConfig {
 
@@ -98,7 +101,15 @@ public class RelayerCoreConfig {
     private boolean isDiscoveryService;
 
     public AbstractCrossChainCertificate getLocalRelayerCrossChainCertificate() {
-        AbstractCrossChainCertificate relayerCertificate = null;
+        if (StrUtil.equals("null", relayerCrossChainCert.getFilename())) {
+            log.warn("your relayer crosschain certificate is not set");
+            return null;
+        }
+        if (!relayerCrossChainCert.exists()) {
+            log.error("your relayer crosschain certificate {} not exist", relayerCrossChainCert.getFilename());
+            return null;
+        }
+        AbstractCrossChainCertificate relayerCertificate;
         try {
             relayerCertificate = CrossChainCertificateFactory.createCrossChainCertificateFromPem(
                     FileUtil.readBytes(relayerCrossChainCert.getFile())
@@ -111,7 +122,8 @@ public class RelayerCoreConfig {
     }
 
     public RelayerCredentialSubject getLocalRelayerCredentialSubject() {
-        return RelayerCredentialSubject.decode(getLocalRelayerCrossChainCertificate().getCredentialSubject());
+        return ObjectUtil.isNull(getLocalRelayerCrossChainCertificate()) ?
+                null : RelayerCredentialSubject.decode(getLocalRelayerCrossChainCertificate().getCredentialSubject());
     }
 
     public String getLocalRelayerIssuerDomainSpace() {
@@ -136,7 +148,8 @@ public class RelayerCoreConfig {
     }
 
     public String getLocalRelayerNodeId() {
-        return RelayerNodeInfo.calculateNodeId(getLocalRelayerCrossChainCertificate());
+        return ObjectUtil.isNull(getLocalRelayerCrossChainCertificate()) ?
+                null : RelayerNodeInfo.calculateNodeId(getLocalRelayerCrossChainCertificate());
     }
 
     @Bean
