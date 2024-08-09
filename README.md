@@ -33,6 +33,10 @@ AntChain Bridge Relayer将功能实现分为两部分，分别为通信和可信
 
 **确保安装了AntChain Bridge Plugin SDK，详情请[见](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK?tab=readme-ov-file#%E6%9E%84%E5%BB%BA)*
 
+> [!IMPORTANT]  
+>
+> 注意当前Relayer要求SDK版本为0.3.0
+
 ### 编译
 
 在项目根目录运行maven命令即可：
@@ -337,18 +341,22 @@ relayer:
 ### 启动Embedded BCDNS
 
 > [!IMPORTANT]  
-> Relayer从0.3.0版本开始支持启动内嵌的BCDNS服务
+> Relayer从0.3.0版本开始支持启动内嵌的BCDNS服务，注意Relayer使用的Embedded BCDNS相关依赖的版本。
 
 Embedded BCDNS是内嵌在服务内部的BCDNS，提供中心化的权威服务，会使用一把私钥为跨链网络提供认证、准入等功能，按照服务端要求可以通过简单配置接入BCDNS，具体内容可以参考[这里](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK/tree/main/bcdns-services/embedded-bcdns/README.md)。
 
-通过在中继的配置增加下面一项，重启即可启动Embedded BCDNS，详细的配置可以参考AntChain Bridge SDK关于如何使用Embedded的README。
+通过在中继的配置增加下面一项，重启即可启动Embedded BCDNS，详细的配置可以参考AntChain Bridge SDK关于如何使用Embedded的[README](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK/tree/main/bcdns-services/embedded-bcdns/README.md)。
 
 ```yaml
 acb:
   bcdns:
     embedded:
       server-on: true
+      root-private-key-file: /path/to/embedded-bcdns-root.crt
+      root-cert-file: /path/to/embedded-bcdns-root-private-key.key
 ```
+
+上面配置中的`root-private-key-file`和`root-cert-file`，可以通过CLI命令`generate-bcdns-root-cert`来生成，详细用法参考[这里](r-cli/README.md#5.5 生成BCDNS根证书)。
 
 启动日志中会看到：
 
