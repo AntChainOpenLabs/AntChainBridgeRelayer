@@ -960,9 +960,9 @@ relayer:> query-curr-active-nodes
 [
 	{
 		"last_active_time":1704366281000,
-		"node_ip":"30.75.64.168",
+		"node_ip":"192.168.0.1",
 		"active":true,
-		"node_id":"30.75.64.168"
+		"node_id":"192.168.0.1"
 	}
 ]
 ```
