@@ -59,7 +59,7 @@ public class DistributedTaskEngine implements ApplicationRunner {
     @Value("${relayer.engine.schedule.duty.period:100}")
     private long dutyPeriod;
 
-    @Value("${relayer.engine.schedule.duty.period:3000}")
+    @Value("${relayer.engine.schedule.duty.biz-period:3000}")
     private long bizDutyPeriod;
 
     @Value("${relayer.engine.schedule.marker.period:300}")
