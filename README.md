@@ -352,8 +352,8 @@ acb:
   bcdns:
     embedded:
       server-on: true
-      root-private-key-file: /path/to/embedded-bcdns-root.crt
-      root-cert-file: /path/to/embedded-bcdns-root-private-key.key
+      root-private-key-file: file:/path/to/embedded-bcdns-root-private-key.key
+      root-cert-file: file:/path/to/embedded-bcdns-root.crt
 ```
 
 上面配置中的`root-private-key-file`和`root-cert-file`，可以通过CLI命令`generate-bcdns-root-cert`来生成，详细用法参考[这里](r-cli/README.md#5.5 生成BCDNS根证书)。
