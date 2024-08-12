@@ -960,9 +960,9 @@ relayer:> query-curr-active-nodes
 [
 	{
 		"last_active_time":1704366281000,
-		"node_ip":"30.75.64.168",
+		"node_ip":"192.168.0.1",
 		"active":true,
-		"node_id":"30.75.64.168"
+		"node_id":"192.168.0.1"
 	}
 ]
 ```
@@ -1078,5 +1078,139 @@ JT/qn36in7+iU6SsNEz0rsJpmEvVRT6adNVY7zS/ni35JwWf/zi60DKnQ7xaCA==
 ```
 relayer:> convert-cross-chain-cert-to-pem --base64Input AAAIAgAAAAABAAAAMQEAKAAAAGRpZDpiaWQ6ZWY5OVJ6OFRpN3g0aTZ6eUNyUHlGaXk5dXRzV0JKVVcCAAEAAAADAwA7AAAAAAA1AAAAAAABAAAAAQEAKAAAAGRpZDpiaWQ6ZWZLTDJ3Tm5xV2ZyOWJ5amRib3hQM2tIckFmQWR0bzkEAAgAAABrZpZlAAAAAAUACAAAAOuZd2cAAAAABgDbAAAAAADVAAAAAAADAAAAMS4wAQAFAAAAcmVsYXkDADsAAAAAADUAAAAAAAEAAAABAQAoAAAAZGlkOmJpZDplZm5KaWZqYlJVcXdrajd3UnZVc053d0FGZWluYjRmSgQAegAAAHsicHVibGljS2V5IjpbeyJ0eXBlIjoiRUQyNTUxOSIsInB1YmxpY0tleUhleCI6ImIwNjU2NjkzYTA1YTBmZDhmYWVmZDQ3OTMxZTIxYTIxYjI3YzBlYmEwMWZmNmM2OGZmZjEyYmQzY2VmZDViM2VlODVjMWIifV19BwCIAAAAAACCAAAAAAADAAAAU00zAQAgAAAANSyaAeb+N8q0mRncA7uGGG2cTmF+4QlxLUp70uRK43ECAAcAAABFZDI1NTE5AwBAAAAAbA8zkKXCI4Iwp6KBERXOqKlnJT/qn36in7+iU6SsNEz0rsJpmEvVRT6adNVY7zS/ni35JwWf/zi60DKnQ7xaCA== --outDir ./
 certificate in pem saved here: /path/to/output_1704359604268.crt
+```
+
+### 5.5 生成BCDNS根证书
+
+> [!IMPORTANT]  
+> 本功能要求CLI版本大于等于0.3.0
+
+在启动BCDNS时，需要提前准备好BCDNS私钥和自签名的根证书，这里提供一个工具🔧，帮助生成它们，尤其是在Relayer启动Embedded BCDNS的时候，可以用到这个功能。
+
+命令：`generate-bcdns-root-cert`，执行命令之后会生成一个BCDNS的PEM格式的根证书，并保存到本地，如果没有指定私钥、公钥，会顺便生成公私钥并保存在本地。
+
+参数：
+
+- `--certVersion`：证书格式版本，默认为1；
+- `--certId`：证书的ID，默认为“mybcdns”；
+- `--credSubjectName`：跨链证书的凭证主体名称 [可选，默认值 = mybcdns]
+- `--hashAlgo` HashAlgoEnum：要生成的 bcdns 根跨链证书的发行证明哈希算法，[可选，默认值 = `KECCAK_256`]，支持`SHA2_256`, `KECCAK_256`, `SHA3_256`, `SM3`；
+- `--signAlgo` SignAlgoEnum：要生成的跨链证书的签名算法，[可选，默认值 = `KECCAK256_WITH_SECP256K1`]，支持`ED25519`, `SHA256_WITH_RSA`, `SHA256_WITH_ECDSA`, `KECCAK256_WITH_SECP256K1`, `SM3_WITH_SM2`
+- `--oidType` ObjectIdentityType：拥有跨链证书的对象身份类型，[可选，默认值 = X509_PUBLIC_KEY_INFO]，还支持BID，并会保存生成的BID Document
+- `--pubkeyFile` String：嵌入式 BCDNS 的根公钥路径，默认生成文件名为“embedded-bcdns-root-pubkey.key”的新公钥 [可选]
+- `--privateKeyFile` String：嵌入式 BCDNS 的根私钥路径，默认生成文件名为“embedded-bcdns-root-private-key.key”的新私钥 [可选]
+- `--outDir` String：保存文件的目录路径，默认当前目录。证书将保存为“embedded-bcdns-root.crt” [可选]
+
+用法如下：
+
+1. 直接运行，不指定任何字段，会生成证书和公私钥并保存。
+
+```
+relayer:> generate-bcdns-root-cert 
+your bcdns root cert is:
+-----BEGIN BCDNS TRUST ROOT CERTIFICATE-----
+AADdAQAAAAABAAAAMQEABwAAAG15YmNkbnMCAAEAAAAAAwBrAAAAAABlAAAAAAAB
+AAAAAAEAWAAAADBWMBAGByqGSM49AgEGBSuBBAAKA0IABLbk30Th9fREt89fOGe3
+fsbUbOFrMjXlSjfbHEwu0RgaEt5+4+VUdVo5mU+pimkrlTXgfKm0e7nWM0+ZLvnF
+ce8EAAgAAAAT1rFmAAAAAAUACAAAAJMJk2gAAAAABgCKAAAAAACEAAAAAAAHAAAA
+bXliY2RucwEAawAAAAAAZQAAAAAAAQAAAAABAFgAAAAwVjAQBgcqhkjOPQIBBgUr
+gQQACgNCAAS25N9E4fX0RLfPXzhnt37G1GzhazI15Uo32xxMLtEYGhLefuPlVHVa
+OZlPqYppK5U14HyptHu51jNPmS75xXHvAgAAAAAABwCfAAAAAACZAAAAAAAKAAAA
+S0VDQ0FLLTI1NgEAIAAAAN1JM3fcwS62uLhbhZ7YdoYLTogja+b3GLlGhYRpZ5cT
+AgAWAAAAS2VjY2FrMjU2V2l0aFNlY3AyNTZrMQMAQQAAAPxlkECDdlt6O5nTxBlN
+PvqUBMIPXL2ya27m5fZms+zdJx/ZSUb2SYpOiKiy99nSxcfnZ1Yvj4YKu8HkTpjJ
+MK8A
+-----END BCDNS TRUST ROOT CERTIFICATE-----
+
+your bcdns root cert file is /AntChainBridgeRelayer/r-cli/target/r-cli/embedded-bcdns-root.crt
+your bcdns root private key file is /AntChainBridgeRelayer/r-cli/target/r-cli/embedded-bcdns-root-private-key.key
+your bcdns root public key file is /AntChainBridgeRelayer/r-cli/target/r-cli/embedded-bcdns-root-pubkey.key
+```
+
+2. 指定部分字段
+
+```
+relayer:> generate-bcdns-root-cert --certId test --credSubjectName test --hashAlgo SHA2_256 --signAlgo ED25519 --oidType BID
+your bcdns root cert is:
+-----BEGIN BCDNS TRUST ROOT CERTIFICATE-----
+AADfAQAAAAABAAAAMQEABAAAAHRlc3QCAAEAAAAAAwA7AAAAAAA1AAAAAAABAAAA
+AQEAKAAAAGRpZDpiaWQ6ZWZoTHpSaGNaWXhIdXd5THhxRW9iUGl4RUR1NWg0VGUE
+AAgAAAAZ2rFmAAAAAAUACAAAAJkNk2gAAAAABgDRAAAAAADLAAAAAAAEAAAAdGVz
+dAEAOwAAAAAANQAAAAAAAQAAAAEBACgAAABkaWQ6YmlkOmVmaEx6UmhjWll4SHV3
+eUx4cUVvYlBpeEVEdTVoNFRlAgB6AAAAeyJwdWJsaWNLZXkiOlt7InR5cGUiOiJF
+RDI1NTE5IiwicHVibGljS2V5SGV4IjoiYjA2NTY2YjlkNDMyYWU0YTU5OTQ1MmYw
+NjA3MjA3YmUwMzM3N2E1NjY4NjlkNmE2ZDY0MDJmMmQ1N2I5Mzg3YzJhZmQ3MSJ9
+XX0HAI0AAAAAAIcAAAAAAAgAAABTSEEyLTI1NgEAIAAAAH8zd6FasjxeGERqh9gg
+VngUv3EePrjpiS6rAu3tp29dAgAHAAAARWQyNTUxOQMAQAAAANcgHl5Ujxxn3zoG
+RP1pQmM7E/9/IpAcv++//HQM4Md/3NIHG5a3l6USm0yDAc5s4NOQLaoIId7A5dGB
+8X8Jxw8=
+-----END BCDNS TRUST ROOT CERTIFICATE-----
+
+your bcdns root cert file is /AntChainBridgeRelayer/r-cli/target/r-cli/embedded-bcdns-root.crt
+your bcdns root private key file is /AntChainBridgeRelayer/r-cli/target/r-cli/embedded-bcdns-root-private-key.key
+your bcdns root public key file is /AntChainBridgeRelayer/r-cli/target/r-cli/embedded-bcdns-root-pubkey.key
+your bid document is /AntChainBridgeRelayer/r-cli/target/r-cli/embedded-bcdns-root-bid-document.json
+```
+
+2. 指定特定公私钥运行
+
+```
+relayer:> generate-bcdns-root-cert --certId test --credSubjectName test --hashAlgo SHA2_256 --signAlgo ED25519 --oidType BID --privateKeyFile ./embedded-bcdns-root-private-key.key --pubkeyFile ./embedded-bcdns-root-pubkey.key
+your bcdns root cert is:
+-----BEGIN BCDNS TRUST ROOT CERTIFICATE-----
+AADfAQAAAAABAAAAMQEABAAAAHRlc3QCAAEAAAAAAwA7AAAAAAA1AAAAAAABAAAA
+AQEAKAAAAGRpZDpiaWQ6ZWZoTHpSaGNaWXhIdXd5THhxRW9iUGl4RUR1NWg0VGUE
+AAgAAACK27FmAAAAAAUACAAAAAoPk2gAAAAABgDRAAAAAADLAAAAAAAEAAAAdGVz
+dAEAOwAAAAAANQAAAAAAAQAAAAEBACgAAABkaWQ6YmlkOmVmaEx6UmhjWll4SHV3
+eUx4cUVvYlBpeEVEdTVoNFRlAgB6AAAAeyJwdWJsaWNLZXkiOlt7InR5cGUiOiJF
+RDI1NTE5IiwicHVibGljS2V5SGV4IjoiYjA2NTY2YjlkNDMyYWU0YTU5OTQ1MmYw
+NjA3MjA3YmUwMzM3N2E1NjY4NjlkNmE2ZDY0MDJmMmQ1N2I5Mzg3YzJhZmQ3MSJ9
+XX0HAI0AAAAAAIcAAAAAAAgAAABTSEEyLTI1NgEAIAAAALIrlWoLe34gHQ4hc+M0
+LGzIxwjSh/TSNkvNXf2qS9D1AgAHAAAARWQyNTUxOQMAQAAAADwCG0OukeuUNOhR
+9HIyqYHs30IR/fXVnoAvx7L6PE0iOPfd06BxweSLL89jL1qqXVuS+Mqo3zPlJQGH
+L0MTzgo=
+-----END BCDNS TRUST ROOT CERTIFICATE-----
+your bcdns root cert file is /Users/zouxyan/IdeaProjects/AntChainBridgeRelayer/r-cli/target/r-cli/embedded-bcdns-root.crt
+your bid document is /Users/zouxyan/IdeaProjects/AntChainBridgeRelayer/r-cli/target/r-cli/embedded-bcdns-root-bid-document.json
+```
+
+### 5.6 生成Relayer证书CSR
+
+证书申请需要申请者构造好`Certificate Signing Request`。
+
+命令：`generate-relayer-csr `以 Base64 格式生成中继器证书签名请求
+
+参数：
+
+- `--certVersion` String：要应用的Relayer跨链证书版本 [可选，默认值 = 1]
+- `--credSubjectName` String：跨链证书的Relayer凭证主体名称 [可选，默认值 = `myrelayer`]
+- `--oidType` ObjectIdentityType：拥有Relayer跨链证书的对象身份类型 [可选，默认值 = `X509_PUBLIC_KEY_INFO`]，还支持BID
+- `--pubkeyFile` String：应用证书的Relayer公钥的路径 [强制]
+
+用法如下：
+
+```
+relayer:> generate-relayer-csr --pubkeyFile ./embedded-bcdns-root-pubkey.key 
+your CSR is 
+AADDAAAAAAABAAAAMQIAAQAAAAMEAAgAAAAAAAAAAAAAAAUACAAAAAAAAAAAAAAABgCTAAAAAACNAAAAAAABAAAAMQEACQAAAG15cmVsYXllcgMAawAAAAAAZQAAAAAAAQAAAAABAFgAAAAwVjAQBgcqhkjOPQIBBgUrgQQACgNCAAQrcI72jkNt107AeW04b9R4JsunCJ5qPx+XSTqqAiRfkDIB1FK/Sp8hbApRbLp0bT51l0ZJeVtNLlLM2/nhTPpyBAAAAAAA
+```
+
+### 5.7 生成PTC证书CSR
+
+证书申请需要申请者构造好`Certificate Signing Request`。
+
+命令：`generate-ptc-csr `以 Base64 格式生成PTC证书签名请求。
+
+参数：
+
+- `--certVersion` String：要应用的PTC跨链证书版本 [可选，默认值 = 1]
+- `--credSubjectName` String：跨链证书的PTC凭证主体名称 [可选，默认值 = `myrelayer`]
+- `--oidType` ObjectIdentityType：拥有PTC跨链证书的对象身份类型 [可选，默认值 = `X509_PUBLIC_KEY_INFO`]，还支持BID
+- `--pubkeyFile` String：应用证书的PTC公钥的路径 [强制]
+
+```
+relayer:> generate-ptc-csr --pubkeyFile ./embedded-bcdns-root-pubkey.key --ptcType BLOCKCHAIN 
+your CSR is 
+AADGAAAAAAABAAAAMQIAAQAAAAIEAAgAAAAAAAAAAAAAAAUACAAAAAAAAAAAAAAABgCWAAAAAACQAAAAAAABAAAAMQEABQAAAG15cHRjAgABAAAAAQMAawAAAAAAZQAAAAAAAQAAAAABAFgAAAAwVjAQBgcqhkjOPQIBBgUrgQQACgNCAAQrcI72jkNt107AeW04b9R4JsunCJ5qPx+XSTqqAiRfkDIB1FK/Sp8hbApRbLp0bT51l0ZJeVtNLlLM2/nhTPpyBAAAAAAA
 ```
 

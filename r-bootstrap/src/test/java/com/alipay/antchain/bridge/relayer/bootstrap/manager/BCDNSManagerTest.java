@@ -21,7 +21,7 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.map.MapUtil;
-import com.alipay.antchain.bridge.bcdns.impl.BlockChainDomainNameServiceFactory;
+import com.alipay.antchain.bridge.bcdns.factory.BlockChainDomainNameServiceFactory;
 import com.alipay.antchain.bridge.bcdns.service.BCDNSTypeEnum;
 import com.alipay.antchain.bridge.bcdns.service.IBlockChainDomainNameService;
 import com.alipay.antchain.bridge.bcdns.types.base.DomainRouter;

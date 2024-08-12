@@ -33,6 +33,10 @@ AntChain Bridge Relayer将功能实现分为两部分，分别为通信和可信
 
 **确保安装了AntChain Bridge Plugin SDK，详情请[见](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK?tab=readme-ov-file#%E6%9E%84%E5%BB%BA)*
 
+> [!IMPORTANT]  
+>
+> 注意当前Relayer要求SDK版本为0.3.0
+
 ### 编译
 
 在项目根目录运行maven命令即可：
@@ -80,7 +84,7 @@ wget -qO- https://get.docker.com/ | bash
 然后下载MySQL镜像并启动容器，注意这里指定了时区为`+08:00`，请修改为您的时区。
 
 ```
-docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD='YOUR_PWD' mysql --default-authentication-plugin=mysql_native_password --default_time_zone +08:00
+docker run -itd --name mysql-test -p 3306:3306 -e MYSQL_ROOT_PASSWORD='YOUR_PWD' mysql:8 --mysql-native-password=ON --default_time_zone +08:00
 ```
 
 然后下载Redis镜像并启动容器：
@@ -333,7 +337,37 @@ relayer:
   {"destDomain":{"domain":"domain.web3.net","domainSpace":false},"destRelayer":{"netAddressList":["https://localhost:8082"],"relayerCert":{"credentialSubject":"AADVAAAAAAAD...hNDRjY2UifV19","credentialSubjectInstance":{"applicant":{"rawId":"ZGlkOmJpZDplZmJ...1b1FHWDZMVUd3Zw==","type":"BID"},"name":"relay","rawSubjectPublicKey":"r2Ze5VBjX...yWnSkTM4=","subject":"eyJwdWJsaWNLZXkiO...jZSJ9XX0=","subjectInfo":"eyJwd...J9XX0=","subjectPublicKey":{"algorithm":"Ed25519","encoded":"MCowBQYDK2V...qJKDyWnSkTM4=","format":"X.509","pointEncoding":"r2Ze5V...ifV19","expirationDate":1733811853,"id":"did:bid:efGeAv4Jr7V2FSyun77m4xTFmTDfG8nh","issuanceDate":1702275853,"issuer":{"rawId":"ZGlkOmJpZDpl...NTdtRENwQw==","type":"BID"},"proof":{"certHash":"Gaw4gcwXzn2i...K6HaPWBxXM=","hashAlgo":"SM3","rawProof":"kMZ/tvT19Tk...TQ4IVYlXkYjSBw==","sigAlgo":"Ed25519"},"type":"RELAYER_CERTIFICATE","version":"1"},"relayerCertId":"did:bid:efGeAv4Jr7V2FSyun77m4xTFmTDfG8nh"}}
   ```
 
-  
+
+### 启动Embedded BCDNS
+
+> [!IMPORTANT]  
+> Relayer从0.3.0版本开始支持启动内嵌的BCDNS服务，注意Relayer使用的Embedded BCDNS相关依赖的版本。
+
+Embedded BCDNS是内嵌在服务内部的BCDNS，提供中心化的权威服务，会使用一把私钥为跨链网络提供认证、准入等功能，按照服务端要求可以通过简单配置接入BCDNS，具体内容可以参考[这里](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK/tree/main/bcdns-services/embedded-bcdns/README.md)。
+
+通过在中继的配置增加下面一项，重启即可启动Embedded BCDNS，详细的配置可以参考AntChain Bridge SDK关于如何使用Embedded的[README](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK/tree/main/bcdns-services/embedded-bcdns/README.md)。
+
+```yaml
+acb:
+  bcdns:
+    embedded:
+      server-on: true
+      root-private-key-file: file:/path/to/embedded-bcdns-root-private-key.key
+      root-cert-file: file:/path/to/embedded-bcdns-root.crt
+```
+
+上面配置中的`root-private-key-file`和`root-cert-file`，可以通过CLI命令`generate-bcdns-root-cert`来生成，详细用法参考[这里](r-cli/README.md#5.5 生成BCDNS根证书)。
+
+需要在DB额外创建一些Embedded BCDNS的表，通过这里的SQL[脚本](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK/tree/main/bcdns-services/embedded-bcdns/embedded-bcdns-state-jdbc-spring-boot-starter/src/main/resources/ddl/mysql/ddl.sql)
+
+重新启动Relayer，启动日志中会看到：
+
+```
+INFO 63164 --- [           main] .EmbeddedBcdnsJdbcStateAutoConfiguration : start jdbc bcdns state
+INFO 63164 --- [           main] b.b.e.s.a.EmbeddedBcdnsAutoConfiguration : start embedded bcdns server on 0.0.0.0:8090
+```
+
+
 
 ## 社区治理
 
