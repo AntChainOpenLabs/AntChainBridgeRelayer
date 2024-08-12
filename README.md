@@ -356,7 +356,7 @@ acb:
       root-cert-file: file:/path/to/embedded-bcdns-root.crt
 ```
 
-上面配置中的`root-private-key-file`和`root-cert-file`，可以通过CLI命令`generate-bcdns-root-cert`来生成，详细用法参考[这里](r-cli/README.md#5.5 生成BCDNS根证书)。
+上面配置中的`root-private-key-file`和`root-cert-file`，可以通过CLI命令`generate-bcdns-root-cert`来生成，详细用法参考[这里](r-cli/README.md#55-生成BCDNS根证书)。
 
 需要在DB额外创建一些Embedded BCDNS的表，通过这里的SQL[脚本](https://github.com/AntChainOpenLabs/AntChainBridgePluginSDK/tree/main/bcdns-services/embedded-bcdns/embedded-bcdns-state-jdbc-spring-boot-starter/src/main/resources/ddl/mysql/ddl.sql)
 
