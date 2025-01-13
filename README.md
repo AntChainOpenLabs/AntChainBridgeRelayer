@@ -17,6 +17,9 @@
   </p>
 </div>
 
+> [!CAUTION]
+> 本仓库已经废弃，请转到[AntChainBridge](https://github.com/AntChainOpenLabs/AntChainBridge)
+
 ## 介绍
 
 蚂蚁链跨链桥中继（AntChain Bridge Relayer）是蚂蚁链跨链开源项目的重要组件，负责连接区块链、区块链域名服务（BCDNS）和证明转化组件（PTC），完成可信信息的流转与证明，实现区块链互操作。
